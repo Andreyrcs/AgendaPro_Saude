@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";if(p.texto==="grande")document.documentElement.style.fontSize="112.5%"}catch(e){}</script>
+    <title>Especialidades · Clínica</title>
+    <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/clinica/base.css" />
+    <link rel="stylesheet" href="assets/css/clinica/layout.css" />
+    <link rel="stylesheet" href="assets/css/clinica/lateral.css" />
+    <link rel="stylesheet" href="assets/css/clinica/botoes.css" />
+    <link rel="stylesheet" href="assets/css/clinica/cabecalho.css" />
+    <link rel="stylesheet" href="assets/css/clinica/painel.css" />
+    <link rel="stylesheet" href="assets/css/clinica/selos.css" />
+    <link rel="stylesheet" href="assets/css/clinica/paginas.css" />
+    <link rel="stylesheet" href="assets/css/clinica/avisos.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  </head>
+  <body>
+    <div class="casca">
+      <aside class="lateral" aria-label="Navegação da clínica">
+        <a class="lateral__marca" href="clinica.html">
+           <span data-marca="30"></span>
+          <span>AgendaPro <b>Saúde</b></span>
+        </a>
+        <nav aria-label="Seções">
+          <ul class="lateral__menu" id="lateral-menu" data-pagina="especialidades"></ul>
+        </nav>
+        <div class="lateral__pe">
+          <span class="avatar-iniciais" style="--tam: 36px; background: #d4f3e6" aria-hidden="true">CM</span>
+          <span><b>Carla Mendes</b><br />Recepção</span>
+        </div>
+      </aside>
+
+      <main class="conteudo" id="conteudo">
+        <header class="titulo-linha">
+          <div class="titulo-linha__data" id="folha-hoje"></div>
+          <div class="titulo-linha__texto">
+            <h1>Especialidades</h1>
+            <p class="titulo-linha__sub" id="subtitulo"></p>
+          </div>
+          <div class="titulo-linha__acoes">
+            <button type="button" class="botao botao--principal" id="nova">
+              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-plus" /></svg>Nova especialidade
+            </button>
+          </div>
+        </header>
+
+        <div class="pagina">
+          <section class="painel" aria-labelledby="t-esp">
+            <div class="painel__cabeca">
+              <h2 id="t-esp">Especialidades da clínica</h2>
+              <span class="painel__meta" id="meta"></span>
+            </div>
+            <div class="tabela-caixa tabela-caixa--solta">
+              <table class="tabela tabela--empilha">
+                <thead>
+                  <tr>
+                    <th scope="col">Especialidade</th>
+                    <th scope="col">Médicos</th>
+                    <th scope="col" class="num">Consulta</th>
+                    <th scope="col" class="num">Horários livres até sábado</th>
+                    <th scope="col" class="num">Na fila</th>
+                    <th scope="col"><span class="visualmente-oculto">Ação</span></th>
+                  </tr>
+                </thead>
+                <tbody id="linhas"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <dialog class="dialogo" id="dlg-esp" aria-labelledby="t-dlg">
+      <form method="dialog" id="form-esp" novalidate>
+        <h2 id="t-dlg">Nova especialidade</h2>
+        <p class="dialogo__texto">A descrição aparece no app para o paciente. Escreva sem termos técnicos.</p>
+        <div class="campo" id="c-nome">
+          <label for="f-nome">Nome</label>
+          <input id="f-nome" name="nome" autocomplete="off" placeholder="Ex.: Endocrinologia" required />
+        </div>
+        <div class="campo">
+          <label for="f-desc">Para que serve</label>
+          <textarea id="f-desc" name="desc" placeholder="Ex.: Diabetes, tireoide e hormônios"></textarea>
+        </div>
+        <div class="dialogo__acoes">
+          <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>
+          <button type="submit" class="botao botao--principal botao--pequeno">Criar especialidade</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toasts" id="toasts"></div>
+    <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+
+    <script src="assets/js/icones.js"></script>
+    <script src="assets/js/dados.js"></script>
+    <script src="assets/js/comum.js"></script>
+    <script src="assets/js/movimento.js"></script>
+    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-casca.js"></script>
+    <script src="assets/js/pagina-especialidades.js"></script>
+  </body>
+</html>

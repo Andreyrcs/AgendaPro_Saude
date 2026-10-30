@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";if(p.texto==="grande")document.documentElement.style.fontSize="112.5%"}catch(e){}</script>
+    <title>Médicos · Clínica</title>
+    <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/clinica/base.css" />
+    <link rel="stylesheet" href="assets/css/clinica/layout.css" />
+    <link rel="stylesheet" href="assets/css/clinica/lateral.css" />
+    <link rel="stylesheet" href="assets/css/clinica/botoes.css" />
+    <link rel="stylesheet" href="assets/css/clinica/cabecalho.css" />
+    <link rel="stylesheet" href="assets/css/clinica/painel.css" />
+    <link rel="stylesheet" href="assets/css/clinica/selos.css" />
+    <link rel="stylesheet" href="assets/css/clinica/paginas.css" />
+    <link rel="stylesheet" href="assets/css/clinica/avisos.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  </head>
+  <body>
+    <div class="casca">
+      <aside class="lateral" aria-label="Navegação da clínica">
+        <a class="lateral__marca" href="clinica.html">
+           <span data-marca="30"></span>
+          <span>AgendaPro <b>Saúde</b></span>
+        </a>
+        <nav aria-label="Seções">
+          <ul class="lateral__menu" id="lateral-menu" data-pagina="medicos"></ul>
+        </nav>
+        <div class="lateral__pe">
+          <span class="avatar-iniciais" style="--tam: 36px; background: #d4f3e6" aria-hidden="true">CM</span>
+          <span><b>Carla Mendes</b><br />Recepção</span>
+        </div>
+      </aside>
+
+      <main class="conteudo" id="conteudo">
+        <header class="titulo-linha">
+          <div class="titulo-linha__data" id="folha-hoje"></div>
+          <div class="titulo-linha__texto">
+            <h1>Médicos</h1>
+            <p class="titulo-linha__sub" id="subtitulo"></p>
+          </div>
+          <div class="titulo-linha__acoes">
+            <button type="button" class="botao botao--principal" id="cadastrar">
+              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-plus" /></svg>Cadastrar médico
+            </button>
+          </div>
+        </header>
+
+        <div class="pagina">
+          <section class="painel" aria-labelledby="t-agenda">
+            <div class="painel__cabeca">
+              <h2 id="t-agenda">Com agenda nesta unidade</h2>
+              <span class="painel__meta" id="meta-semana"></span>
+            </div>
+            <div class="tabela-caixa">
+              <table class="tabela tabela--empilha">
+                <thead>
+                  <tr>
+                    <th scope="col">Médico</th>
+                    <th scope="col">Expediente hoje</th>
+                    <th scope="col" class="num">Consultas hoje</th>
+                    <th scope="col" class="num">Ocupação da semana</th>
+                    <th scope="col" class="num">Na fila</th>
+                    <th scope="col">Próximo horário livre</th>
+                    <th scope="col">Sala e contato</th>
+                    <th scope="col"><span class="visualmente-oculto">Ação</span></th>
+                  </tr>
+                </thead>
+                <tbody id="linhas"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="painel" aria-labelledby="t-sem">
+            <div class="painel__cabeca">
+              <h2 id="t-sem">Sem horário nesta unidade</h2>
+              <span class="painel__meta" id="meta-sem"></span>
+            </div>
+            <p class="painel__titulo-sub">Estão no cadastro, mas ainda não têm expediente aqui. Cadastre o horário para que apareçam na agenda.</p>
+            <div class="tabela-caixa">
+              <table class="tabela tabela--empilha">
+                <thead>
+                  <tr>
+                    <th scope="col">Médico</th>
+                    <th scope="col">Especialidade</th>
+                    <th scope="col">Sala e contato</th>
+                    <th scope="col"><span class="visualmente-oculto">Ações</span></th>
+                  </tr>
+                </thead>
+                <tbody id="linhas-sem"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <dialog class="dialogo" id="dlg-medico" aria-labelledby="t-dlg">
+      <form method="dialog" id="form-medico" novalidate>
+        <h2 id="t-dlg">Cadastrar médico</h2>
+        <p class="dialogo__texto" id="dlg-texto">Depois do cadastro, defina o expediente em Horários para abrir a agenda.</p>
+        <div class="campo" id="c-nome">
+          <label for="f-nome">Nome completo</label>
+          <input id="f-nome" name="nome" autocomplete="off" placeholder="Ex.: Dra. Marta Siqueira" required />
+        </div>
+        <div class="campo">
+          <label for="f-esp">Especialidade</label>
+          <select id="f-esp" name="esp"></select>
+        </div>
+        <div class="campos-dupla">
+          <div class="campo" id="c-tel">
+            <label for="f-tel">Telefone</label>
+            <input id="f-tel" name="tel" inputmode="tel" autocomplete="off" placeholder="(11) 90000-0000" />
+          </div>
+          <div class="campo">
+            <label for="f-sala">Sala ou consultório</label>
+            <input id="f-sala" name="sala" autocomplete="off" placeholder="Ex.: Sala 3" />
+          </div>
+        </div>
+        <div class="dialogo__acoes">
+          <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>
+          <button type="submit" class="botao botao--principal botao--pequeno" id="dlg-ok">Cadastrar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toasts" id="toasts"></div>
+    <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+
+    <script src="assets/js/icones.js"></script>
+    <script src="assets/js/dados.js"></script>
+    <script src="assets/js/comum.js"></script>
+    <script src="assets/js/movimento.js"></script>
+    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-casca.js"></script>
+    <script src="assets/js/pagina-medicos.js"></script>
+  </body>
+</html>

@@ -1,0 +1,45 @@
+/* ─── Botões ─── */
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform var(--t-toque) var(--ease-out), background-color 160ms ease;
+}
+.botao:active { transform: scale(0.97); }
+.botao--principal { background: var(--noite); color: #fff; }
+.botao--secundario { background: var(--papel); color: var(--noite); box-shadow: inset 0 0 0 1.5px var(--noite); }
+.botao--menta { background: var(--menta); color: var(--noite); }
+.botao--pequeno { min-height: 38px; padding: 0 14px; font-size: 0.9375rem; }
+.botao--texto { background: transparent; color: var(--noite); padding: 0 8px; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1.5px; }
+.botao--principal:hover { background: var(--noite-3); }
+.botao--secundario:hover { background: var(--gelo); }
+
+.botao-icone {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: var(--papel);
+  color: var(--noite);
+  box-shadow: inset 0 0 0 1px var(--linha);
+  transition: transform var(--t-toque) var(--ease-out), background-color 160ms ease;
+}
+.botao-icone:active { transform: scale(0.94); }
+.botao-icone:hover { background: var(--gelo); }
+
+@media (prefers-reduced-motion: reduce) {
+  .botao:active, .botao-icone:active { transform: none; }
+}

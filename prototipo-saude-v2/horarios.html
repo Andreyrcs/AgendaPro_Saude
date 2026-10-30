@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";if(p.texto==="grande")document.documentElement.style.fontSize="112.5%"}catch(e){}</script>
+    <title>Horários · Clínica</title>
+    <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/clinica/base.css" />
+    <link rel="stylesheet" href="assets/css/clinica/layout.css" />
+    <link rel="stylesheet" href="assets/css/clinica/lateral.css" />
+    <link rel="stylesheet" href="assets/css/clinica/botoes.css" />
+    <link rel="stylesheet" href="assets/css/clinica/cabecalho.css" />
+    <link rel="stylesheet" href="assets/css/clinica/painel.css" />
+    <link rel="stylesheet" href="assets/css/clinica/selos.css" />
+    <link rel="stylesheet" href="assets/css/clinica/paginas.css" />
+    <link rel="stylesheet" href="assets/css/clinica/avisos.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  </head>
+  <body>
+    <div class="casca">
+      <aside class="lateral" aria-label="Navegação da clínica">
+        <a class="lateral__marca" href="clinica.html">
+         <span data-marca="30"></span>
+          <span>AgendaPro <b>Saúde</b></span>
+        </a>
+        <nav aria-label="Seções">
+          <ul class="lateral__menu" id="lateral-menu" data-pagina="horarios"></ul>
+        </nav>
+        <div class="lateral__pe">
+          <span class="avatar-iniciais" style="--tam: 36px; background: #d4f3e6" aria-hidden="true">CM</span>
+          <span><b>Carla Mendes</b><br />Recepção</span>
+        </div>
+      </aside>
+
+      <main class="conteudo" id="conteudo">
+        <header class="titulo-linha">
+          <div class="titulo-linha__data" id="folha-hoje"></div>
+          <div class="titulo-linha__texto">
+            <h1>Horários</h1>
+            <p class="titulo-linha__sub" id="subtitulo"></p>
+          </div>
+        </header>
+
+        <div class="pagina">
+            <section class="painel" aria-labelledby="t-exp">
+              <div class="painel__cabeca">
+                <h2 id="t-exp">Expediente de cada médico</h2>
+                <span class="painel__meta">Almoço das 12:00 às 13:00 para todos</span>
+              </div>
+              <div class="tabela-caixa">
+                <table class="tabela tabela--empilha">
+                  <thead>
+                    <tr>
+                      <th scope="col">Médico</th>
+                      <th scope="col">Segunda a sexta<div class="eixo" id="eixo-1" aria-hidden="true"></div></th>
+                      <th scope="col">Sábado<div class="eixo" id="eixo-2" aria-hidden="true"></div></th>
+                      <th scope="col" class="num">Consulta</th>
+                      <th scope="col" class="num">Horários por semana</th>
+                      <th scope="col"><span class="visualmente-oculto">Ação</span></th>
+                    </tr>
+                  </thead>
+                  <tbody id="linhas"></tbody>
+                </table>
+              </div>
+            </section>
+
+          <div class="pagina pagina--lado" style="margin-top:0">
+            <section class="painel" aria-labelledby="t-sem">
+              <div class="painel__cabeca">
+                <h2 id="t-sem">Sem horário nesta unidade</h2>
+              </div>
+              <div class="tabela-caixa">
+                <table class="tabela tabela--empilha">
+                  <thead>
+                    <tr>
+                      <th scope="col">Médico</th>
+                      <th scope="col">Especialidade</th>
+                      <th scope="col"><span class="visualmente-oculto">Ação</span></th>
+                    </tr>
+                  </thead>
+                  <tbody id="linhas-sem"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="painel" aria-labelledby="t-fechado">
+              <h2 id="t-fechado">Dias sem atendimento</h2>
+              <p class="painel__titulo-sub">A agenda não abre nesses dias, para nenhum médico.</p>
+              <ul class="folhas-lista" id="fechados"></ul>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <dialog class="dialogo" id="dlg-exp" aria-labelledby="t-dlg">
+      <form method="dialog" id="form-exp" novalidate>
+        <h2 id="t-dlg">Expediente</h2>
+        <p class="dialogo__texto" id="dlg-quem"></p>
+        <fieldset class="campo" style="border:0;padding:0;margin:0">
+          <legend class="campo__rotulo">Segunda a sexta</legend>
+          <label class="marcar"><input type="checkbox" name="semana" /> Atende de segunda a sexta</label>
+          <div class="campos-dupla">
+            <div class="campo"><label for="f-s-ini">Começa</label><select id="f-s-ini" name="sIni"></select></div>
+            <div class="campo"><label for="f-s-fim">Termina</label><select id="f-s-fim" name="sFim"></select></div>
+          </div>
+        </fieldset>
+        <fieldset class="campo" style="border:0;padding:0;margin:0">
+          <legend class="campo__rotulo">Sábado</legend>
+          <label class="marcar"><input type="checkbox" name="sabado" /> Atende aos sábados</label>
+          <div class="campos-dupla">
+            <div class="campo"><label for="f-b-ini">Começa</label><select id="f-b-ini" name="bIni"></select></div>
+            <div class="campo"><label for="f-b-fim">Termina</label><select id="f-b-fim" name="bFim"></select></div>
+          </div>
+        </fieldset>
+        <div class="campo">
+          <label for="f-dur">Duração de cada consulta</label>
+          <select id="f-dur" name="dur">
+            <option value="20">20 minutos</option>
+            <option value="30">30 minutos</option>
+            <option value="40">40 minutos</option>
+            <option value="60">1 hora</option>
+          </select>
+        </div>
+        <p class="campo__erro" id="e-exp" hidden></p>
+        <div class="dialogo__acoes">
+          <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>
+          <button type="submit" class="botao botao--principal botao--pequeno">Salvar expediente</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toasts" id="toasts"></div>
+    <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+
+    <script src="assets/js/icones.js"></script>
+    <script src="assets/js/dados.js"></script>
+    <script src="assets/js/comum.js"></script>
+    <script src="assets/js/movimento.js"></script>
+    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-casca.js"></script>
+    <script src="assets/js/pagina-horarios.js"></script>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+/* ─── Selos de situação: as mesmas cores dos blocos da agenda, em pílula ─── */
+
+.selo {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--noite);
+  background: var(--papel);
+  box-shadow: inset 0 0 0 1.5px #8fa2b3;
+}
+.selo--chegou { background: var(--menta); box-shadow: none; }
+.selo--em { background: var(--noite); color: #fff; box-shadow: none; }
+.selo--atraso { background: var(--ambar); color: var(--ambar-tinta); box-shadow: inset 0 0 0 1.5px #d9a84a; }
+.selo--chamado { background: var(--menta-2); color: var(--menta-tinta); box-shadow: none; }
+.selo--atendida { background: #edf1f0; color: #3d4c5a; box-shadow: none; }
+.selo--faltou { background: #edf1f0; color: #4b5b6c; box-shadow: none; }
+.selo--vaga { background: var(--ambar); color: var(--ambar-tinta); box-shadow: none; }
+.selo--oferecida { background: var(--menta-2); color: #0f4a37; box-shadow: none; }
+.selo--neutro { background: var(--gelo-2); color: var(--tinta-2); box-shadow: none; }

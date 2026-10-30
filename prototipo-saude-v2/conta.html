@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";if(p.texto==="grande")document.documentElement.style.fontSize="112.5%"}catch(e){}</script>
+    <title>Minha conta · Clínica</title>
+    <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/clinica/base.css" />
+    <link rel="stylesheet" href="assets/css/clinica/layout.css" />
+    <link rel="stylesheet" href="assets/css/clinica/lateral.css" />
+    <link rel="stylesheet" href="assets/css/clinica/botoes.css" />
+    <link rel="stylesheet" href="assets/css/clinica/cabecalho.css" />
+    <link rel="stylesheet" href="assets/css/clinica/painel.css" />
+    <link rel="stylesheet" href="assets/css/clinica/selos.css" />
+    <link rel="stylesheet" href="assets/css/clinica/paginas.css" />
+    <link rel="stylesheet" href="assets/css/clinica/avisos.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  </head>
+  <body data-pagina="conta">
+    <div class="casca">
+      <aside class="lateral" aria-label="Navegação da clínica">
+        <a class="lateral__marca" href="clinica.html">
+           <span data-marca="30"></span>
+          <span>AgendaPro <b>Saúde</b></span>
+        </a>
+        <nav aria-label="Seções">
+          <ul class="lateral__menu" id="lateral-menu" data-pagina="conta"></ul>
+        </nav>
+        <div class="lateral__pe"></div>
+      </aside>
+
+      <main class="conteudo" id="conteudo">
+        <header class="titulo-linha">
+          <span class="avatar-iniciais conta__avatar" id="conta-avatar" style="--tam: 68px; background: #d4f3e6" aria-hidden="true"></span>
+          <div class="titulo-linha__texto">
+            <h1>Minha conta</h1>
+            <p class="titulo-linha__sub" id="subtitulo"></p>
+          </div>
+        </header>
+
+        <div class="ajustes">
+          <section class="ajuste" aria-labelledby="t-dados">
+            <div class="ajuste__rotulo">
+              <h2 id="t-dados">Dados pessoais</h2>
+              <p>Seu nome aparece para a equipe da clínica e no registro de quem marcou cada consulta.</p>
+            </div>
+            <form class="painel ajuste__painel" id="form-dados" novalidate>
+              <div class="campo" id="c-nome">
+                <label for="f-nome">Nome completo</label>
+                <input id="f-nome" name="nome" autocomplete="name" />
+              </div>
+              <div class="campo" id="c-email">
+                <label for="f-email">E-mail</label>
+                <input id="f-email" name="email" type="email" autocomplete="email" />
+                <span class="campo__dica">É por ele que você entra no sistema e recupera a senha.</span>
+              </div>
+              <div class="campos-dupla">
+                <div class="campo" id="c-tel">
+                  <label for="f-tel">Telefone da recepção</label>
+                  <input id="f-tel" name="tel" inputmode="tel" autocomplete="tel" />
+                </div>
+                <div class="campo">
+                  <label for="f-ramal">Ramal</label>
+                  <input id="f-ramal" name="ramal" inputmode="numeric" autocomplete="off" />
+                </div>
+              </div>
+              <div class="ajuste__acoes">
+                <span class="ajuste__salvo" id="salvo-dados" aria-live="polite"></span>
+                <button type="submit" class="botao botao--principal botao--pequeno">Salvar dados</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="ajuste" aria-labelledby="t-senha">
+            <div class="ajuste__rotulo">
+              <h2 id="t-senha">Senha</h2>
+              <p>Use pelo menos 8 caracteres, com letras e números. Não use a mesma senha de outros sites.</p>
+            </div>
+            <form class="painel ajuste__painel" id="form-senha" novalidate>
+              <div class="campo" id="c-atual">
+                <label for="f-atual">Senha atual</label>
+                <input id="f-atual" name="atual" type="password" autocomplete="current-password" />
+              </div>
+              <div class="campos-dupla">
+                <div class="campo" id="c-nova">
+                  <label for="f-nova">Nova senha</label>
+                  <input id="f-nova" name="nova" type="password" autocomplete="new-password" />
+                </div>
+                <div class="campo" id="c-repete">
+                  <label for="f-repete">Repita a nova senha</label>
+                  <input id="f-repete" name="repete" type="password" autocomplete="new-password" />
+                </div>
+              </div>
+              <label class="marcar"><input type="checkbox" id="ver-senha" /> Mostrar as senhas</label>
+              <div class="ajuste__acoes">
+                <span class="ajuste__salvo" id="salvo-senha" aria-live="polite"></span>
+                <button type="submit" class="botao botao--principal botao--pequeno">Trocar senha</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="ajuste" aria-labelledby="t-pref">
+            <div class="ajuste__rotulo">
+              <h2 id="t-pref">Preferências</h2>
+              <p>Mudam na hora, em todas as telas da clínica, só neste computador.</p>
+            </div>
+            <div class="painel ajuste__painel">
+              <div class="interruptor-linha">
+                <span><b id="t-texto">Tamanho do texto</b><small>Deixa letras e botões maiores.</small></span>
+                <div class="segmento" role="radiogroup" aria-labelledby="t-texto" id="seg-texto">
+                  <button type="button" role="radio" data-texto="normal">Normal</button>
+                  <button type="button" role="radio" data-texto="grande">Grande</button>
+                </div>
+              </div>
+              <div class="interruptor-linha">
+                <span><b id="t-mov">Reduzir movimento</b><small>Tira os deslizes e as animações da agenda.</small></span>
+                <button type="button" class="interruptor" role="switch" id="sw-mov" aria-labelledby="t-mov"></button>
+              </div>
+              <div class="interruptor-linha">
+                <span><b id="t-menu">Menu lateral recolhido</b><small>Mostra só os ícones, para sobrar espaço para a agenda.</small></span>
+                <button type="button" class="interruptor" role="switch" id="sw-menu" aria-labelledby="t-menu"></button>
+              </div>
+            </div>
+          </section>
+
+          <section class="ajuste" aria-labelledby="t-acesso">
+            <div class="ajuste__rotulo">
+              <h2 id="t-acesso">Acesso</h2>
+              <p>Definido pela gestão da clínica. Para mudar, fale com quem administra o sistema.</p>
+            </div>
+            <div class="painel ajuste__painel">
+              <dl class="acesso" id="acesso"></dl>
+              <p class="ficha__secao">O que esta conta pode fazer</p>
+              <ul class="permissoes" id="permissoes"></ul>
+            </div>
+          </section>
+
+          <section class="ajuste" aria-labelledby="t-dados-proto">
+            <div class="ajuste__rotulo">
+              <h2 id="t-dados-proto">Dados deste protótipo</h2>
+              <p>Médicos, especialidades e edições feitas aqui ficam guardados neste navegador.</p>
+            </div>
+            <div class="painel ajuste__painel" id="restaurar-caixa"></div>
+          </section>
+
+          <section class="ajuste ajuste--sair" aria-label="Sair">
+            <div class="ajuste__rotulo"></div>
+            <div class="ajuste__painel ajuste__painel--solto">
+              <button type="button" class="botao botao--perigo" id="sair">
+                <svg class="ic ic-sm" aria-hidden="true"><use href="#i-log-out" /></svg>Sair da conta
+              </button>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="toasts" id="toasts"></div>
+    <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+
+    <script src="assets/js/icones.js"></script>
+    <script src="assets/js/dados.js"></script>
+    <script src="assets/js/comum.js"></script>
+    <script src="assets/js/movimento.js"></script>
+    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-casca.js"></script>
+    <script src="assets/js/pagina-conta.js"></script>
+  </body>
+</html>

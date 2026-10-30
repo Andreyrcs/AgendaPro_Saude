@@ -1,0 +1,67 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--tinta);
+  background: var(--gelo);
+}
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd {
+  margin: 0;
+}
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+a {
+  color: inherit;
+}
+svg {
+  display: block;
+}
+html {
+  overflow-x: hidden;
+}
+:root {
+  --px: 1.5px;
+  --calor-1: #e3e9ea;
+  --calor-2: #b9c3cb;
+  --calor-3: #8a97a5;
+  --calor-4: #566679;
+  --calor-5: #1f3350;
+  --ambar: #fdf0d2;
+  --ambar-tinta: #7a4a00;
+}
+
+.pular {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  z-index: 30;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--noite);
+  color: #fff;
+  font-weight: 700;
+}
+.pular:focus {
+  top: 12px;
+}

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";if(p.texto==="grande")document.documentElement.style.fontSize="112.5%"}catch(e){}</script>
+    <title>Nova consulta · Clínica</title>
+    <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/clinica/base.css" />
+    <link rel="stylesheet" href="assets/css/clinica/layout.css" />
+    <link rel="stylesheet" href="assets/css/clinica/lateral.css" />
+    <link rel="stylesheet" href="assets/css/clinica/botoes.css" />
+    <link rel="stylesheet" href="assets/css/clinica/cabecalho.css" />
+    <link rel="stylesheet" href="assets/css/clinica/painel.css" />
+    <link rel="stylesheet" href="assets/css/clinica/selos.css" />
+    <link rel="stylesheet" href="assets/css/clinica/paginas.css" />
+    <link rel="stylesheet" href="assets/css/clinica/avisos.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  </head>
+  <body>
+    <div class="casca">
+      <aside class="lateral" aria-label="Navegação da clínica">
+        <a class="lateral__marca" href="clinica.html">
+           <span data-marca="30"></span>
+          <span>AgendaPro <b>Saúde</b></span>
+        </a>
+        <nav aria-label="Seções">
+          <ul class="lateral__menu" id="lateral-menu" data-pagina="agenda"></ul>
+        </nav>
+        <div class="lateral__pe">
+          <span class="avatar-iniciais" style="--tam: 36px; background: #d4f3e6" aria-hidden="true">CM</span>
+          <span><b>Carla Mendes</b><br />Recepção</span>
+        </div>
+      </aside>
+
+      <main class="conteudo" id="conteudo">
+        <header class="titulo-linha">
+          <div class="titulo-linha__data" id="folha-hoje"></div>
+          <div class="titulo-linha__texto">
+            <h1>Nova consulta</h1>
+            <p class="titulo-linha__sub" id="subtitulo">Escolha o paciente, a especialidade, o médico e um horário livre.</p>
+          </div>
+          <div class="titulo-linha__acoes">
+            <a class="botao botao--secundario" href="clinica.html">Voltar à agenda</a>
+          </div>
+        </header>
+
+        <form class="pagina pagina--lado" id="form" novalidate>
+          <div class="pagina" id="passos">
+            <section class="painel passo" aria-labelledby="t-paciente">
+              <h2 id="t-paciente">Paciente</h2>
+              <div class="passo__corpo">
+                <div class="campos-dupla">
+                  <div class="campo" id="c-nome">
+                    <label for="f-nome">Nome completo</label>
+                    <input id="f-nome" name="nome" list="conhecidos" autocomplete="off" spellcheck="false" />
+                    <span class="campo__dica">Comece a digitar: quem já tem consulta aparece na lista.</span>
+                  </div>
+                  <div class="campo">
+                    <label for="f-tel">Telefone para contato</label>
+                    <input id="f-tel" name="tel" inputmode="tel" autocomplete="off" placeholder="(11) 90000-0000" />
+                  </div>
+                </div>
+                <datalist id="conhecidos"></datalist>
+              </div>
+            </section>
+
+            <section class="painel passo" aria-labelledby="t-medico">
+              <h2 id="t-medico">Especialidade e médico</h2>
+              <div class="passo__corpo">
+                <div class="campo" style="max-width: 420px">
+                  <label for="f-esp">Especialidade</label>
+                  <select id="f-esp" name="esp"></select>
+                </div>
+                <fieldset style="border:0;padding:0;margin:0">
+                  <legend class="visualmente-oculto">Médico</legend>
+                  <div class="escolhas" id="medicos"></div>
+                </fieldset>
+                <div id="aviso-fila"></div>
+              </div>
+            </section>
+
+            <section class="painel passo" aria-labelledby="t-dia">
+              <h2 id="t-dia">Dia</h2>
+              <p class="painel__titulo-sub" id="dia-sub"></p>
+              <div class="passo__corpo">
+                <fieldset style="border:0;padding:0;margin:0;min-width:0">
+                  <legend class="visualmente-oculto">Dia da consulta</legend>
+                  <div class="calendario" id="dias"></div>
+                </fieldset>
+                <div class="sem-dia" id="sem-dia"></div>
+              </div>
+            </section>
+
+            <section class="painel passo" aria-labelledby="t-hora">
+              <h2 id="t-hora">Horário</h2>
+              <p class="painel__titulo-sub" id="hora-sub"></p>
+              <div class="passo__corpo">
+                <fieldset style="border:0;padding:0;margin:0">
+                  <legend class="visualmente-oculto">Horário da consulta</legend>
+                  <div class="horas" id="horas"></div>
+                </fieldset>
+                <div id="bloqueio" aria-live="polite"></div>
+              </div>
+            </section>
+          </div>
+
+          <aside class="painel resumo-consulta" aria-labelledby="t-resumo">
+            <h2 id="t-resumo">Resumo</h2>
+            <div class="resumo-consulta__data" id="r-data"></div>
+            <dl id="r-lista"></dl>
+            <button type="submit" class="botao botao--principal" id="marcar">Marcar consulta</button>
+            <p class="resumo-consulta__falta" id="r-falta" aria-live="polite"></p>
+          </aside>
+        </form>
+
+        <section class="painel feito" id="feito" hidden aria-labelledby="t-feito" tabindex="-1"></section>
+      </main>
+    </div>
+
+    <dialog class="dialogo" id="dlg-fila" aria-labelledby="t-dlg-fila">
+      <form method="dialog" id="form-fila" novalidate>
+        <h2 id="t-dlg-fila">Entrar na lista de espera</h2>
+        <p class="dialogo__texto" id="dlg-fila-texto"></p>
+        <div class="campo" id="c-fila-nome">
+          <label for="f-fila-nome">Nome do paciente</label>
+          <input id="f-fila-nome" name="nome" autocomplete="off" />
+        </div>
+        <div class="campo">
+          <label for="f-fila-tel">Telefone</label>
+          <input id="f-fila-tel" name="tel" inputmode="tel" autocomplete="off" placeholder="(11) 90000-0000" />
+        </div>
+        <fieldset class="campo" id="fila-qualquer" style="border:0;padding:0;margin:0">
+          <legend class="campo__rotulo">Com qual médico?</legend>
+          <div class="escolhas escolhas--lista" id="fila-opcoes"></div>
+        </fieldset>
+        <label class="marcar"><input type="checkbox" name="app" /> A pessoa usa o app e recebe o aviso por lá</label>
+        <div class="dialogo__acoes">
+          <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>
+          <button type="submit" class="botao botao--principal botao--pequeno">Colocar na fila</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toasts" id="toasts"></div>
+    <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+
+    <script src="assets/js/icones.js"></script>
+    <script src="assets/js/dados.js"></script>
+    <script src="assets/js/comum.js"></script>
+    <script src="assets/js/movimento.js"></script>
+    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-casca.js"></script>
+    <script src="assets/js/pagina-nova-consulta.js"></script>
+  </body>
+</html>

@@ -1,0 +1,188 @@
+.mes3d {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.9fr);
+  gap: 20px;
+  align-items: center;
+  margin-top: 12px;
+}
+.pilha {
+  position: relative;
+  height: 440px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--gelo);
+  perspective: 1600px;
+  perspective-origin: 50% 20%;
+}
+.pilha__palco {
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  width: 340px;
+  height: 206px;
+  margin: -103px 0 0 -170px;
+  transform-style: preserve-3d;
+  transform: rotateX(54deg) rotateZ(-22deg);
+}
+.camada {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  text-align: left;
+  background: var(--papel);
+  box-shadow: inset 0 0 0 1.5px var(--linha);
+  transform: translateZ(calc(var(--i) * 18px));
+  transition:
+    transform 420ms var(--ease-out),
+    box-shadow 200ms ease;
+}
+.pilha--aberta .camada {
+  transform: translateZ(calc(var(--i) * 50px));
+}
+.pilha--aberta .camada.ativa {
+  transform: translateZ(calc(var(--i) * 50px + 28px));
+  box-shadow:
+    inset 0 0 0 2.5px var(--noite),
+    0 30px 40px -24px rgba(10, 24, 40, 0.55);
+}
+.camada:focus-visible {
+  outline: 3px solid var(--noite);
+  outline-offset: 3px;
+}
+.camada__faixa {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 16px 12px;
+  background: var(--noite);
+  color: #fff;
+  font-family: var(--fonte-numero);
+  font-stretch: 86%;
+  font-weight: 800;
+  font-size: 1.25rem;
+}
+.camada__faixa::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -3px;
+  height: 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6'%3E%3Ccircle cx='6' cy='3' r='1.8' fill='%23d9e2df'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+}
+.camada--atual .camada__faixa {
+  background: var(--menta);
+  color: var(--noite);
+}
+.camada__faixa small {
+  font-family: var(--fonte-texto);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.camada__dias {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  padding: 14px 14px 8px;
+}
+.camada__dia {
+  display: grid;
+  align-content: end;
+  gap: 4px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--tinta-2);
+}
+.camada__barra {
+  height: 56px;
+  border-radius: 6px;
+  background: var(--gelo);
+  position: relative;
+  overflow: hidden;
+}
+.camada__barra i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--o) * 100%);
+  background: var(--calor-4);
+  border-radius: 6px 6px 0 0;
+}
+.camada__total {
+  padding: 0 16px 12px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--tinta-2);
+}
+
+.semanas {
+  display: grid;
+  gap: 6px;
+}
+.semanas button {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--gelo);
+  text-align: left;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.semanas button.ativa {
+  background: var(--papel);
+  box-shadow: inset 0 0 0 2px var(--noite);
+}
+.semanas__nome {
+  font-weight: 700;
+}
+.semanas__n {
+  font-family: var(--fonte-numero);
+  font-stretch: 86%;
+  font-weight: 800;
+  font-size: 1.25rem;
+  text-align: right;
+}
+.semanas__sub {
+  font-size: 0.875rem;
+  color: var(--tinta-2);
+}
+
+@media (max-width: 900px) {
+  .mes3d {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pilha {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pilha {
+    display: none;
+  }
+  .mes3d {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+html[data-movimento="reduzido"] .pilha {
+  display: none;
+}
+html[data-movimento="reduzido"] .mes3d {
+  grid-template-columns: minmax(0, 1fr);
+}

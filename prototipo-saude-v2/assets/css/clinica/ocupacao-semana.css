@@ -1,0 +1,85 @@
+.calor {
+  padding-bottom: 16px;
+  height: auto;
+}
+.calor__escala {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: var(--tinta-2);
+}
+.calor__amostras {
+  display: flex;
+  gap: 2px;
+}
+.calor__amostras i {
+  width: 18px;
+  height: 12px;
+  border-radius: 3px;
+}
+.calor__grade {
+  display: grid;
+  grid-template-columns: 74px repeat(11, minmax(0, 1fr));
+  gap: 2px;
+  margin-top: 10px;
+}
+.calor__hora {
+  padding-bottom: 2px;
+  font-family: var(--fonte-numero);
+  font-stretch: 88%;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--tinta-3);
+  text-align: center;
+}
+.calor__dia {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 6px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--tinta-2);
+  white-space: nowrap;
+}
+.calor__dia--hoje {
+  color: var(--noite);
+}
+.calor__dia--hoje::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--menta-tinta);
+}
+.calor__celula {
+  display: grid;
+  place-items: center;
+  height: 21px;
+  border: 0;
+  padding: 0;
+  border-radius: 4px;
+  font-family: var(--fonte-numero);
+  font-stretch: 88%;
+  font-weight: 700;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--noite);
+  transition:
+    background-color 400ms ease,
+    color 400ms ease;
+}
+.calor__celula--escura {
+  color: #fff;
+}
+.calor__celula--vazia {
+  background: var(--gelo);
+  color: var(--tinta-3);
+}
+/* só as células com consulta são <button>; as vazias são <span> */
+button.calor__celula:hover {
+  box-shadow:
+    0 0 0 2px var(--papel),
+    0 0 0 4px var(--noite);
+}

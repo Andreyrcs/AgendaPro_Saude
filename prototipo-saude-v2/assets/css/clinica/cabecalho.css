@@ -1,0 +1,66 @@
+.titulo-linha {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.titulo-linha__data .folha {
+  --folha-l: 68px;
+}
+.titulo-linha__data .folha__dia {
+  font-size: 2.6rem;
+}
+.titulo-linha__texto {
+  flex: 1;
+  min-width: 0;
+}
+.titulo-linha h1 {
+  font-family: var(--fonte-numero);
+  font-stretch: 86%;
+  font-weight: 800;
+  font-size: 1.875rem;
+  line-height: 1.1;
+  word-spacing: 0.06em;
+}
+.titulo-linha__sub {
+  margin-top: 4px;
+  color: var(--tinta-2);
+}
+.titulo-linha__acoes {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.vistas {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--gelo-2);
+}
+.vistas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-weight: 700;
+  color: var(--tinta-2);
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+.vistas button:hover {
+  background: var(--papel);
+  color: var(--tinta);
+}
+/* botão da vista atual (vem depois do hover para ganhar dele) */
+.vistas button[aria-selected="true"] {
+  background: var(--noite);
+  color: #fff;
+}

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";if(p.texto==="grande")document.documentElement.style.fontSize="112.5%"}catch(e){}</script>
+    <title>Lista de espera · Clínica</title>
+    <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/clinica/base.css" />
+    <link rel="stylesheet" href="assets/css/clinica/layout.css" />
+    <link rel="stylesheet" href="assets/css/clinica/lateral.css" />
+    <link rel="stylesheet" href="assets/css/clinica/botoes.css" />
+    <link rel="stylesheet" href="assets/css/clinica/cabecalho.css" />
+    <link rel="stylesheet" href="assets/css/clinica/painel.css" />
+    <link rel="stylesheet" href="assets/css/clinica/selos.css" />
+    <link rel="stylesheet" href="assets/css/clinica/paginas.css" />
+    <link rel="stylesheet" href="assets/css/clinica/avisos.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  </head>
+  <body>
+    <div class="casca">
+      <aside class="lateral" aria-label="Navegação da clínica">
+        <a class="lateral__marca" href="clinica.html">
+           <span data-marca="30"></span>
+          <span>AgendaPro <b>Saúde</b></span>
+        </a>
+        <nav aria-label="Seções">
+          <ul class="lateral__menu" id="lateral-menu" data-pagina="fila"></ul>
+        </nav>
+        <div class="lateral__pe">
+          <span class="avatar-iniciais" style="--tam: 36px; background: #d4f3e6" aria-hidden="true">CM</span>
+          <span><b>Carla Mendes</b><br />Recepção</span>
+        </div>
+      </aside>
+
+      <main class="conteudo" id="conteudo">
+        <header class="titulo-linha">
+          <div class="titulo-linha__data" id="folha-hoje"></div>
+          <div class="titulo-linha__texto">
+            <h1>Lista de espera</h1>
+            <p class="titulo-linha__sub" id="subtitulo"></p>
+          </div>
+          <div class="titulo-linha__acoes">
+            <button type="button" class="botao botao--principal" id="adicionar">
+              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-plus" /></svg>Adicionar à fila
+            </button>
+          </div>
+        </header>
+
+        <div class="pagina pagina--espera">
+          <section class="painel" aria-labelledby="t-medicos">
+            <div class="painel__cabeca">
+              <h2 id="t-medicos">Médicos</h2>
+              <span class="painel__meta">pessoas na fila</span>
+            </div>
+            <div class="medicos-fila" id="medicos"></div>
+          </section>
+
+          <section class="painel" id="detalhe" aria-labelledby="t-detalhe"></section>
+        </div>
+      </main>
+    </div>
+
+    <dialog class="dialogo" id="dlg-adicionar" aria-labelledby="t-adicionar">
+      <form method="dialog" id="form-adicionar" novalidate>
+        <h2 id="t-adicionar">Adicionar à lista de espera</h2>
+        <p class="dialogo__texto">A pessoa entra no fim da fila e recebe a vaga quando chegar a vez dela.</p>
+        <div class="campo" id="c-nome">
+          <label for="f-nome">Nome do paciente</label>
+          <input id="f-nome" name="nome" autocomplete="off" required />
+        </div>
+        <div class="campos-dupla">
+          <div class="campo">
+            <label for="f-tel">Telefone</label>
+            <input id="f-tel" name="tel" inputmode="tel" autocomplete="off" placeholder="(11) 90000-0000" />
+          </div>
+          <div class="campo">
+            <label for="f-medico">Médico</label>
+            <select id="f-medico" name="medico"></select>
+          </div>
+        </div>
+        <label class="marcar"><input type="checkbox" name="app" /> A pessoa usa o app e recebe o aviso por lá</label>
+        <div class="dialogo__acoes">
+          <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>
+          <button type="submit" class="botao botao--principal botao--pequeno" value="ok">Adicionar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toasts" id="toasts"></div>
+    <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+
+    <script src="assets/js/icones.js"></script>
+    <script src="assets/js/dados.js"></script>
+    <script src="assets/js/comum.js"></script>
+    <script src="assets/js/movimento.js"></script>
+    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-casca.js"></script>
+    <script src="assets/js/pagina-lista-espera.js"></script>
+  </body>
+</html>

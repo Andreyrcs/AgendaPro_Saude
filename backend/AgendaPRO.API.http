@@ -1,0 +1,56 @@
+### Testar conexão
+GET http://localhost:5000/api/teste/conexao
+Accept: application/json
+
+
+### Criar usuário
+POST http://localhost:5000/api/usuarios
+Content-Type: application/json
+
+{
+  "nome": "Thiago",
+  "email": "thiago@email.com",
+  "senha": "123456"
+}
+
+
+### Login
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "thiago@email.com",
+  "senha": "123456"
+}
+
+
+### Listar usuários
+GET http://localhost:5000/api/usuarios
+Accept: application/json
+
+
+### Criar reunião presencial
+POST http://localhost:5000/api/reunioes
+Content-Type: application/json
+
+{
+  "tituloReuniao": "Reuniao teste",
+  "pautaReuniao": "Teste do backend com MySQL",
+  "dataReuniao": "2026-05-20",
+  "horaInicio": "09:00:00",
+  "horaFim": "10:00:00",
+  "localReuniao": "Sala A29",
+  "linkReuniao": null,
+  "idUsuarioLogado": 1,
+  "tipoReuniao": "PRESENCIAL"
+}
+
+
+### Listar minhas reuniões
+GET http://localhost:5000/api/reunioes/minhas?idUsuarioLogado=1
+Accept: application/json
+
+
+### Listar convites
+GET http://localhost:5000/api/reunioes/convites?idUsuarioLogado=1
+Accept: application/json

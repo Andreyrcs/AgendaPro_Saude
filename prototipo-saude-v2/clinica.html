@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";if(p.texto==="grande")document.documentElement.style.fontSize="112.5%"}catch(e){}</script>
+    <title>Agenda da Clínica</title>
+    <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/clinica/base.css" />
+    <link rel="stylesheet" href="assets/css/clinica/layout.css" />
+    <link rel="stylesheet" href="assets/css/clinica/lateral.css" />
+    <link rel="stylesheet" href="assets/css/clinica/botoes.css" />
+    <link rel="stylesheet" href="assets/css/clinica/cabecalho.css" />
+    <link rel="stylesheet" href="assets/css/clinica/painel.css" />
+    <link rel="stylesheet" href="assets/css/clinica/contadores.css" />
+    <link rel="stylesheet" href="assets/css/clinica/ocupacao-semana.css" />
+    <link rel="stylesheet" href="assets/css/clinica/agenda.css" />
+    <link rel="stylesheet" href="assets/css/clinica/agenda-linhas.css" />
+    <link rel="stylesheet" href="assets/css/clinica/agenda-mes.css" />
+    <link rel="stylesheet" href="assets/css/clinica/selos.css" />
+    <link rel="stylesheet" href="assets/css/clinica/proximos.css" />
+    <link rel="stylesheet" href="assets/css/clinica/lista-espera.css" />
+    <link rel="stylesheet" href="assets/css/clinica/menu-consulta.css" />
+    <link rel="stylesheet" href="assets/css/clinica/avisos.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  </head>
+  <body>
+    <div class="casca">
+      <aside class="lateral" aria-label="Navegação da clínica">
+        <a class="lateral__marca" href="inicio.html">
+           <span data-marca="30"></span>
+          <span>AgendaPro <b>Saúde</b></span>
+        </a>
+   
+        <nav aria-label="Seções">
+          <ul class="lateral__menu" id="lateral-menu" data-pagina="agenda"></ul>
+        </nav>
+
+        <div class="lateral__pe">
+          <span class="avatar-iniciais" style="--tam: 36px; background: #d4f3e6" aria-hidden="true">CM</span>
+          <span><b>Carla Mendes</b><br />Recepção</span>
+        </div>
+      </aside>
+
+      <main class="conteudo" id="conteudo">
+        <header class="titulo-linha">
+          <div class="titulo-linha__data" id="folha-hoje"></div>
+          <div class="titulo-linha__texto">
+            <h1>Agenda da clínica</h1>
+            <p class="titulo-linha__sub" id="subtitulo"></p>
+          </div>
+          <div class="titulo-linha__acoes">
+            <div class="vistas" role="tablist" aria-label="Visão da agenda">
+              <button type="button" role="tab" data-vista="dia" aria-controls="vista" id="aba-dia">Dia</button>
+              <button type="button" role="tab" data-vista="semana" aria-controls="vista" id="aba-semana">Semana</button>
+              <button type="button" role="tab" data-vista="mes" aria-controls="vista" id="aba-mes">
+                <svg class="ic ic-sm" aria-hidden="true"><use href="#i-layers" /></svg>Mês
+              </button>
+            </div>
+            <a class="botao botao--principal" href="nova-consulta.html">
+              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-plus" /></svg>Nova consulta
+            </a>
+          </div>
+        </header>
+
+        <section class="resumo" aria-label="Resumo">
+          <dl class="contadores" aria-label="Hoje">
+            <div class="contador">
+              <dt>Consultas hoje</dt>
+              <dd>
+                <span class="contador__n num" id="n-consultas">0</span
+                ><span class="contador__sub" id="s-consultas"></span>
+              </dd>
+            </div>
+            <div class="contador">
+              <dt>Vagas livres hoje</dt>
+              <dd>
+                <span class="contador__n num" id="n-vagas">0</span><span class="contador__sub" id="s-vagas"></span>
+              </dd>
+            </div>
+            <div class="contador">
+              <dt>Pessoas na lista de espera</dt>
+              <dd><span class="contador__n num" id="n-fila">0</span><span class="contador__sub" id="s-fila"></span></dd>
+            </div>
+          </dl>
+          <section class="painel calor" aria-labelledby="t-calor">
+            <div class="painel__cabeca">
+              <h2 id="t-calor">Ocupação da semana</h2>
+              <div class="calor__escala" aria-hidden="true">
+                <span>Vazio</span>
+                <span class="calor__amostras"
+                  ><i style="background: var(--calor-1)"></i><i style="background: var(--calor-2)"></i
+                  ><i style="background: var(--calor-3)"></i><i style="background: var(--calor-4)"></i
+                  ><i style="background: var(--calor-5)"></i
+                ></span>
+                <span>Cheio</span>
+              </div>
+            </div>
+            <div class="calor__grade" id="calor" aria-hidden="true"></div>
+            <table class="visualmente-oculto" id="calor-tabela"></table>
+          </section>
+        </section>
+
+        <div class="trabalho">
+          <section class="painel agenda" id="agenda" aria-labelledby="t-agenda">
+            <div class="painel__cabeca agenda__cabeca">
+              <div class="navegar">
+                <button type="button" class="botao-icone" id="ant" aria-label="Anterior">
+                  <svg class="ic ic-sm" aria-hidden="true"><use href="#i-chevron-left" /></svg>
+                </button>
+                <button type="button" class="botao botao--secundario botao--pequeno" id="hoje">Hoje</button>
+                <button type="button" class="botao-icone" id="prox" aria-label="Próximo">
+                  <svg class="ic ic-sm" aria-hidden="true"><use href="#i-chevron-right" /></svg>
+                </button>
+              </div>
+              <h2 id="t-agenda" aria-live="polite"></h2>
+              <div class="disposicao" id="disposicao" role="group" aria-label="Disposição da agenda">
+                <button type="button" data-layout="coluna" aria-pressed="true">Colunas</button>
+                <button type="button" data-layout="linha" aria-pressed="false">Linhas</button>
+              </div>
+            </div>
+            <ul class="legenda" aria-label="Legenda das consultas"></ul>
+            <div id="vista" role="tabpanel"></div>
+            <p class="agenda__dica" id="dica"></p>
+          </section>
+
+          <aside class="coluna">
+            <div class="coluna__pilha">
+          
+            <section class="painel fila" id="fila" aria-labelledby="t-fila">
+              <div class="Container_fila">
+                <div class="painel__cabeca">
+                  <h2 id="t-fila">Lista de espera</h2>
+                  <span class="painel__meta" id="fila-meta"></span>
+                </div>
+                <div class="fila__medicos" id="fila-medicos"></div>
+                <p class="fila__regra">
+                  Quando uma consulta é cancelada, a vaga é oferecida sozinha à 1ª pessoa da fila, que tem 30 minutos
+                  para confirmar.
+                </p>
+                <ol class="fila__lista" id="fila-lista"></ol>
+              </div>
+            </section>
+            </div>
+          </aside>
+
+            
+        </div>
+        <section class="painel proximos" id="proximos" aria-labelledby="t-proximos">
+              <div class="painel__cabeca">
+                <h2 id="t-proximos">Próximos pacientes</h2>
+                <span class="painel__meta" id="proximos-meta"></span>
+              </div>
+              <div class="busca">
+                <label for="busca">Buscar paciente de hoje</label>
+                <div class="busca__campo">
+                  <svg class="ic ic-sm" aria-hidden="true"><use href="#i-search" /></svg>
+                  <input id="busca" type="search" autocomplete="off" spellcheck="false" placeholder="Nome do paciente" />
+                </div>
+              </div>
+              <ol class="proximos__lista" id="proximos-lista" aria-describedby="proximos-meta"></ol>
+              <button type="button" class="proximos__mais" id="proximos-mais" aria-controls="proximos-lista" hidden></button>
+            </section>
+      </main>
+    </div>
+
+    <div class="menu-camada" id="menu" hidden></div>
+    <div class="toasts" id="toasts"></div>
+    <div class="dica-flutuante" id="dica-flutuante" role="tooltip" hidden></div>
+    <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+
+    <script src="assets/js/icones.js"></script>
+    <script src="assets/js/dados.js"></script>
+    <script src="assets/js/comum.js"></script>
+    <script src="assets/js/movimento.js"></script>
+    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-casca.js"></script>
+    <script src="assets/js/clinica.js"></script>
+  </body>
+</html>

@@ -1,0 +1,196 @@
+/* ─── Próximos pacientes: a fila da recepção, em ordem de horário ───
+   Cada hora é uma folhinha de destacar em miniatura; a do primeiro da lista ganha a faixa menta,
+   a mesma da folha de hoje no cabeçalho. */
+
+.busca {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+.busca label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--tinta-2);
+}
+.busca__campo {
+  position: relative;
+}
+.busca__campo .ic {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  color: var(--tinta-3);
+  pointer-events: none;
+}
+.busca__campo input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px 0 38px;
+  border: 1.5px solid #9aabb9;
+  border-radius: 12px;
+  background: var(--papel);
+  font: inherit;
+  color: var(--tinta);
+}
+.busca__campo input::placeholder {
+  color: var(--tinta-3);
+}
+.busca__campo input:focus-visible {
+  outline: 3px solid var(--noite);
+  outline-offset: 1px;
+}
+
+.proximos__lista {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+.proximos__lista--todos {
+  max-height: 340px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #b9c6c2 transparent;
+}
+
+.proximo {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 6px 8px 6px 6px;
+  border-radius: 12px;
+  background: var(--papel);
+  box-shadow: inset 0 0 0 1px #e0e8e5;
+    width: 100%;
+}
+
+/* a hora como folhinha */
+.proximo__folha {
+  display: grid;
+  grid-template-rows: 5px auto;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--papel);
+  box-shadow: inset 0 0 0 1.5px var(--linha);
+  text-align: center;
+}
+.proximo__folha::before {
+  content: "";
+  background: var(--noite);
+}
+.proximo__h {
+  padding: 5px 2px 6px;
+  font-family: var(--fonte-numero);
+  font-stretch: 80%;
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.proximo--primeiro .proximo__folha::before {
+  background: var(--menta);
+}
+.proximo--primeiro {
+  box-shadow: inset 0 0 0 1.5px var(--menta-tinta);
+}
+
+.proximo__corpo {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.proximo__nome {
+  justify-self: start;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  line-height: 1.25;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 160ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .proximo__nome:hover {
+    text-decoration-color: currentColor;
+  }
+}
+.proximo__sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  color: var(--tinta-2);
+}
+.proximo__medico {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.proximo__acao .botao {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 0.875rem;
+}
+.proximo__acao .botao--secundario {
+  box-shadow: inset 0 0 0 1.5px var(--linha);
+}
+.proximo__acao .botao--secundario:hover {
+  box-shadow: inset 0 0 0 1.5px var(--noite);
+}
+.proximo__acao .botao--menta:hover {
+  background: #93dcc0;
+}
+
+.proximos__vazio {
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--gelo);
+  font-size: 0.9375rem;
+  color: var(--tinta-2);
+}
+
+.proximos__mais {
+  justify-self: start;
+  margin-top: 8px;
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--noite);
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+.proximos__mais[hidden] {
+  display: none;
+}
+
+/* bloco da agenda apontado a partir da lista */
+.cbloco.apontado {
+  z-index: 6;
+  box-shadow:
+    inset 0 0 0 2.5px var(--noite),
+    0 0 0 4px var(--menta);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .proximo__nome {
+    transition: none;
+  }
+}

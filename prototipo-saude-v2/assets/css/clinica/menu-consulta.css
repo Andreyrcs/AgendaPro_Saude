@@ -1,0 +1,36 @@
+/* ─── Menu de uma consulta (abre ao clicar num bloco da agenda) ─── */
+
+.menu-camada { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 50; }
+.menu-camada[hidden] { display: none; }
+.menu {
+  position: absolute;
+  width: 290px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--papel);
+  box-shadow: inset 0 0 0 1px #e0e8e5, 0 24px 44px -18px rgba(10, 24, 40, 0.45);
+  transform-origin: var(--origem, top left);
+}
+.menu__cab { padding: 2px 4px 10px; border-bottom: 1px solid #e7eeeb; }
+.menu__nome { font-weight: 700; line-height: 1.25; }
+.menu__sub { font-size: 0.875rem; color: var(--tinta-2); }
+.menu__itens { display: grid; gap: 2px; margin-top: 8px; }
+.menu__itens button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+.menu__itens button .ic { color: var(--tinta-3); }
+.menu__itens button:focus-visible { outline: none; background: var(--gelo-2); }
+.menu__itens button:hover { background: var(--gelo); }
+.menu__itens .menu__perigo { margin-top: 6px; padding-top: 6px; border-top: 1px solid #e7eeeb; border-radius: 0 0 10px 10px; text-decoration: underline; text-underline-offset: 4px; }
+.menu__confirma { margin-top: 10px; font-size: 0.9375rem; line-height: 1.4; }
+.menu__confirma-acoes { display: flex; gap: 8px; margin-top: 10px; }

@@ -1,0 +1,313 @@
+/* Disposição "Linhas": as horas correm na horizontal e cada médico (ou médico+dia) ocupa uma linha.
+   Os blocos reaproveitam .cbloco; só a geometria muda. */
+
+.disposicao {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--gelo-2);
+}
+.disposicao[hidden] {
+  display: none;
+}
+.disposicao button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--tinta-2);
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+.disposicao button:hover {
+  background: var(--papel);
+  color: var(--tinta);
+}
+.disposicao button[aria-pressed="true"] {
+  background: var(--noite);
+  color: #fff;
+}
+
+.grade--linha {
+  --pxh: 2.6px;
+  --h: 64px;
+  --rot: 176px;
+}
+.grade--linha.grade--semana {
+  --h: 34px;
+  --rot: 218px;
+}
+.grade--linha .grade__rolagem {
+  height: auto;
+  max-height: min(620px, calc(100vh - 170px));
+  overflow: auto;
+}
+
+.linhas {
+  position: relative;
+  width: calc(var(--rot) + var(--larg) * var(--pxh));
+}
+.linhas__cab {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  display: flex;
+  height: 34px;
+  background: var(--papel);
+  border-bottom: 1px solid var(--linha);
+}
+.linhas__canto {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  flex: none;
+  width: var(--rot);
+  align-self: stretch;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 0 6px 6px;
+  background: var(--papel);
+  font-size: 0.8125rem;
+  color: var(--tinta-2);
+}
+.linhas__eixo {
+  position: relative;
+  flex: none;
+  width: calc(var(--larg) * var(--pxh));
+}
+.linhas__hora {
+  position: absolute;
+  bottom: 6px;
+  transform: translateX(-50%);
+  font-family: var(--fonte-numero);
+  font-stretch: 88%;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: var(--tinta-3);
+}
+.linhas__hora:first-child {
+  transform: none;
+  padding-left: 4px;
+}
+
+.linhas__corpo {
+  display: flex;
+}
+.linhas__rotulos {
+  position: sticky;
+  left: 0;
+  z-index: 8;
+  flex: none;
+  width: var(--rot);
+  background: var(--papel);
+  box-shadow: 1px 0 0 var(--linha);
+}
+.linhas__corpo .grade__pista {
+  flex: none;
+  width: calc(var(--larg) * var(--pxh));
+  height: calc(var(--n) * var(--h));
+}
+
+/* rótulo de cada médico (visão do dia) */
+.linhas__med {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--h);
+  min-width: 0;
+  padding: 0 10px 0 8px;
+  border-top: 1px solid #edf1f0;
+  border-left: 4px solid var(--cor, transparent);
+}
+.linhas__med:first-child {
+  border-top: 0;
+}
+.linhas__med-texto {
+  min-width: 0;
+  line-height: 1.2;
+}
+.linhas__med-nome {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+.linhas__med-sub {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: var(--tinta-2);
+}
+.linhas__med-fila {
+  font-weight: 700;
+  color: #6b4300;
+}
+
+/* visão da semana: um grupo de seis linhas por dia */
+.linhas__grupo {
+  display: flex;
+  height: calc(6 * var(--h));
+  border-top: 2px solid var(--linha);
+}
+.linhas__grupo:first-child {
+  border-top: 0;
+}
+.linhas__dia {
+  flex: none;
+  width: 70px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  text-align: center;
+  font-family: var(--fonte-numero);
+  font-stretch: 86%;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  line-height: 1.15;
+}
+.linhas__dia small {
+  font-family: var(--fonte-texto, inherit);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--tinta-2);
+}
+.linhas__dia--hoje {
+  color: var(--menta-tinta);
+}
+.linhas__dia--hoje::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--menta-tinta);
+}
+.linhas__meds {
+  flex: 1;
+  min-width: 0;
+}
+.linhas__meds .linhas__med {
+  gap: 6px;
+  padding-right: 6px;
+  border-left-width: 3px;
+}
+.linhas__meds .linhas__med:first-child {
+  border-top: 0;
+}
+.linhas__meds .linhas__med-nome {
+  font-size: 0.8125rem;
+}
+.linhas__meds .avatar-iniciais {
+  font-size: 0.625rem;
+}
+
+/* fundo da pista */
+.linhas__vlinha {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #e7eeeb;
+}
+.linhas__vlinha--meia {
+  background: #f0f4f2;
+}
+.linhas__hsep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #edf1f0;
+}
+.linhas__hsep--dia {
+  height: 2px;
+  background: var(--linha);
+}
+.grade--linha .grade__almoco {
+  top: 0;
+  bottom: 0;
+  left: calc(300 * var(--pxh));
+  right: auto;
+  width: calc(60 * var(--pxh));
+  height: auto;
+}
+
+/* blocos */
+.grade--linha .cbloco {
+  left: calc((var(--ini) - 420) * var(--pxh));
+  top: calc(var(--c) * var(--h) + 4px);
+  width: calc(var(--dur) * var(--pxh) - 3px);
+  height: calc(var(--h) - 8px);
+}
+.grade--linha.grade--semana .cbloco {
+  padding: 0 6px;
+  justify-content: flex-start;
+  gap: 4px;
+}
+.grade--linha.grade--semana .cbloco__texto {
+  display: grid;
+}
+.grade--linha.grade--semana .cbloco__hora {
+  display: none;
+}
+.grade--linha.grade--semana .cbloco__nome {
+  font-size: 0.75rem;
+}
+.grade--linha.grade--semana .encaixe {
+  padding: 0;
+}
+
+/* linha do agora: vertical, cobre só as linhas do dia de hoje */
+.grade--linha .agora {
+  left: 0;
+  top: 0;
+  height: auto;
+  width: 0;
+}
+.grade--linha .agora::before {
+  left: -1px;
+  right: auto;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  height: auto;
+}
+.grade--linha .agora::after {
+  left: -5px;
+  top: -5px;
+}
+.grade--linha .agora__rotulo {
+  right: auto;
+  left: 7px;
+  top: 4px;
+}
+
+@media (max-width: 900px) {
+  .grade--linha,
+  .grade--linha.grade--semana {
+    min-width: 0;
+    --rot: 140px;
+  }
+  .grade--linha.grade--semana {
+    --rot: 190px;
+  }
+  .agenda__cabeca {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .disposicao button {
+    transition: none;
+  }
+}

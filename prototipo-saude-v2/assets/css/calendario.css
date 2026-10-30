@@ -1,0 +1,436 @@
+/* AgendaPro Saúde v2 — calendário do paciente (aba Agenda)
+   O mês é uma folhinha de parede; cada dia com compromisso é uma folha de papel com faixa azul-noite.
+   Sombra só durante o movimento (virar, cair, carimbar). Em repouso, tudo chapado. */
+
+/* ─── Abas Calendário | Lista ─── */
+.abas--agenda { margin-top: 10px; }
+.abas button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.abas button .ic { width: 20px; height: 20px; }
+
+/* ─── Filtro por pessoa: uma fileira de rostos, cada um com o nome ─── */
+.cal-filtros {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+  margin-top: 12px;
+}
+.cal-pessoa {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  min-height: 48px;
+  padding: 4px 0 6px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--tinta-2);
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+.cal-pessoa .avatar,
+.cal-pessoa__todos {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  transition: transform var(--t-toque) var(--ease-out), box-shadow 160ms ease;
+}
+.cal-pessoa__todos { display: grid; place-items: center; background: var(--gelo-2); color: var(--noite); }
+.cal-pessoa__todos .ic { width: 22px; height: 22px; }
+.cal-pessoa:active .avatar,
+.cal-pessoa:active .cal-pessoa__todos { transform: scale(0.94); }
+.cal-pessoa[aria-pressed="true"] { background: var(--papel); color: var(--noite); box-shadow: inset 0 0 0 1px #e0e8e5; }
+.cal-pessoa[aria-pressed="true"] .avatar,
+.cal-pessoa[aria-pressed="true"] .cal-pessoa__todos { box-shadow: 0 0 0 2.5px var(--papel), 0 0 0 5px var(--noite); }
+
+/* ─── A folhinha do mês ─── */
+.cal {
+  position: relative;
+  margin-top: 14px;
+  border-radius: var(--raio-cartao);
+  background: var(--papel);
+  box-shadow: inset 0 0 0 1px #e0e8e5;
+}
+
+.cal-cabeca {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 10px 14px;
+  border-radius: var(--raio-cartao) var(--raio-cartao) 0 0;
+  background: var(--noite);
+  color: #fff;
+}
+/* furos da picotagem, como no bloco de destacar */
+.cal-cabeca::after {
+  content: "";
+  position: absolute;
+  left: 14px; right: 14px; bottom: -3px;
+  height: 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6'%3E%3Ccircle cx='6' cy='3' r='1.8' fill='%23d9e2df'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-position: center;
+}
+.cal-cabeca__titulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--fonte-numero);
+  font-weight: 800;
+  line-height: 1;
+}
+.cal-cabeca__mes { font-stretch: 80%; font-size: 2rem; letter-spacing: -0.01em; }
+.cal-cabeca__ano { font-stretch: 88%; font-size: 1.125rem; font-weight: 700; color: var(--menta); }
+.cal-cabeca .botao-icone {
+  background: transparent;
+  color: #fff;
+  box-shadow: inset 0 0 0 1.5px #8099b6;
+  transition: background-color 160ms ease, transform var(--t-toque) var(--ease-out);
+}
+.cal-cabeca .botao-icone:active { transform: scale(0.94); }
+.cal-cabeca .botao-icone:hover { background: var(--noite-2); }
+/* desativado (vem depois do hover para ganhar dele) */
+.cal-cabeca .botao-icone[disabled] { opacity: 0.35; cursor: not-allowed; background: transparent; }
+
+/* área onde as páginas viram: perspectiva própria e gesto horizontal */
+.cal-area {
+  position: relative;
+  display: grid;
+  perspective: 1100px;
+  perspective-origin: 30% 40%;
+  touch-action: pan-y;
+  user-select: none;
+}
+.cal-area > .cal-pagina,
+.cal-area > .cal-aberto { grid-area: 1 / 1; }
+
+.cal-pagina {
+  display: grid;
+  gap: 4px;
+  padding: 10px 8px 10px;
+  background: var(--papel);
+}
+.cal-linha { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-sem {
+  padding: 4px 0 2px;
+  text-align: center;
+  font-family: var(--fonte-numero);
+  font-stretch: 86%;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--tinta-2);
+}
+.cal-sem--dom { color: #a52d17; }
+
+/* ─── Um dia = uma folha pequena ─── */
+.cal-dia {
+  position: relative;
+  display: grid;
+  grid-template-rows: 6px auto 1fr;
+  justify-items: center;
+  width: 100%;
+  min-height: 3.875rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--gelo);
+  color: var(--tinta);
+  transition: transform var(--t-toque) var(--ease-out), background-color 160ms ease;
+}
+.cal-dia:active { transform: scale(0.95); }
+.cal-dia:focus-visible { outline: 3px solid var(--noite); outline-offset: 2px; z-index: 1; }
+.cal-dia__faixa { align-self: stretch; justify-self: stretch; background: transparent; transition: opacity 160ms ease; }
+.cal-dia__num {
+  padding-top: 5px;
+  font-family: var(--fonte-numero);
+  font-stretch: 72%;
+  font-weight: 800;
+  font-size: 1.375rem;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+}
+.cal-dia__marcas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  gap: 3px;
+  padding: 3px 3px 6px;
+  min-height: 18px;
+}
+.cal-marca {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--cor);
+  box-shadow: inset 0 0 0 1.5px rgba(18, 38, 63, 0.6);
+  transition: opacity 160ms ease, transform 160ms var(--ease-out);
+}
+.cal-selo-mini { width: 14px; height: 14px; color: var(--menta-tinta); stroke-width: 2.4; transition: opacity 160ms ease; }
+.cal-dia .oculta { opacity: 0; transform: scale(0.5); }
+
+/* dia com compromisso: vira folha de papel com faixa */
+.cal-dia--com { background: var(--papel); box-shadow: inset 0 0 0 1.5px var(--linha); }
+.cal-dia--com .cal-dia__faixa { background: var(--noite); }
+.cal-dia--filtrado .cal-dia__faixa { opacity: 0; }
+.cal-dia--passado { color: var(--tinta-3); }
+.cal-dia--passado .cal-dia__num { font-weight: 700; }
+.cal-dia--domingo .cal-dia__num { color: var(--domingo); }
+.cal-dia--fora { visibility: hidden; pointer-events: none; }
+.cal-dia--hoje { box-shadow: inset 0 0 0 2px var(--menta-tinta); }
+.cal-dia--hoje .cal-dia__faixa { background: var(--menta); opacity: 1; }
+.cal-dia--vaga { background: var(--menta-2); box-shadow: inset 0 0 0 2px var(--menta-tinta); }
+.cal-dia--vaga .cal-dia__faixa { background: var(--menta-tinta); opacity: 1; }
+.cal-dia[aria-expanded="true"] { box-shadow: inset 0 0 0 2.5px var(--noite); }
+.cal-dia:hover { background: var(--papel); box-shadow: inset 0 0 0 1.5px #b9c9c3; }
+.cal-dia--hoje:hover { box-shadow: inset 0 0 0 2px var(--menta-tinta); }
+
+/* carimbo pequeno que fica na folha depois de marcar */
+.cal-dia__carimbo {
+  position: absolute;
+  right: 2px;
+  top: 8px;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  color: var(--menta-tinta);
+  box-shadow: inset 0 0 0 1.5px currentColor;
+  transform: rotate(-12deg);
+}
+.cal-dia__carimbo .ic { width: 12px; height: 12px; stroke-width: 3; }
+
+/* ─── Legenda ─── */
+.cal-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid #e7eeeb;
+  font-size: 1rem;
+  color: var(--tinta-2);
+}
+.cal-legenda li { display: inline-flex; align-items: center; gap: 6px; }
+.cal-legenda .ic { width: 18px; height: 18px; color: var(--menta-tinta); stroke-width: 2.2; }
+.cal-legenda__ponto { width: 11px; height: 11px; border-radius: 50%; background: var(--id-davi); box-shadow: inset 0 0 0 1.5px rgba(18, 38, 63, 0.6); }
+
+.cal-dica { margin-top: 10px; font-size: 1rem; color: var(--tinta-2); }
+
+/* ─── A folha do dia aberta ─── */
+.cal-aberto {
+  align-self: start;
+  padding-bottom: 6px;
+  background: var(--papel);
+}
+.cal-aberto[hidden] { display: none; }
+.cal-aberto:focus { outline: none; }
+.cda-cabeca {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 10px 12px 14px;
+}
+.cda-cabeca__texto { flex: 1; min-width: 0; }
+.cda-cabeca__titulo { font-weight: 700; font-size: 1.1875rem; line-height: 1.25; }
+.cda-cabeca__sub { font-size: 1rem; color: var(--tinta-2); }
+.cda-cabeca .botao-icone { align-self: flex-start; }
+
+.cda-lista { padding: 0 14px; }
+.cda-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 0;
+  border-top: 1px solid #e7eeeb;
+  text-decoration: none;
+  color: inherit;
+}
+.cda-item .avatar { width: 44px; height: 44px; }
+.cda-item__corpo { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.cda-item__linha { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.cda-item__hora { font-family: var(--fonte-numero); font-stretch: 88%; font-weight: 800; font-size: 1.375rem; line-height: 1.1; font-variant-numeric: tabular-nums lining-nums; }
+.cda-item__titulo { font-weight: 700; line-height: 1.3; }
+.cda-item__sub { font-size: 1rem; color: var(--tinta-2); line-height: 1.35; }
+.cda-item .item__seta { align-self: center; }
+.cda-item--vaga { margin: 4px -14px 0; padding: 14px; border-top: 0; border-radius: 16px; background: var(--menta-2); }
+.cda-item--vaga .botao { margin-top: 10px; }
+.cda-vazio { padding: 6px 0 14px; color: var(--tinta-2); }
+.cda-vazio .botao { margin-top: 12px; }
+.cda-nota { padding: 10px 0 4px; font-size: 1rem; color: var(--tinta-2); border-top: 1px solid #e7eeeb; }
+.cda-nota button { border: 0; background: none; padding: 0; font-weight: 700; color: var(--menta-tinta); text-decoration: underline; text-underline-offset: 4px; min-height: 44px; }
+
+/* selos por tipo (consulta, exame, prevenção, retorno, vaga): forma + ícone + palavra */
+.selo-tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px 0 8px;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--menta-tinta);
+  box-shadow: inset 0 0 0 1.5px currentColor;
+  transform: rotate(-2deg);
+}
+.selo-tipo .ic { width: 16px; height: 16px; stroke-width: 2.2; }
+.selo-tipo--consulta { color: var(--tinta-2); transform: none; border-radius: 999px; }
+.selo-tipo--realizada { color: var(--tinta-2); transform: none; border-radius: 999px; }
+.selo-tipo--vaga { color: var(--noite); background: var(--menta); box-shadow: none; transform: none; border-radius: 999px; }
+
+/* ─── Folha que vira em 3D (abrir o dia) ─── */
+.giro {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  transform-origin: top left;
+}
+.giro__sombra {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  border-radius: 14px;
+  box-shadow: 0 26px 40px -18px rgba(10, 24, 40, 0.55);
+  opacity: 0;
+}
+.giro__cartao { position: absolute; top: 0; right: 0; bottom: 0; left: 0; transform-style: preserve-3d; }
+.giro__face {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--papel);
+  backface-visibility: hidden;
+}
+.giro__frente {
+  display: grid;
+  grid-template-rows: auto auto;
+  justify-items: center;
+  box-shadow: inset 0 0 0 calc(1.5px / var(--s, 1)) var(--linha);
+}
+.giro__frente-faixa { justify-self: stretch; height: calc(6px / var(--s, 1)); background: var(--noite); }
+.giro__frente--hoje .giro__frente-faixa { background: var(--menta); }
+.giro__frente--vaga { background: var(--menta-2); }
+.giro__frente--vaga .giro__frente-faixa { background: var(--menta-tinta); }
+.giro__frente-num {
+  padding-top: calc(5px / var(--s, 1));
+  font-family: var(--fonte-numero);
+  font-stretch: 72%;
+  font-weight: 800;
+  font-size: calc(1.375rem / var(--s, 1));
+  line-height: 1;
+}
+.giro__verso { transform: rotateY(180deg); }
+
+/* ─── Página que vira (troca de mês) ─── */
+.virador {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 4;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+.virador > .cal-pagina {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  backface-visibility: hidden;
+}
+.virador__luz { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: rgba(18, 38, 63, 0.16); opacity: 0; backface-visibility: hidden; }
+.virador__verso {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: #e9efec;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+}
+.cal-sombra { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 3; background: rgba(10, 24, 40, 0.2); opacity: 0; pointer-events: none; }
+
+/* ─── Vaga que chega ao calendário ─── */
+.vaga-voando {
+  position: absolute;
+  z-index: 7;
+  display: grid;
+  grid-template-rows: 6px auto auto;
+  justify-items: center;
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--menta-2);
+  box-shadow: inset 0 0 0 2px var(--menta-tinta), 0 20px 30px -14px rgba(10, 24, 40, 0.5);
+  pointer-events: none;
+}
+.vaga-voando__faixa { justify-self: stretch; background: var(--menta-tinta); }
+.vaga-voando__num { padding-top: 5px; font-family: var(--fonte-numero); font-stretch: 72%; font-weight: 800; font-size: 1.375rem; line-height: 1; }
+.vaga-voando .ic { width: 14px; height: 14px; margin-top: 4px; color: var(--menta-tinta); stroke-width: 2.4; }
+.cal-halo {
+  position: absolute;
+  z-index: 6;
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px var(--menta-tinta);
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* ─── Carimbo "Marcada" ─── */
+.carimbo {
+  display: inline-grid;
+  place-items: center;
+  padding: 6px 14px 5px;
+  border-radius: 10px;
+  color: var(--menta-tinta);
+  box-shadow: inset 0 0 0 3px currentColor, inset 0 0 0 6px var(--papel), inset 0 0 0 7.5px currentColor;
+  font-family: var(--fonte-numero);
+  font-stretch: 84%;
+  font-weight: 900;
+  font-size: 1.5rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transform: rotate(-12deg);
+}
+.carimbo-palco {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 4px auto 6px;
+  width: 168px;
+  height: 150px;
+}
+.carimbo-palco .folha { --folha-l: 112px; }
+.carimbo-palco .folha__dia { font-size: 4.4rem; }
+.carimbo-palco .folha__mes { font-size: 1rem; padding: 7px 4px 6px; }
+.carimbo-palco .folha__semana { font-size: 1rem; padding-bottom: 10px; }
+.carimbo-palco .carimbo { position: absolute; right: -6px; bottom: 6px; }
+
+/* peças da chuva de folhinhas */
+.chuva-folhas__folha {
+  position: absolute;
+  width: 16px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--papel);
+  box-shadow: inset 0 6px 0 var(--faixa), inset 0 0 0 1px #c9d6d1;
+}
+
+/* ─── Lista do mês (alternativa em texto ao calendário) ─── */
+.mes-lista .agenda-item + .agenda-item { margin-top: 10px; }
+.mes-lista__prev { display: flex; gap: 12px; align-items: flex-start; }
+.mes-lista__prev + .mes-lista__prev { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e7eeeb; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cal-dia:active, .cal-pessoa:active .avatar, .cal-cabeca .botao-icone:active { transform: none; }
+  .cal-marca { transition: opacity 160ms ease; }
+}
+html[data-movimento="reduzido"] .cal-dia:active,
+html[data-movimento="reduzido"] .cal-pessoa:active .avatar,
+html[data-movimento="reduzido"] .cal-cabeca .botao-icone:active { transform: none; }

@@ -1,0 +1,33 @@
+/* ─── Contadores de hoje: consultas, vagas livres, pessoas na lista de espera ─── */
+
+.contadores {
+  display: grid;
+  border-radius: var(--raio-cartao);
+  background: var(--noite);
+  color: #fff;
+  padding: 2px 20px;
+}
+.contador { display: grid; gap: 0; padding: 9px 0; }
+.contador + .contador { border-top: 1px solid rgba(188, 203, 220, 0.25); }
+.contador dt { font-size: 0.9375rem; font-weight: 600; color: var(--sobre-noite-2); }
+.contador dd { display: flex; align-items: baseline; gap: 10px; }
+.contador__n {
+  display: inline-block;
+  min-width: 2ch;
+  font-family: var(--fonte-numero);
+  font-stretch: 78%;
+  font-weight: 800;
+  font-size: 2.125rem;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.contador__sub { font-size: 0.9375rem; color: var(--sobre-noite-2); }
+.contador:nth-child(2) .contador__n { color: var(--menta); }
+
+@media (max-width: 1080px) {
+  .contadores { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .contador + .contador { border-top: 0; }
+}
+@media (max-width: 900px) {
+  .contadores { grid-template-columns: minmax(0, 1fr); }
+}
