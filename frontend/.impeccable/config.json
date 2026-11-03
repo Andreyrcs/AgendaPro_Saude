@@ -1,0 +1,54 @@
+{
+  "buildPath": "code",
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "pulsing-dot",
+        "value": "*",
+        "files": [
+          "prototipo-saude/index.html"
+        ],
+        "createdAt": "2026-10-20T20:26:25.054Z",
+        "reason": "agent triage: only pulsing dot is the assistant typing indicator, shown while a reply is pending (genuinely live); disabled under reduced motion"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "prototipo-saude/inicio.html"
+        ],
+        "createdAt": "2026-10-20T20:26:25.441Z",
+        "reason": "agent triage: false positive, fixed-height flex bands (.parte__faixa) with text vertically centered"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "prototipo-saude/landing.html"
+        ],
+        "createdAt": "2026-10-20T20:26:25.823Z",
+        "reason": "agent triage: false positive, fixed-height flex band (.folha-parede__faixa) with text vertically centered"
+      },
+      {
+        "rule": "buried-raster",
+        "value": "*",
+        "files": [
+          "prototipo-saude/landing.html"
+        ],
+        "createdAt": "2026-10-20T20:39:23.144Z",
+        "reason": "agent triage + independent detector review: #carrossel slow crossfade; every frame reaches opacity 1 in the 5.6s cycle (pause control provided; reduced motion shows the first frame only)"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "prototipo-saude/index.html"
+        ],
+        "createdAt": "2026-10-20T20:39:28.267Z",
+        "reason": "agent triage + independent detector review: neutral navy offset elevation shadow on the floating notification toast (a real overlay), not a zero-offset coloured halo"
+      }
+    ]
+  }
+}

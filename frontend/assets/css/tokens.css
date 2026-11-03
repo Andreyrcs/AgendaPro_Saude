@@ -2,217 +2,260 @@
    Mundo: a folhinha de parede. Campos chapados, sem sombra em repouso, sem degradê. */
 
 @font-face {
-  font-family: "Atkinson Hyperlegible Next";
-  src: url("../fonts/atkinson-next-latin.woff2") format("woff2");
-  font-weight: 200 800;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Atkinson Hyperlegible Next';
+    src: url('../fonts/atkinson-next-latin.woff2') format('woff2');
+    font-weight: 200 800;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: "Archivo";
-  src: url("../fonts/archivo-latin.woff2") format("woff2");
-  font-weight: 100 900;
-  font-stretch: 62% 125%;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Archivo';
+    src: url('../fonts/archivo-latin.woff2') format('woff2');
+    font-weight: 100 900;
+    font-stretch: 62% 125%;
+    font-style: normal;
+    font-display: swap;
 }
 
 :root {
-  /* Campos */
-  --noite: #12263f;          /* azul-noite: topo, assistente, botão principal, títulos */
-  --noite-2: #1c3756;        /* um passo acima do azul-noite (balões, superfícies sobre o azul) */
-  --noite-3: #2a4a70;
-  --menta: #a8e6cf;          /* verde-menta: lista de espera, confirmações */
-  --menta-2: #d4f3e6;        /* menta clara: realces suaves */
-  --menta-tinta: #1f6b52;    /* menta escura para texto sobre claro (6,2:1 no branco) */
-  --domingo: #c8381f;        /* vermelho de domingo: feriado e emergência, nada mais */
-  --domingo-claro: #fbe7e2;
+    /* Campos */
+    --noite: #12263f; /* azul-noite: topo, assistente, botão principal, títulos */
+    --noite-2: #1c3756; /* um passo acima do azul-noite (balões, superfícies sobre o azul) */
+    --noite-3: #2a4a70;
+    --menta: #a8e6cf; /* verde-menta: lista de espera, confirmações */
+    --menta-2: #d4f3e6; /* menta clara: realces suaves */
+    --menta-tinta: #1f6b52; /* menta escura para texto sobre claro (6,2:1 no branco) */
+    --domingo: #c8381f; /* vermelho de domingo: feriado e emergência, nada mais */
+    --domingo-claro: #fbe7e2;
 
-  /* Chão e superfícies */
-  --gelo: #f4f7f6;           /* chão do app */
-  --gelo-2: #e7eeeb;         /* um passo abaixo: separação por tom */
-  --papel: #ffffff;          /* folhas e cartões */
-  --linha: #d9e2df;          /* borda de controles e divisórias de lista */
+    /* Chão e superfícies */
+    --gelo: #f4f7f6; /* chão do app */
+    --gelo-2: #e7eeeb; /* um passo abaixo: separação por tom */
+    --papel: #ffffff; /* folhas e cartões */
+    --linha: #d9e2df; /* borda de controles e divisórias de lista */
 
-  /* Tinta */
-  --tinta: #12263f;          /* texto principal = azul-noite */
-  --tinta-2: #4b5b6c;        /* texto secundário (7:1 no branco) */
-  --tinta-3: #5d6b7a;        /* meta, rótulos pequenos (5,4:1 no branco) */
-  --sobre-noite: #ffffff;
-  --sobre-noite-2: #bccbdc;  /* secundário sobre azul-noite (9:1) */
+    /* Tinta */
+    --tinta: #12263f; /* texto principal = azul-noite */
+    --tinta-2: #4b5b6c; /* texto secundário (7:1 no branco) */
+    --tinta-3: #5d6b7a; /* meta, rótulos pequenos (5,4:1 no branco) */
+    --sobre-noite: #ffffff;
+    --sobre-noite-2: #bccbdc; /* secundário sobre azul-noite (9:1) */
 
-  /* Cores-identidade dos familiares (tons claros, ~60° de distância) */
-  --id-juliana: #cfe2f6;
-  --id-davi: #fbdcc6;
-  --id-marina: #d3f0e2;
-  --id-cida: #f6e5a8;
-  --id-kenji: #f3d3de;
+    /* Cores-identidade dos familiares (tons claros, ~60° de distância) */
+    --id-juliana: #cfe2f6;
+    --id-davi: #fbdcc6;
+    --id-marina: #d3f0e2;
+    --id-cida: #f6e5a8;
+    --id-kenji: #f3d3de;
 
-  /* Tipografia */
-  --fonte-texto: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
-  --fonte-numero: "Archivo", "Arial Narrow", system-ui, sans-serif;
+    /* Tipografia */
+    --fonte-texto:
+        'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif;
+    --fonte-numero: 'Archivo', 'Arial Narrow', system-ui, sans-serif;
 
-  /* Raios: macios e decididos uma vez */
-  --raio-folha: 14px;
-  --raio-cartao: 22px;
-  --raio-controle: 999px;
+    /* Raios: macios e decididos uma vez */
+    --raio-folha: 14px;
+    --raio-cartao: 22px;
+    --raio-controle: 999px;
 
-  /* Movimento (Emil Kowalski) */
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  --ease-gaveta: cubic-bezier(0.32, 0.72, 0, 1);
-  --t-toque: 160ms;
-  --t-tela: 260ms;
+    /* Movimento (Emil Kowalski) */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-gaveta: cubic-bezier(0.32, 0.72, 0, 1);
+    --t-toque: 160ms;
+    --t-tela: 260ms;
 
-  color-scheme: light;
+    color-scheme: light;
 }
 
 /* Seleção, cursor e foco também carregam a identidade */
-::selection { background: var(--menta); color: var(--noite); }
+::selection {
+    background: var(--menta);
+    color: var(--noite);
+}
 
 :focus-visible {
-  outline: 3px solid var(--noite);
-  outline-offset: 2px;
+    outline: 3px solid var(--noite);
+    outline-offset: 2px;
 }
 
 .sobre-noite :focus-visible,
 .sobre-noite:focus-visible {
-  outline-color: var(--menta);
+    outline-color: var(--menta);
 }
 
 /* Ícones Lucide em sprite */
 .ic {
-  width: 24px;
-  height: 24px;
-  flex: none;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.85;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.85;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-.ic-sm { width: 20px; height: 20px; }
-.ic-lg { width: 28px; height: 28px; }
+.ic-sm {
+    width: 20px;
+    height: 20px;
+}
+.ic-lg {
+    width: 28px;
+    height: 28px;
+}
 
 .num {
-  font-family: var(--fonte-numero);
-  font-variant-numeric: tabular-nums lining-nums;
+    font-family: var(--fonte-numero);
+    font-variant-numeric: tabular-nums lining-nums;
 }
 
 .visualmente-oculto {
-  position: absolute !important;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 /* Médicos: inicial estável sobre tom claro próprio */
 .avatar-iniciais {
-  display: grid;
-  place-items: center;
-  width: var(--tam);
-  height: var(--tam);
-  flex: none;
-  border-radius: 50%;
-  color: var(--noite);
-  font-weight: 700;
-  font-size: calc(var(--tam) * 0.36);
-  letter-spacing: 0.01em;
+    display: grid;
+    place-items: center;
+    width: var(--tam);
+    height: var(--tam);
+    flex: none;
+    border-radius: 50%;
+    color: var(--noite);
+    font-weight: 700;
+    font-size: calc(var(--tam) * 0.36);
+    letter-spacing: 0.01em;
 }
 
 /* A folha do dia: a assinatura do mundo */
 .folha {
-  --folha-l: 76px;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  width: var(--folha-l);
-  flex: none;
-  background: var(--papel);
-  border-radius: var(--raio-folha);
-  overflow: hidden;
-  text-align: center;
-  color: var(--tinta);
-  box-shadow: inset 0 0 0 1.5px var(--linha);
+    --folha-l: 76px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    width: var(--folha-l);
+    flex: none;
+    background: var(--papel);
+    border-radius: var(--raio-folha);
+    overflow: hidden;
+    text-align: center;
+    color: var(--tinta);
+    box-shadow: inset 0 0 0 1.5px var(--linha);
 }
 
 .folha__mes {
-  background: var(--noite);
-  color: var(--sobre-noite);
-  font-family: var(--fonte-numero);
-  font-stretch: 88%;
-  font-weight: 700;
-  font-size: 0.8125rem;
-  letter-spacing: 0.02em;
-  padding: 5px 4px 4px;
-  position: relative;
+    background: var(--noite);
+    color: var(--sobre-noite);
+    font-family: var(--fonte-numero);
+    font-stretch: 88%;
+    font-weight: 700;
+    font-size: 0.8125rem;
+    letter-spacing: 0.02em;
+    padding: 5px 4px 4px;
+    position: relative;
 }
 
 /* Furos da picotagem, como no bloco de destacar */
 .folha__mes::after {
-  content: "";
-  position: absolute;
-  left: 8px; right: 8px; bottom: -3px;
-  height: 6px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Ccircle cx='5' cy='3' r='1.6' fill='%23d9e2df'/%3E%3C/svg%3E");
-  background-repeat: repeat-x;
-  background-position: center;
+    content: '';
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: -3px;
+    height: 6px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Ccircle cx='5' cy='3' r='1.6' fill='%23d9e2df'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-position: center;
 }
 
 .folha__dia {
-  font-family: var(--fonte-numero);
-  font-stretch: 72%;
-  font-weight: 800;
-  font-size: 3.1rem;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-  padding: 8px 2px 0;
-  font-variant-numeric: lining-nums;
+    font-family: var(--fonte-numero);
+    font-stretch: 72%;
+    font-weight: 800;
+    font-size: 3.1rem;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    padding: 8px 2px 0;
+    font-variant-numeric: lining-nums;
 }
 
 .folha__semana {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--tinta-2);
-  padding: 2px 4px 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--tinta-2);
+    padding: 2px 4px 8px;
 }
 
-.folha--domingo .folha__dia { color: var(--domingo); }
+.folha--domingo .folha__dia {
+    color: var(--domingo);
+}
 
-.folha--menta .folha__mes { background: var(--menta); color: var(--noite); }
+.folha--menta .folha__mes {
+    background: var(--menta);
+    color: var(--noite);
+}
 
-.folha--pequena { --folha-l: 58px; }
-.folha--pequena .folha__dia { font-size: 2.2rem; padding-top: 6px; }
-.folha--pequena .folha__mes { font-size: 0.75rem; }
-.folha--pequena .folha__semana { font-size: 0.8125rem; padding-bottom: 6px; }
+.folha--pequena {
+    --folha-l: 58px;
+    height: 112px;
+}
+.folha--pequena .folha__dia {
+    font-size: 2.6rem;
+}
+.folha--pequena .folha__mes {
+    font-size: 0.75rem;
+}
+.folha--pequena .folha__semana {
+    font-size: 0.8125rem;
+    padding-bottom: 6px;
+}
 
 /* Bloco de folhas empilhadas (só na próxima consulta) */
 .bloco {
-  position: relative;
-  flex: none;
-  padding: 0 0 6px 0;
+    position: relative;
+    flex: none;
+    padding: 0 0 6px 0;
 }
 
 .bloco::before,
 .bloco::after {
-  content: "";
-  position: absolute;
-  left: 4px; right: 4px;
-  border-radius: 0 0 var(--raio-folha) var(--raio-folha);
-  background: var(--papel);
-  box-shadow: inset 0 0 0 1.5px var(--linha);
+    content: '';
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    border-radius: 0 0 var(--raio-folha) var(--raio-folha);
+    background: var(--papel);
+    box-shadow: inset 0 0 0 1.5px var(--linha);
 }
 
-.bloco::before { bottom: 0; height: 20px; left: 8px; right: 8px; }
-.bloco::after { bottom: 3px; height: 20px; }
-.bloco .folha { position: relative; z-index: 1; }
+.bloco::before {
+    bottom: 0;
+    height: 20px;
+    left: 8px;
+    right: 8px;
+}
+.bloco::after {
+    bottom: 3px;
+    height: 20px;
+}
+.bloco .folha {
+    position: relative;
+    z-index: 1;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    scroll-behavior: auto !important;
-  }
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+    }
 }

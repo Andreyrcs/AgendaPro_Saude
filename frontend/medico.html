@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minha Agenda — AgendaPro Saúde</title>
+  <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/clinica/base.css">
+  <link rel="stylesheet" href="assets/css/clinica/layout.css">
+  <link rel="stylesheet" href="assets/css/clinica/lateral.css">
+  <link rel="stylesheet" href="assets/css/clinica/botoes.css">
+  <link rel="stylesheet" href="assets/css/clinica/cabecalho.css">
+  <link rel="stylesheet" href="assets/css/clinica/contadores.css">
+  <link rel="stylesheet" href="assets/css/clinica/agenda.css">
+  <link rel="stylesheet" href="assets/css/clinica/selos.css">
+  <link rel="stylesheet" href="assets/css/clinica/avisos.css">
+</head>
+<body>
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+  <div class="casca">
+    <aside class="lateral" aria-label="Navegação">
+      <a class="lateral__marca" href="inicio.html">
+        <span data-marca="30"></span>
+        <span>AgendaPro <b>Saúde</b></span>
+      </a>
+
+      <nav aria-label="Seções">
+        <ul class="lateral__menu">
+          <li>
+            <a href="medico.html" aria-current="page">
+              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-calendar-days"/></svg>
+              Minha agenda
+            </a>
+          </li>
+          <li>
+            <a href="clinica.html">
+              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-arrow-left"/></svg>
+              Área da clínica
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="lateral__pe">
+        <span class="avatar-iniciais" style="--tam:36px;background:#d4e8f4" aria-hidden="true">PM</span>
+        <span><b>Dr. Paulo Menezes</b><br>Cardiologia</span>
+      </div>
+    </aside>
+
+    <main class="conteudo" id="conteudo">
+      <header class="titulo-linha">
+        <div class="titulo-linha__data" id="folha-hoje"></div>
+        <div class="titulo-linha__texto">
+          <h1>Minha agenda</h1>
+          <p class="titulo-linha__sub" id="subtitulo"></p>
+        </div>
+        <div class="titulo-linha__acoes">
+          <div class="vistas" role="tablist" aria-label="Visão da agenda">
+            <button type="button" role="tab" data-vista="dia" aria-selected="true" aria-controls="vista" id="aba-dia">Dia</button>
+            <button type="button" role="tab" data-vista="semana" aria-selected="false" aria-controls="vista" id="aba-semana">Semana</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="resumo" aria-label="Resumo do dia">
+        <dl class="contadores" aria-label="Hoje">
+          <div class="contador">
+            <dt>Consultas hoje</dt>
+            <dd>
+              <span class="contador__n num" id="n-consultas">0</span>
+              <span class="contador__sub" id="s-consultas"></span>
+            </dd>
+          </div>
+          <div class="contador">
+            <dt>Realizadas</dt>
+            <dd>
+              <span class="contador__n num" id="n-atendidas">0</span>
+            </dd>
+          </div>
+          <div class="contador">
+            <dt>Ainda por vir</dt>
+            <dd>
+              <span class="contador__n num" id="n-restantes">0</span>
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <div style="padding:0 24px 40px">
+        <section class="painel agenda" aria-labelledby="t-agenda">
+          <div class="painel__cabeca agenda__cabeca">
+            <div class="navegar">
+              <button type="button" class="botao-icone" id="ant" aria-label="Anterior">
+                <svg class="ic ic-sm" aria-hidden="true"><use href="#i-chevron-left"/></svg>
+              </button>
+              <button type="button" class="botao botao--secundario botao--pequeno" id="hoje">Hoje</button>
+              <button type="button" class="botao-icone" id="prox" aria-label="Próximo">
+                <svg class="ic ic-sm" aria-hidden="true"><use href="#i-chevron-right"/></svg>
+              </button>
+            </div>
+            <h2 id="t-agenda" aria-live="polite"></h2>
+          </div>
+          <div id="vista" role="tabpanel" aria-labelledby="aba-dia"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+  <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+
+  <script src="assets/js/icones.js"></script>
+  <script src="assets/js/dados.js"></script>
+  <script src="assets/js/comum.js"></script>
+  <script src="assets/js/movimento.js"></script>
+  <script src="assets/js/clinica-dados.js"></script>
+  <script src="assets/js/medico.js"></script>
+</body>
+</html>

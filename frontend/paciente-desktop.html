@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title>AgendaPro Saúde — App do paciente</title>
+        <meta
+            name="description"
+            content="Versão desktop do app do paciente do AgendaPro Saúde."
+        />
+        <meta name="theme-color" content="#12263f" />
+        <link
+            rel="preload"
+            href="assets/fonts/atkinson-next-latin.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin
+        />
+        <link
+            rel="preload"
+            href="assets/fonts/archivo-latin.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin
+        />
+        <link rel="stylesheet" href="assets/css/tokens.css" />
+        <link rel="stylesheet" href="assets/css/app.css" />
+        <link rel="stylesheet" href="assets/css/calendario.css" />
+        <link rel="stylesheet" href="assets/css/clinica/lateral.css" />
+        <link rel="stylesheet" href="assets/css/paciente-desktop.css" />
+    </head>
+    <body class="corpo">
+        <div class="casca">
+            <aside class="lateral" aria-label="Navegação do paciente">
+                <div>
+                    <a class="lateral__marca" href="index.html">
+                        <span data-marca="30"></span>
+                        <span>AgendaPro <b>Saúde</b></span>
+                    </a>
+
+                    <nav aria-label="Seções">
+                        <ul class="lateral__menu" id="lateral-menu">
+                            <li>
+                                <a
+                                    href="#inicio"
+                                    data-secao="inicio"
+                                    data-dica-lateral="Início"
+                                >
+                                    <svg class="ic ic-sm" aria-hidden="true">
+                                        <use href="#i-house" />
+                                    </svg>
+                                    <span class="lateral__rotulo">Início</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="#assistente"
+                                    data-secao="assistente"
+                                    data-dica-lateral="Assistente de saúde"
+                                >
+                                    <svg class="ic ic-sm" aria-hidden="true">
+                                        <use href="#i-message-circle-heart" />
+                                    </svg>
+                                    <span class="lateral__rotulo"
+                                        >Assistente de saúde</span
+                                    >
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="#agenda"
+                                    data-secao="agenda"
+                                    data-dica-lateral="Agenda"
+                                >
+                                    <svg class="ic ic-sm" aria-hidden="true">
+                                        <use href="#i-calendar-days" />
+                                    </svg>
+                                    <span class="lateral__rotulo">Agenda</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="#familia"
+                                    data-secao="familia"
+                                    data-dica-lateral="Família"
+                                >
+                                    <svg class="ic ic-sm" aria-hidden="true">
+                                        <use href="#i-users" />
+                                    </svg>
+                                    <span class="lateral__rotulo">Família</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="#prevencao"
+                                    data-secao="prevencao"
+                                    data-dica-lateral="Prevenção"
+                                >
+                                    <svg class="ic ic-sm" aria-hidden="true">
+                                        <use href="#i-calendar-heart" />
+                                    </svg>
+                                    <span class="lateral__rotulo"
+                                        >Prevenção</span
+                                    >
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="#acompanhamento"
+                                    data-secao="acompanhamento"
+                                    data-dica-lateral="Depois da consulta"
+                                >
+                                    <svg class="ic ic-sm" aria-hidden="true">
+                                        <use href="#i-repeat" />
+                                    </svg>
+                                    <span class="lateral__rotulo"
+                                        >Depois da consulta</span
+                                    >
+                                </a>
+                            </li>
+                            <li>
+                                <a
+                                    href="clinica.html"
+                                    data-secao="acompanhamento"
+                                    data-dica-lateral="Depois da consulta"
+                                >
+                                    <svg class="ic ic-sm" aria-hidden="true">
+                                        <use href="#i-repeat" />
+                                    </svg>
+                                    <span class="lateral__rotulo"
+                                        >Depois da consulta</span
+                                    >
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                <a
+                    href="#perfil"
+                    data-secao="perfil"
+                    data-dica-lateral="Perfil"
+                    class="perfil__lateral"
+                >
+                    <div class="lateral__pe">
+                        <span id="avatar-titular"></span>
+                        <span id="nome-titular"></span>
+                    </div>
+                </a>
+            </aside>
+
+            <main class="conteudo" id="conteudo">
+                <div id="pagina"></div>
+            </main>
+        </div>
+
+        <div class="avisos" id="avisos"></div>
+        <div class="gaveta-camada" id="gaveta" hidden></div>
+        <div
+            class="visualmente-oculto"
+            id="anunciador"
+            aria-live="polite"
+        ></div>
+
+        <script src="assets/js/icones.js"></script>
+        <script src="assets/js/dados.js"></script>
+        <script src="assets/js/comum.js"></script>
+        <script src="assets/js/movimento.js"></script>
+        <script src="assets/js/calendario-paciente.js"></script>
+        <script src="assets/js/paciente-desktop.js"></script>
+    </body>
+</html>

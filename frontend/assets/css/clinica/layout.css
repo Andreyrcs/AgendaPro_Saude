@@ -1,103 +1,103 @@
 .casca {
-  display: grid;
-  grid-template-columns: 15rem minmax(0, 1fr);
-  min-height: 100vh;
+    display: grid;
+    grid-template-columns: 16rem minmax(0, 1fr);
+    min-height: 100vh;
 }
 
 .conteudo {
-  min-width: 0;
-  padding: 26px 32px 48px 8px;
+    min-width: 0;
+    padding: 26px 32px 48px 32px;
 }
 
 .resumo {
-  display: grid;
-  grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
-  gap: 16px;
-  margin-top: 22px;
+    display: grid;
+    grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
+    gap: 16px;
+    margin-top: 22px;
 }
 
 .trabalho {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 16px;
-  margin-top: 16px;
-  align-items: stretch;
-  width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 16px;
+    margin-top: 16px;
+    align-items: stretch;
+    width: 100%;
 }
 
 .coluna {
-  position: relative;
-  min-height: 0;
+    position: relative;
+    min-height: 0;
 }
 .coluna__pilha {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
-.proximos{
-  margin-top: 20px;
-  width: 100%;
+.proximos {
+    margin-top: 20px;
+    width: 100%;
 }
 .coluna__pilha > .proximos {
-  flex: none;
+    flex: none;
 }
 .coluna__pilha > .fila {
-  flex: 1;
-  min-height: 240px;
-  height: auto;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+    flex: 1;
+    min-height: 240px;
+    height: auto;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 .coluna .Container_fila {
-  flex: 1;
-  min-height: 0;
+    flex: 1;
+    min-height: 0;
 }
 .coluna .fila__lista {
-  flex: 1;
-  min-height: 0;
-  height: auto;
-  overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    overflow-y: auto;
 }
 
 @media (max-width: 1240px) {
-  .trabalho {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .coluna__pilha {
-    position: static;
-    display: grid;
+    .trabalho {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .coluna__pilha {
+        position: static;
+        display: grid;
 
-    align-items: start;
-  }
-  .coluna__pilha > .fila {
-    min-height: 0;
-  }
-  .coluna .fila__lista {
-    overflow: visible;
-  }
+        align-items: start;
+    }
+    .coluna__pilha > .fila {
+        min-height: 0;
+    }
+    .coluna .fila__lista {
+        overflow: visible;
+    }
 }
 @media (max-width: 760px) {
-  .coluna__pilha {
-    grid-template-columns: minmax(0, 1fr);
-  }
+    .coluna__pilha {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 @media (max-width: 1080px) {
-  .resumo {
-    grid-template-columns: minmax(0, 1fr);
-  }
+    .resumo {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 @media (max-width: 900px) {
-  .casca {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .conteudo {
-    padding: 8px 16px 40px;
-  }
-  .coluna {
-    grid-template-columns: minmax(0, 1fr);
-  }
+    .casca {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .conteudo {
+        padding: 8px 16px 40px;
+    }
+    .coluna {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }

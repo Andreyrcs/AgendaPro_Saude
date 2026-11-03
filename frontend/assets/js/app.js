@@ -1168,7 +1168,6 @@
       interruptor("fila", "Vagas da lista de espera", "Avisamos assim que abrir uma vaga", true) +
       interruptor("prev", "Calendário de prevenção", "No começo de cada mês", true) +
       "</div></section>" +
-      '<p class="nota-rodape">Protótipo acadêmico do PIM IV (UNIP, Análise e Desenvolvimento de Sistemas). Todos os dados são fictícios.</p>' +
       '<div class="zona-perigo"><button type="button" class="botao botao--texto-perigo" id="sair">' + I("log-out") + "Sair da conta</button></div>";
 
     function montar(el) {
