@@ -1091,6 +1091,15 @@
             '</span>' +
             '<span class="item__sub" style="display:block">juliana.santos@exemplo.com</span></span></div>' +
             '<div class="grupo">' +
+            cabecaSecao('Sua clínica') +
+            '<div class="cartao item" style="padding:16px">' +
+            '<span class="item__corpo"><span class="item__titulo" style="display:block">' +
+            A.esc(D.clinica.nome) +
+            '</span><span class="item__sub" style="display:block">' +
+            A.esc(D.clinica.endereco) +
+            '</span></span>' +
+            '<a class="botao botao--secundario" href="escolher-clinica.html">Trocar de clínica</a></div></div>' +
+            '<div class="grupo">' +
             cabecaSecao('Acessibilidade') +
             '<div class="cartao">' +
             '<p class="item__titulo" id="t-texto">Tamanho do texto</p>' +
@@ -1175,12 +1184,9 @@
                 }
             });
 
-            el.querySelector('#sair').addEventListener('click', () => {
-                aviso({
-                    titulo: 'Saída desativada no protótipo',
-                    texto: 'Na versão final, você voltaria para a tela de login.',
-                    icone: 'info',
-                });
+            el.querySelector('#sair').addEventListener('click', async () => {
+                await window.API.sair();
+                location.href = 'login.html';
             });
         }
 
@@ -2182,6 +2188,7 @@
     if (nomeEl && titular) nomeEl.textContent = titular.curto;
 
     aplicarPrefs();
+    A.seloClinica(document.querySelector('.lateral'), 'paciente', { href: 'escolher-clinica.html' });
     navegar();
 
     /* ─── Botão de recolher a sidebar ─── */

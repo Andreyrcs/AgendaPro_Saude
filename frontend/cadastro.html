@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Cadastro - AgendaPro Saúde</title>
+        <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='26' rx='7' fill='%2312263f'/%3E%3Cpath d='M2 12v-1a7 7 0 0 1 7-7h14a7 7 0 0 1 7 7v1z' fill='%23a8e6cf'/%3E%3Crect x='14.2' y='14.5' width='3.6' height='11.5' rx='1.2' fill='%23fff'/%3E%3Crect x='10.25' y='18.45' width='11.5' height='3.6' rx='1.2' fill='%23fff'/%3E%3C/svg%3E" />
+        <meta name="theme-color" content="#12263f" />
+        <link
+            rel="preload"
+            href="assets/fonts/atkinson-next-latin.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin
+        />
+        <link
+            rel="preload"
+            href="assets/fonts/archivo-latin.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin
+        />
+        <link rel="stylesheet" href="assets/css/tokens.css" />
+        <link rel="stylesheet" href="assets/css/acesso.css" />
+    </head>
+    <body>
+        <div class="acesso">
+            <!-- Topo com logo -->
+            <header class="acesso__topo">
+                <a
+                    href="index.html"
+                    class="acesso__marca"
+                    aria-label="AgendaPro Saúde - página inicial"
+                >
+                    <span data-marca="28"></span>
+                    <span class="acesso__marca-nome">AgendaPro Saúde</span>
+                </a>
+            </header>
+
+            <main class="acesso__corpo">
+                <div class="cartao-acesso">
+                    <div class="container-acesso__conteudo" aria-hidden="true">
+                        <span class="acesso__marca-logo" data-marca="28"></span>
+                        <h1 class="cartao-acesso__titulo">Criar conta</h1>
+                    </div>
+                    <p class="cartao-acesso__sub">
+                        Cadastre-se para agendar consultas pelo app.
+                    </p>
+
+                    <div class="erro-geral" id="erro-geral" role="alert">
+                        <svg
+                            class="ic ic-sm"
+                            aria-hidden="true"
+                            focusable="false"
+                        >
+                            <use href="#i-alert-circle" />
+                        </svg>
+                        <span id="erro-geral-texto"></span>
+                    </div>
+
+                    <form id="form-cadastro" novalidate>
+                        <!-- Nome completo -->
+                        <div class="campo">
+                            <label class="campo__rotulo" for="nome"
+                                >Nome completo</label
+                            >
+                            <input
+                                class="campo__entrada"
+                                id="nome"
+                                name="nome"
+                                type="text"
+                                placeholder="Seu nome completo"
+                                autocomplete="name"
+                                required
+                            />
+                            <span
+                                class="campo__erro"
+                                id="erro-nome"
+                                aria-live="polite"
+                            ></span>
+                        </div>
+
+                        <!-- E-mail -->
+                        <div class="campo">
+                            <label class="campo__rotulo" for="email"
+                                >E-mail</label
+                            >
+                            <input
+                                class="campo__entrada"
+                                id="email"
+                                name="email"
+                                type="email"
+                                placeholder="seu@email.com"
+                                autocomplete="email"
+                                required
+                            />
+                            <span
+                                class="campo__erro"
+                                id="erro-email"
+                                aria-live="polite"
+                            ></span>
+                        </div>
+
+                        <!-- Telefone (opcional) -->
+                        <div class="campo">
+                            <label class="campo__rotulo" for="telefone"
+                                >Telefone
+                                <span
+                                    style="
+                                        font-weight: 400;
+                                        color: var(--tinta-3);
+                                    "
+                                    >(opcional)</span
+                                ></label
+                            >
+                            <input
+                                class="campo__entrada"
+                                id="telefone"
+                                name="telefone"
+                                type="tel"
+                                placeholder="(11) 99999-0000"
+                                autocomplete="tel"
+                            />
+                            
+                        </div>
+                        <!-- Documento: CPF ou RG (escolha um) -->
+                        <div class="campo">
+                            <span class="campo__rotulo" id="rotulo-documento"
+                                >Documento</span
+                            >
+                            <div
+                                class="doc-tipo-grupo"
+                                role="radiogroup"
+                                aria-labelledby="rotulo-documento"
+                            >
+                                <label class="doc-tipo-opcao">
+                                    <input
+                                        type="radio"
+                                        name="doc-tipo"
+                                        value="cpf"
+                                        checked
+                                    />
+                                    <span>CPF</span>
+                                </label>
+                                <label class="doc-tipo-opcao">
+                                    <input
+                                        type="radio"
+                                        name="doc-tipo"
+                                        value="rg"
+                                    />
+                                    <span>RG</span>
+                                </label>
+                            </div>
+                            <input
+                                class="campo__entrada"
+                                id="documento"
+                                name="documento"
+                                type="text"
+                                inputmode="numeric"
+                                placeholder="000.000.000-00"
+                                autocomplete="off"
+                                required
+                            />
+                            <span
+                                class="campo__erro"
+                                id="erro-documento"
+                                aria-live="polite"
+                            ></span>
+                        </div>
+
+                        <!-- Data de nascimento (opcional) -->
+                        <div class="campo">
+                            <label class="campo__rotulo" for="nascimento"
+                                >Data de nascimento
+                                <span
+                                    style="
+                                        font-weight: 400;
+                                        color: var(--tinta-3);
+                                    "
+                                    >(opcional)</span
+                                ></label
+                            >
+                            <input
+                                class="campo__entrada"
+                                id="nascimento"
+                                name="nascimento"
+                                type="date"
+                                autocomplete="bday"
+                            />
+                        </div>
+
+                        <!-- Senha -->
+                        <div class="campo">
+                            <label class="campo__rotulo" for="senha"
+                                >Senha</label
+                            >
+                            <div class="campo__senha-wrap">
+                                <input
+                                    class="campo__entrada"
+                                    id="senha"
+                                    name="senha"
+                                    type="password"
+                                    placeholder="Mínimo 8 caracteres"
+                                    autocomplete="new-password"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    class="campo__senha-ver"
+                                    id="btn-ver-senha"
+                                    aria-label="Mostrar senha"
+                                    title="Mostrar senha"
+                                >
+                                    <svg
+                                        class="ic ic-sm"
+                                        aria-hidden="true"
+                                        focusable="false"
+                                    >
+                                        <use href="#i-eye" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <span
+                                class="campo__erro"
+                                id="erro-senha"
+                                aria-live="polite"
+                            ></span>
+                        </div>
+
+                        <!-- Confirmar senha -->
+                        <div class="campo">
+                            <label class="campo__rotulo" for="confirmar"
+                                >Confirmar senha</label
+                            >
+                            <div class="campo__senha-wrap">
+                                <input
+                                    class="campo__entrada"
+                                    id="confirmar"
+                                    name="confirmar"
+                                    type="password"
+                                    placeholder="Repita a senha"
+                                    autocomplete="new-password"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    class="campo__senha-ver"
+                                    id="btn-ver-confirmar"
+                                    aria-label="Mostrar senha"
+                                    title="Mostrar senha"
+                                >
+                                    <svg
+                                        class="ic ic-sm"
+                                        aria-hidden="true"
+                                        focusable="false"
+                                    >
+                                        <use href="#i-eye" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <span
+                                class="campo__erro"
+                                id="erro-confirmar"
+                                aria-live="polite"
+                            ></span>
+                        </div>
+
+                        <!-- Aceite dos termos -->
+                        <label class="check" id="check-termos">
+                            <input
+                                type="checkbox"
+                                id="termos"
+                                name="termos"
+                                required
+                            />
+                            <span
+                                >Li e aceito os
+                                <a href="#" class="acesso-link" data-fora
+                                    >Termos de Uso</a
+                                >
+                                e a
+                                <a href="#" class="acesso-link" data-fora
+                                    >Política de Privacidade</a
+                                >.</span
+                            >
+                        </label>
+                        <span
+                            class="campo__erro"
+                            id="erro-termos"
+                            aria-live="polite"
+                        ></span>
+
+                        <!-- Botão principal -->
+                        <button
+                            type="submit"
+                            class="btn btn--principal"
+                            id="btn-cadastrar"
+                            style="margin-top: 6px"
+                        >
+                            Criar conta
+                        </button>
+                    </form>
+
+                    <!-- Link para login -->
+                    <p class="cartao-acesso__rodape">
+                        Já tem conta?
+                        <a href="login.html" class="acesso-link">Entrar</a>
+                    </p>
+                </div>
+            </main>
+        </div>
+
+        <!-- Toast -->
+        <div
+            class="toast-acesso"
+            id="toast"
+            role="status"
+            aria-live="polite"
+        ></div>
+
+        <!-- Anunciador para leitores de tela -->
+        <div
+            id="anunciador"
+            aria-live="polite"
+            class="visualmente-oculto"
+        ></div>
+
+        <!-- Ícones (inline subset) -->
+        <svg xmlns="http://www.w3.org/2000/svg" style="display: none">
+            <symbol
+                id="i-eye"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.85"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path
+                    d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
+                />
+                <circle cx="12" cy="12" r="3" />
+            </symbol>
+            <symbol
+                id="i-eye-off"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.85"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path
+                    d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"
+                />
+                <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" />
+                <path
+                    d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"
+                />
+                <path d="m2 2 20 20" />
+            </symbol>
+            <symbol
+                id="i-alert-circle"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.85"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+            </symbol>
+            <symbol
+                id="i-check-circle"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.85"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <circle cx="12" cy="12" r="10" />
+                <path d="m9 12 2 2 4-4" />
+            </symbol>
+        </svg>
+
+        <script src="assets/js/dados.js"></script>
+        <script src="assets/js/api.js"></script>
+        <script src="assets/js/comum.js"></script>
+        <script>
+            (function () {
+                'use strict';
+
+                var A = window.AP;
+
+                /* ─── Logo ─── */
+                document
+                    .querySelectorAll('[data-marca]')
+                    .forEach(function (el) {
+                        el.innerHTML = A.marca(Number(el.dataset.marca));
+                    });
+
+                var formEl = document.getElementById('form-cadastro');
+                var btnCadastrar = document.getElementById('btn-cadastrar');
+                var anunciador = document.getElementById('anunciador');
+
+                var nomeEl = document.getElementById('nome');
+                var emailEl = document.getElementById('email');
+                var documentoEl = document.getElementById('documento');
+                var docTipoRadios = document.querySelectorAll(
+                    'input[name="doc-tipo"]',
+                );
+                var senhaEl = document.getElementById('senha');
+                var confirmarEl = document.getElementById('confirmar');
+                var termosEl = document.getElementById('termos');
+
+                function anunciar(texto) {
+                    anunciador.textContent = '';
+                    setTimeout(function () {
+                        anunciador.textContent = texto;
+                    }, 30);
+                }
+
+                /* ─── Toast ─── */
+                var toastEl = document.getElementById('toast');
+                var toastTimer;
+                function toast(texto) {
+                    clearTimeout(toastTimer);
+                    toastEl.textContent = texto;
+                    toastEl.classList.add('toast-acesso--visivel');
+                    toastTimer = setTimeout(function () {
+                        toastEl.classList.remove('toast-acesso--visivel');
+                    }, 3000);
+                }
+
+                /* ─── Fora do escopo ─── */
+                document.querySelectorAll('[data-fora]').forEach(function (el) {
+                    el.addEventListener('click', function (ev) {
+                        ev.preventDefault();
+                        toast('Fora do escopo deste protótipo');
+                        anunciar('Fora do escopo deste protótipo');
+                    });
+                });
+
+                /* ─── Mostrar/ocultar senha ─── */
+                function setupVerSenha(btnId, inputId) {
+                    var btn = document.getElementById(btnId);
+                    var input = document.getElementById(inputId);
+                    btn.addEventListener('click', function () {
+                        var visivel = input.type === 'text';
+                        input.type = visivel ? 'password' : 'text';
+                        btn.setAttribute(
+                            'aria-label',
+                            visivel ? 'Mostrar senha' : 'Ocultar senha',
+                        );
+                        btn.setAttribute(
+                            'title',
+                            visivel ? 'Mostrar senha' : 'Ocultar senha',
+                        );
+                        btn.querySelector('use').setAttribute(
+                            'href',
+                            visivel ? '#i-eye' : '#i-eye-off',
+                        );
+                    });
+                }
+                setupVerSenha('btn-ver-senha', 'senha');
+                setupVerSenha('btn-ver-confirmar', 'confirmar');
+
+                /* ─── Tipo de documento: CPF ou RG ─── */
+                /* "0" marca onde entra cada dígito; o resto é inserido como está */
+                var MASCARAS_DOCUMENTO = {
+                    cpf: '000.000.000-00',
+                    rg: '00.000.000-0',
+                };
+
+                function tipoDocumentoSelecionado() {
+                    var marcado = document.querySelector(
+                        'input[name="doc-tipo"]:checked',
+                    );
+                    return marcado ? marcado.value : 'cpf';
+                }
+
+                /* Só deixa dígito passar e já formata com pontos e traço
+                   enquanto a pessoa digita — não dá pra "colar" letra ou
+                   símbolo e isso passar para a validação do envio. */
+                function aplicarMascara(valor, padrao) {
+                    var digitos = valor.replace(/\D/g, '');
+                    var resultado = '';
+                    var i = 0;
+                    for (
+                        var p = 0;
+                        p < padrao.length && i < digitos.length;
+                        p++
+                    ) {
+                        if (padrao[p] === '0') {
+                            resultado += digitos[i];
+                            i++;
+                        } else {
+                            resultado += padrao[p];
+                        }
+                    }
+                    return resultado;
+                }
+
+                function mascararDocumento() {
+                    var padrao =
+                        MASCARAS_DOCUMENTO[tipoDocumentoSelecionado()];
+                    documentoEl.value = aplicarMascara(
+                        documentoEl.value,
+                        padrao,
+                    );
+                }
+
+                function atualizarCampoDocumento() {
+                    var tipo = tipoDocumentoSelecionado();
+                    documentoEl.placeholder =
+                        tipo === 'cpf' ? '000.000.000-00' : '00.000.000-0';
+                    documentoEl.setAttribute(
+                        'maxlength',
+                        String(MASCARAS_DOCUMENTO[tipo].length),
+                    );
+                    documentoEl.value = '';
+                    documentoEl.classList.remove('campo__entrada--erro');
+                    document.getElementById('erro-documento').textContent =
+                        '';
+                }
+
+                documentoEl.addEventListener('input', mascararDocumento);
+                docTipoRadios.forEach(function (radio) {
+                    radio.addEventListener('change', atualizarCampoDocumento);
+                });
+                atualizarCampoDocumento();
+
+                /* ─── Validação ─── */
+                function limparErros() {
+                    document
+                        .querySelectorAll('.campo__entrada--erro')
+                        .forEach(function (el) {
+                            el.classList.remove('campo__entrada--erro');
+                        });
+                    document
+                        .querySelectorAll('.campo__erro')
+                        .forEach(function (el) {
+                            el.textContent = '';
+                        });
+                    document
+                        .getElementById('check-termos')
+                        .classList.remove('check--erro');
+                    document
+                        .getElementById('erro-geral')
+                        .classList.remove('erro-geral--visivel');
+                }
+
+                function mostrarErroCampo(inputId, msg) {
+                    var input = document.getElementById(inputId);
+                    var erro = document.getElementById('erro-' + inputId);
+                    if (input) input.classList.add('campo__entrada--erro');
+                    if (erro) erro.textContent = msg;
+                }
+
+                function validarEmail(valor) {
+                    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor);
+                }
+
+                /* ─── Submit ─── */
+                formEl.addEventListener('submit', function (ev) {
+                    ev.preventDefault();
+                    limparErros();
+
+                    var nome = nomeEl.value.trim();
+                    var email = emailEl.value.trim();
+                    var senha = senhaEl.value;
+                    var confirmar = confirmarEl.value;
+                    var termos = termosEl.checked;
+                    var valido = true;
+
+                    if (!nome) {
+                        mostrarErroCampo('nome', 'Informe seu nome completo.');
+                        valido = false;
+                    }
+
+                    if (!email) {
+                        mostrarErroCampo('email', 'Informe seu e-mail.');
+                        valido = false;
+                    } else if (!validarEmail(email)) {
+                        mostrarErroCampo(
+                            'email',
+                            'Formato de e-mail inválido.',
+                        );
+                        valido = false;
+                    }
+
+                    var tipoDocumento = tipoDocumentoSelecionado();
+                    var documento = documentoEl.value.trim();
+                    var documentoDigitos = documento.replace(/\D/g, '');
+
+                    if (!documento) {
+                        mostrarErroCampo(
+                            'documento',
+                            tipoDocumento === 'cpf'
+                                ? 'Informe seu CPF.'
+                                : 'Informe seu RG.',
+                        );
+                        valido = false;
+                    } else if (
+                        tipoDocumento === 'cpf' &&
+                        documentoDigitos.length !== 11
+                    ) {
+                        mostrarErroCampo(
+                            'documento',
+                            'O CPF precisa ter 11 dígitos.',
+                        );
+                        valido = false;
+                    } else if (
+                        tipoDocumento === 'rg' &&
+                        documentoDigitos.length < 4
+                    ) {
+                        mostrarErroCampo(
+                            'documento',
+                            'Informe um RG válido.',
+                        );
+                        valido = false;
+                    }
+
+                    if (!senha) {
+                        mostrarErroCampo('senha', 'Crie uma senha.');
+                        valido = false;
+                    } else if (senha.length < 8) {
+                        mostrarErroCampo(
+                            'senha',
+                            'A senha precisa ter pelo menos 8 caracteres.',
+                        );
+                        valido = false;
+                    }
+
+                    if (!confirmar) {
+                        mostrarErroCampo('confirmar', 'Confirme sua senha.');
+                        valido = false;
+                    } else if (senha && confirmar !== senha) {
+                        mostrarErroCampo(
+                            'confirmar',
+                            'As senhas não coincidem.',
+                        );
+                        valido = false;
+                    }
+
+                    if (!termos) {
+                        document
+                            .getElementById('check-termos')
+                            .classList.add('check--erro');
+                        document.getElementById('erro-termos').textContent =
+                            'Você precisa aceitar os termos para continuar.';
+                        valido = false;
+                    }
+
+                    if (!valido) {
+                        anunciar('Corrija os campos destacados.');
+                        return;
+                    }
+
+                    /* Simula criação da conta */
+                    btnCadastrar.classList.add('btn--carregando');
+                    btnCadastrar.textContent = 'Criando conta...';
+                    anunciar('Criando sua conta...');
+
+                    window.API.cadastrarPaciente({
+                        nome: nomeEl.value.trim(),
+                        email: emailEl.value.trim(),
+                        senha: senhaEl.value,
+                        telefone: document.getElementById('telefone').value.trim(),
+                        documento: documentoEl.value.trim(),
+                        nascimento: (document.getElementById('nascimento') || {}).value || '',
+                    })
+                        .then(function () {
+                            window.location.href = 'escolher-clinica.html';
+                        })
+                        .catch(function (e) {
+                            btnCadastrar.classList.remove('btn--carregando');
+                            btnCadastrar.textContent = 'Criar conta';
+                            mostrarErroCampo('email', e.message);
+                            anunciar(e.message);
+                        });
+                });
+
+                /* ─── Limpar erros ao digitar ─── */
+                [nomeEl, emailEl, documentoEl, senhaEl, confirmarEl].forEach(function (el) {
+                    el.addEventListener('input', function () {
+                        el.classList.remove('campo__entrada--erro');
+                        var erroEl = document.getElementById('erro-' + el.id);
+                        if (erroEl) erroEl.textContent = '';
+                    });
+                });
+
+                termosEl.addEventListener('change', function () {
+                    document
+                        .getElementById('check-termos')
+                        .classList.remove('check--erro');
+                    document.getElementById('erro-termos').textContent = '';
+                });
+            })();
+        </script>
+    </body>
+</html>

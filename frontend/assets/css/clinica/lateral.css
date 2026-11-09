@@ -346,3 +346,71 @@ html[data-movimento='reduzido'] .lateral__rotulo {
         white-space: nowrap;
     }
 }
+
+/* ─── Clínica em que a pessoa atua ─── */
+.lateral__clinica {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 6px 10px 6px 6px;
+    border-radius: 16px;
+    background: var(--menta-2);
+    box-shadow: inset 0 0 0 1px #c3e9d8;
+    color: var(--tinta);
+    text-decoration: none;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: background-color 160ms ease, padding 280ms var(--ease-in-out);
+}
+a.lateral__clinica:hover {
+    background: var(--menta);
+}
+.lateral__clinica-icone {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    background: var(--papel);
+    color: var(--noite);
+}
+.lateral__clinica-texto {
+    display: grid;
+    min-width: 0;
+    line-height: 1.2;
+}
+.lateral__clinica-texto small {
+    color: var(--menta-tinta);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+.lateral__clinica-texto b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.9375rem;
+}
+.lateral__clinica-texto span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--tinta-2);
+    font-size: 0.8125rem;
+}
+@media (min-width: 901px) {
+    html[data-lateral='recolhida'] .lateral__clinica {
+        margin-top: 36px;
+        padding: 4px;
+        background: transparent;
+        box-shadow: none;
+    }
+    html[data-lateral='recolhida'] .lateral__clinica ~ nav {
+        margin-top: 0;
+    }
+}
+@media (max-width: 900px) {
+    .lateral__clinica {
+        display: none;
+    }
+}

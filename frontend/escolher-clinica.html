@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Escolher clínica - AgendaPro Saúde</title>
+        <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='26' rx='7' fill='%2312263f'/%3E%3Cpath d='M2 12v-1a7 7 0 0 1 7-7h14a7 7 0 0 1 7 7v1z' fill='%23a8e6cf'/%3E%3Crect x='14.2' y='14.5' width='3.6' height='11.5' rx='1.2' fill='%23fff'/%3E%3Crect x='10.25' y='18.45' width='11.5' height='3.6' rx='1.2' fill='%23fff'/%3E%3C/svg%3E" />
+        <meta name="theme-color" content="#12263f" />
+        <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="stylesheet" href="assets/css/tokens.css" />
+        <link rel="stylesheet" href="assets/css/acesso.css" />
+    </head>
+    <body>
+        <div class="acesso">
+            <header class="acesso__topo">
+                <a href="index.html" class="acesso__marca" aria-label="AgendaPro Saúde - página inicial">
+                    <span data-marca="28"></span>
+                    <span class="acesso__marca-nome">AgendaPro Saúde</span>
+                </a>
+            </header>
+
+            <main class="acesso__corpo">
+                <div class="cartao-acesso cartao-acesso--largo">
+                    <h1 class="cartao-acesso__titulo cartao-acesso__titulo--esq" id="titulo">Qual é a sua clínica?</h1>
+                    <p class="cartao-acesso__sub cartao-acesso__sub--esq" id="subtitulo">
+                        Procure pelo nome da clínica ou pela cidade. Os horários e as consultas que você
+                        vê no app são os dela.
+                    </p>
+
+                    <section class="minhas" id="minhas" hidden aria-labelledby="t-minhas">
+                        <h2 class="minhas__titulo" id="t-minhas">Suas clínicas</h2>
+                        <ul class="lista-clinicas" id="lista-minhas"></ul>
+                    </section>
+
+                    <div class="campo">
+                        <label class="campo__rotulo" for="busca">Nome da clínica ou cidade</label>
+                        <div class="busca-campo">
+                            <svg class="ic ic-sm" aria-hidden="true"><use href="#i-search" /></svg>
+                            <input class="campo__entrada" id="busca" type="search" placeholder="Ex.: Ipê ou São Paulo" autocomplete="off" aria-controls="resultados" />
+                        </div>
+                    </div>
+
+                    <p class="resultados__conta" id="conta" aria-live="polite"></p>
+                    <ul class="lista-clinicas" id="resultados"></ul>
+
+                    <details class="codigo-abre" id="codigo-abre">
+                        <summary>Tenho um código da clínica</summary>
+                        <form id="form-codigo" class="codigo-form" novalidate>
+                            <div class="campo">
+                                <label class="campo__rotulo" for="codigo">Código</label>
+                                <input class="campo__entrada num" id="codigo" type="text" placeholder="Ex.: IPE-4821" maxlength="8" autocomplete="off" autocapitalize="characters" />
+                                <span class="campo__erro" id="erro-codigo" aria-live="polite"></span>
+                            </div>
+                            <button type="submit" class="btn btn--principal">Entrar com o código</button>
+                        </form>
+                    </details>
+                </div>
+            </main>
+            <footer class="acesso__rodape">Clínicas Jacarandá e Aroeira são fictícias, só para a demonstração.</footer>
+        </div>
+
+        <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+
+        <script src="assets/js/icones.js"></script>
+        <script src="assets/js/dados.js"></script>
+        <script src="assets/js/api.js"></script>
+        <script src="assets/js/comum.js"></script>
+        <script src="assets/js/escolher-clinica.js"></script>
+    </body>
+</html>

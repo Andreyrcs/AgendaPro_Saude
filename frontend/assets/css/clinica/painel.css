@@ -1,26 +1,27 @@
 .painel {
-  min-width: 0;
-  padding: 18px 20px 20px;
-  border-radius: var(--raio-cartao);
-  background: var(--papel);
-  border: 1px solid #e0e8e5;
+    min-width: 0;
+    padding: 18px 20px 20px;
+    border-radius: var(--raio-cartao);
+    background: var(--papel);
+    border: 1px solid #e0e8e5;
+    height: 100%;
 }
 .painel__cabeca {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 .painel h2 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.125rem;
-  font-weight: 700;
-  line-height: 1.25;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.25;
 }
 .painel__meta {
-  font-size: 0.9375rem;
-  color: var(--tinta-2);
+    font-size: 0.9375rem;
+    color: var(--tinta-2);
 }

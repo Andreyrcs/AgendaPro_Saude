@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Cadastrar clínica - AgendaPro Saúde</title>
+        <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='26' rx='7' fill='%2312263f'/%3E%3Cpath d='M2 12v-1a7 7 0 0 1 7-7h14a7 7 0 0 1 7 7v1z' fill='%23a8e6cf'/%3E%3Crect x='14.2' y='14.5' width='3.6' height='11.5' rx='1.2' fill='%23fff'/%3E%3Crect x='10.25' y='18.45' width='11.5' height='3.6' rx='1.2' fill='%23fff'/%3E%3C/svg%3E" />
+        <meta name="theme-color" content="#12263f" />
+        <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+        <link rel="stylesheet" href="assets/css/tokens.css" />
+        <link rel="stylesheet" href="assets/css/acesso.css" />
+    </head>
+    <body>
+        <div class="acesso">
+            <header class="acesso__topo">
+                <a href="index.html" class="acesso__marca" aria-label="AgendaPro Saúde - página inicial">
+                    <span data-marca="28"></span>
+                    <span class="acesso__marca-nome">AgendaPro Saúde</span>
+                </a>
+            </header>
+
+            <main class="acesso__corpo">
+                <div class="cartao-acesso cartao-acesso--largo" id="cartao">
+                    <h1 class="cartao-acesso__titulo cartao-acesso__titulo--esq">Cadastrar sua clínica</h1>
+                    <p class="cartao-acesso__sub cartao-acesso__sub--esq">
+                        Você cria a conta da clínica e o seu acesso de responsável. Depois, cadastra a
+                        recepção, os médicos e os horários.
+                    </p>
+
+                    <div class="erro-geral" id="erro-geral" role="alert">
+                        <svg class="ic ic-sm" aria-hidden="true"><use href="#i-info" /></svg>
+                        <span id="erro-geral-texto"></span>
+                    </div>
+
+                    <form id="form-clinica" novalidate>
+                        <fieldset class="grupo-form">
+                            <legend class="grupo-form__titulo"><span class="grupo-form__num">1</span>Dados da clínica</legend>
+
+                            <div class="campo">
+                                <label class="campo__rotulo" for="nome-clinica">Nome da clínica</label>
+                                <input class="campo__entrada" id="nome-clinica" name="nome" type="text" placeholder="Ex.: Clínica Bem Viver" autocomplete="organization" />
+                                <span class="campo__erro" id="erro-nome-clinica" aria-live="polite"></span>
+                            </div>
+
+                            <div class="campos-linha">
+                                <div class="campo">
+                                    <label class="campo__rotulo" for="cnpj">CNPJ</label>
+                                    <input class="campo__entrada" id="cnpj" name="cnpj" type="text" inputmode="numeric" placeholder="00.000.000/0000-00" maxlength="18" />
+                                    <span class="campo__erro" id="erro-cnpj" aria-live="polite"></span>
+                                </div>
+                                <div class="campo">
+                                    <label class="campo__rotulo" for="telefone">Telefone da recepção</label>
+                                    <input class="campo__entrada" id="telefone" name="telefone" type="tel" inputmode="tel" placeholder="(11) 2345-0000" autocomplete="tel" />
+                                    <span class="campo__erro" id="erro-telefone" aria-live="polite"></span>
+                                </div>
+                            </div>
+
+                            <div class="campo">
+                                <label class="campo__rotulo" for="endereco">Endereço</label>
+                                <input class="campo__entrada" id="endereco" name="endereco" type="text" placeholder="Rua, número e bairro" autocomplete="street-address" />
+                                <span class="campo__erro" id="erro-endereco" aria-live="polite"></span>
+                            </div>
+
+                            <div class="campos-linha campos-linha--cidade">
+                                <div class="campo">
+                                    <label class="campo__rotulo" for="cidade">Cidade</label>
+                                    <input class="campo__entrada" id="cidade" name="cidade" type="text" autocomplete="address-level2" />
+                                    <span class="campo__erro" id="erro-cidade" aria-live="polite"></span>
+                                </div>
+                                <div class="campo">
+                                    <label class="campo__rotulo" for="uf">UF</label>
+                                    <input class="campo__entrada" id="uf" name="uf" type="text" maxlength="2" placeholder="SP" autocomplete="address-level1" />
+                                    <span class="campo__erro" id="erro-uf" aria-live="polite"></span>
+                                </div>
+                            </div>
+
+                            <label class="check">
+                                <input type="checkbox" id="publica" name="publica" checked />
+                                <span><b>Pacientes podem encontrar a clínica pela busca.</b> Se desmarcar, eles entram só com o código que a recepção passa.</span>
+                            </label>
+                        </fieldset>
+
+                        <fieldset class="grupo-form">
+                            <legend class="grupo-form__titulo"><span class="grupo-form__num">2</span>Seu acesso de responsável</legend>
+
+                            <div class="campo">
+                                <label class="campo__rotulo" for="nome-dono">Seu nome completo</label>
+                                <input class="campo__entrada" id="nome-dono" name="nomeDono" type="text" autocomplete="name" />
+                                <span class="campo__erro" id="erro-nome-dono" aria-live="polite"></span>
+                            </div>
+
+                            <div class="campo">
+                                <label class="campo__rotulo" for="email">E-mail de acesso</label>
+                                <input class="campo__entrada" id="email" name="email" type="email" placeholder="voce@suaclinica.com.br" autocomplete="email" />
+                                <span class="campo__erro" id="erro-email" aria-live="polite"></span>
+                            </div>
+
+                            <div class="campos-linha">
+                                <div class="campo">
+                                    <label class="campo__rotulo" for="senha">Senha</label>
+                                    <input class="campo__entrada" id="senha" name="senha" type="password" autocomplete="new-password" aria-describedby="dica-senha" />
+                                    <span class="campo__erro" id="erro-senha" aria-live="polite"></span>
+                                </div>
+                                <div class="campo">
+                                    <label class="campo__rotulo" for="confirmar">Repita a senha</label>
+                                    <input class="campo__entrada" id="confirmar" name="confirmar" type="password" autocomplete="new-password" />
+                                    <span class="campo__erro" id="erro-confirmar" aria-live="polite"></span>
+                                </div>
+                            </div>
+                            <p class="campo__dica" id="dica-senha">Pelo menos 8 caracteres, com letras e números.</p>
+                            <label class="check"><input type="checkbox" id="ver-senha" /> <span>Mostrar as senhas</span></label>
+                        </fieldset>
+
+                        <button type="submit" class="btn btn--principal" id="btn-cadastrar">Cadastrar clínica</button>
+                    </form>
+
+                    <p class="cartao-acesso__rodape">
+                        Já tem conta? <a href="login.html" class="acesso-link">Entrar</a>
+                    </p>
+                </div>
+
+                <div class="cartao-acesso cartao-acesso--largo" id="pronto" hidden>
+                    <span class="selo-ok"><svg class="ic" aria-hidden="true"><use href="#i-check" /></svg></span>
+                    <h1 class="cartao-acesso__titulo cartao-acesso__titulo--esq" tabindex="-1" id="pronto-titulo">Clínica cadastrada</h1>
+                    <p class="cartao-acesso__sub cartao-acesso__sub--esq" id="pronto-texto"></p>
+                    <div class="codigo-clinica">
+                        <span class="codigo-clinica__rotulo">Código da clínica para os pacientes</span>
+                        <b class="codigo-clinica__valor num" id="pronto-codigo"></b>
+                        <span class="codigo-clinica__dica">Ele também fica na página Equipe, na área da recepção.</span>
+                    </div>
+                    <a class="btn btn--principal" href="clinica.html">Abrir a área da clínica</a>
+                </div>
+            </main>
+            <footer class="acesso__rodape">Protótipo acadêmico. Os dados ficam só neste navegador até a API ficar pronta.</footer>
+        </div>
+
+        <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+
+        <script src="assets/js/icones.js"></script>
+        <script src="assets/js/dados.js"></script>
+        <script src="assets/js/api.js"></script>
+        <script src="assets/js/comum.js"></script>
+        <script src="assets/js/cadastro-clinica.js"></script>
+    </body>
+</html>

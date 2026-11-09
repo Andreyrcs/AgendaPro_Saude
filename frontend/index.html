@@ -3,18 +3,24 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>AgendaPro Saúde — App do paciente</title>
+        <title>AgendaPro Saúde: do sintoma à consulta</title>
         <meta
             name="description"
-            content="Protótipo navegável do app do paciente do AgendaPro Saúde, com dados fictícios."
+            content="Conte o que está sentindo, descubra a especialidade certa e marque a consulta para você ou para alguém da família, sem precisar saber o nome do médico."
         />
-        <meta name="theme-color" content="#12263f" />
+        <meta name="theme-color" content="#f5f4ec" />
+        <meta
+            property="og:title"
+            content="AgendaPro Saúde: do sintoma à consulta"
+        />
+        <meta
+            property="og:description"
+            content="Conte o que está sentindo e marque a consulta certa, para você e para a família."
+        />
+        <meta property="og:type" content="website" />
         <link
-            rel="preload"
-            href="assets/fonts/atkinson-next-latin.woff2"
-            as="font"
-            type="font/woff2"
-            crossorigin
+            rel="icon"
+            href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='26' rx='7' fill='%2312263f'/%3E%3Cpath d='M2 12v-1a7 7 0 0 1 7-7h14a7 7 0 0 1 7 7v1z' fill='%23a8e6cf'/%3E%3Crect x='14.2' y='14.5' width='3.6' height='11.5' rx='1.2' fill='%23fff'/%3E%3Crect x='10.25' y='18.45' width='11.5' height='3.6' rx='1.2' fill='%23fff'/%3E%3C/svg%3E"
         />
         <link
             rel="preload"
@@ -23,189 +29,927 @@
             type="font/woff2"
             crossorigin
         />
+        <link
+            rel="preload"
+            href="assets/fonts/atkinson-next-latin.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin
+        />
         <link rel="stylesheet" href="assets/css/tokens.css" />
-        <link rel="stylesheet" href="assets/css/app.css" />
-        <link rel="stylesheet" href="assets/css/calendario.css" />
+        <link rel="stylesheet" href="assets/css/landing.css" />
+        <script>
+            document.documentElement.classList.add('js');
+        </script>
     </head>
-    <body class="pagina-app">
-        <div class="palco">
-            <aside class="palco__lado" aria-label="Sobre este protótipo">
-                <a class="palco__marca" href="inicio.html">
-                    <span data-marca="30"></span>
-                    <span>AgendaPro <b>Saúde</b></span>
-                </a>
-                <h1 class="palco__titulo">App do paciente</h1>
-                <p class="palco__texto">
-                    Protótipo navegável. Toque nos cartões e no menu do celular.
-                    Todos os nomes, médicos e horários são fictícios.
-                </p>
+    <body>
+        <header class="topo" id="topo">
+            <a
+                class="topo__marca"
+                href="#inicio"
+                aria-label="AgendaPro Saúde, início"
+            >
+                <span data-marca="34"></span>
+                <span class="topo__nome">AgendaPro <b>Saúde</b></span>
+            </a>
+            <div class="ilha">
+                <nav class="ilha__nucleo" aria-label="Seções da página">
+                    <a href="#inicio" data-secao="inicio">Início</a>
+                    <a href="#como-funciona" data-secao="como-funciona"
+                        >Como funciona</a
+                    >
+                    <a href="#familia" data-secao="familia">Família</a>
+                    <a href="#avisos" data-secao="avisos">Avisos</a>
+                    <a href="#clinicas" data-secao="clinicas">Para clínicas</a>
+                    <a class="ilha__entrar pressionavel" href="login.html"
+                        >Entrar</a
+                    >
+                </nav>
+            </div>
+        </header>
 
-                <h2 class="palco__subtitulo">Ir direto para</h2>
-                <ul class="palco__atalhos">
-                    <li><a href="#inicio">Tela inicial</a></li>
-                    <li><a href="#assistente">Assistente de saúde</a></li>
-                    <li><a href="#espera">Lista de espera</a></li>
-                    <li><a href="#familia">Perfil familiar</a></li>
-                    <li><a href="#prevencao">Calendário de prevenção</a></li>
-                    <li><a href="#acompanhamento">Depois da consulta</a></li>
-                    <li><a href="#agenda">Agenda</a></li>
-                    <li><a href="#perfil">Perfil e acessibilidade</a></li>
-                </ul>
+        <main id="conteudo">
+            <!-- Abertura -->
+            <section
+                class="abertura"
+                id="inicio"
+                aria-labelledby="titulo-principal"
+            >
+                <canvas class="ondas" id="ondas" aria-hidden="true"></canvas>
+                <div class="abertura__grade">
+                    <div class="abertura__texto">
+                        <p
+                            class="assinatura surge"
+                            aria-label="AgendaPro Saúde"
+                        >
+                            <span
+                                class="assinatura__logo"
+                                data-marca="120"
+                            ></span>
+                            <span class="assinatura__nome" aria-hidden="true">
+                                <span>AgendaPro</span>
+                                <span class="verde">Saúde</span>
+                            </span>
+                        </p>
 
-                <h2 class="palco__subtitulo">Experimente</h2>
-                <ul class="palco__dicas">
-                    <li>
-                        No assistente, toque em <b>“Dor no peito”</b> para ver o
-                        alerta de emergência.
-                    </li>
-                    <li>
-                        Na lista de espera, use <b>“Simular cancelamento”</b> e
-                        veja sua posição mudar.
-                    </li>
-                    <li>Em Perfil, aumente o <b>tamanho do texto</b>.</li>
-                </ul>
-
-                <p class="palco__links">
-                    <a href="inicio.html">Voltar ao índice</a>
-                    <a href="landing.html">Página pública</a>
-                    <a href="clinica.html">Área da clínica</a>
-                    <a href="medico.html">Área do medico</a>
-                    <a href="paciente-desktop.html">Área do paciente</a>
-                </p>
-            </aside>
-
-            <div class="aparelho">
-                <div class="aparelho__tela">
-                    <div class="barra-status" aria-hidden="true">
-                        <span class="num barra-status__hora">9:41</span>
-                        <span class="barra-status__ilha"></span>
-                        <span class="barra-status__icones">
-                            <svg width="18" height="12" viewBox="0 0 18 12">
-                                <rect
-                                    x="0"
-                                    y="8"
-                                    width="3"
-                                    height="4"
-                                    rx="1"
-                                    fill="currentColor"
-                                />
-                                <rect
-                                    x="5"
-                                    y="5.5"
-                                    width="3"
-                                    height="6.5"
-                                    rx="1"
-                                    fill="currentColor"
-                                />
-                                <rect
-                                    x="10"
-                                    y="3"
-                                    width="3"
-                                    height="9"
-                                    rx="1"
-                                    fill="currentColor"
-                                />
-                                <rect
-                                    x="15"
-                                    y="0"
-                                    width="3"
-                                    height="12"
-                                    rx="1"
-                                    fill="currentColor"
-                                />
-                            </svg>
-                            <svg width="16" height="12" viewBox="0 0 16 12">
-                                <path
-                                    d="M8 11.5 5.6 8.9a3.4 3.4 0 0 1 4.8 0zM3.3 6.6a6.7 6.7 0 0 1 9.4 0l-1.3 1.3a4.9 4.9 0 0 0-6.8 0zM1 4.3a10 10 0 0 1 14 0l-1.3 1.3a8.2 8.2 0 0 0-11.4 0z"
-                                    fill="currentColor"
-                                />
-                            </svg>
-                            <svg width="26" height="12" viewBox="0 0 26 12">
-                                <rect
-                                    x="0.6"
-                                    y="0.6"
-                                    width="22"
-                                    height="10.8"
-                                    rx="3.2"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-opacity=".45"
-                                    stroke-width="1.2"
-                                />
-                                <rect
-                                    x="2.4"
-                                    y="2.4"
-                                    width="15.5"
-                                    height="7.2"
-                                    rx="1.8"
-                                    fill="currentColor"
-                                />
-                                <rect
-                                    x="23.8"
-                                    y="4"
-                                    width="1.8"
-                                    height="4"
-                                    rx="0.9"
-                                    fill="currentColor"
-                                    fill-opacity=".45"
-                                />
-                            </svg>
-                        </span>
+                        <div>
+                            <h1 class="titulo-grande" id="titulo-principal">
+                                <span class="linha surge"
+                                    ><span>Do sintoma</span></span
+                                >
+                                <span class="linha surge"
+                                    ><span class="verde"
+                                        >à consulta.</span
+                                    ></span
+                                >
+                            </h1>
+                            <p class="abertura__frase surge">
+                                Quem sente algo não precisa saber qual médico
+                                procurar. Conte o que está acontecendo e o
+                                AgendaPro Saúde mostra a especialidade certa e
+                                os horários livres.
+                            </p>
+                        </div>
+                        <a
+                            class="botao-ilha pressionavel surge"
+                            href="#como-funciona"
+                        >
+                            Ver como funciona
+                            <span class="botao-ilha__seta">
+                                <svg class="ic ic-sm" aria-hidden="true">
+                                    <use href="#i-arrow-right" />
+                                </svg>
+                            </span>
+                        </a>
                     </div>
 
-                    <main class="viewport" id="viewport"></main>
-
-                    <nav class="nav-inferior" aria-label="Menu principal">
-                        <a href="#inicio" data-aba="inicio"
-                            ><span class="nav-inferior__icone"
-                                ><svg class="ic" aria-hidden="true">
-                                    <use href="#i-house" /></svg></span
-                            >Início</a
-                        >
-                        <a href="#agenda" data-aba="agenda"
-                            ><span class="nav-inferior__icone"
-                                ><svg class="ic" aria-hidden="true">
-                                    <use href="#i-calendar-days" /></svg></span
-                            >Agenda</a
-                        >
-                        <a href="#familia" data-aba="familia"
-                            ><span class="nav-inferior__icone"
-                                ><svg class="ic" aria-hidden="true">
-                                    <use href="#i-users" /></svg></span
-                            >Família</a
-                        >
-                        <a href="#perfil" data-aba="perfil"
-                            ><span class="nav-inferior__icone"
-                                ><svg class="ic" aria-hidden="true">
-                                    <use href="#i-user-round" /></svg></span
-                            >Perfil</a
-                        >
-                    </nav>
-
-                    <div class="avisos" id="avisos"></div>
-                    <div class="gaveta-camada" id="gaveta" hidden></div>
+                    <div class="abertura__aparelho" aria-hidden="true">
+                        <div class="flutua">
+                            <div class="cel cel--inclinado">
+                                <div class="cel__vidro">
+                                    <span class="cel__ilha"></span>
+                                    <div class="app">
+                                        <div class="app__cab">
+                                            <b>Agenda</b>
+                                            <span class="app__mais"
+                                                ><svg
+                                                    class="ic"
+                                                    aria-hidden="true"
+                                                >
+                                                    <use href="#i-plus" /></svg
+                                            ></span>
+                                        </div>
+                                        <div class="seg">
+                                            <span class="seg__ativo"
+                                                ><svg
+                                                    class="ic"
+                                                    aria-hidden="true"
+                                                >
+                                                    <use
+                                                        href="#i-calendar-days"
+                                                    /></svg
+                                                >Calendário</span
+                                            >
+                                            <span
+                                                ><svg
+                                                    class="ic"
+                                                    aria-hidden="true"
+                                                >
+                                                    <use href="#i-list" /></svg
+                                                >Lista</span
+                                            >
+                                        </div>
+                                        <div class="pessoas">
+                                            <span class="pessoa pessoa--ativa"
+                                                ><span class="pessoa__todos"
+                                                    ><svg
+                                                        class="ic"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <use
+                                                            href="#i-users"
+                                                        /></svg></span
+                                                >Todos</span
+                                            >
+                                            <span class="pessoa"
+                                                ><span
+                                                    data-avatar="juliana"
+                                                ></span
+                                                >Você</span
+                                            >
+                                            <span class="pessoa"
+                                                ><span data-avatar="davi"></span
+                                                >Davi</span
+                                            >
+                                            <span class="pessoa"
+                                                ><span
+                                                    data-avatar="marina"
+                                                ></span
+                                                >Marina</span
+                                            >
+                                            <span class="pessoa"
+                                                ><span data-avatar="cida"></span
+                                                >Dona Cida</span
+                                            >
+                                            <span class="pessoa"
+                                                ><span
+                                                    data-avatar="kenji"
+                                                ></span
+                                                >Seu Kenji</span
+                                            >
+                                        </div>
+                                        <div class="mes-cab">
+                                            <span class="mes-cab__seta"
+                                                ><svg
+                                                    class="ic"
+                                                    aria-hidden="true"
+                                                >
+                                                    <use
+                                                        href="#i-chevron-left"
+                                                    /></svg
+                                            ></span>
+                                            <b
+                                                >Outubro
+                                                <small class="num"
+                                                    >2026</small
+                                                ></b
+                                            >
+                                            <span class="mes-cab__seta"
+                                                ><svg
+                                                    class="ic"
+                                                    aria-hidden="true"
+                                                >
+                                                    <use
+                                                        href="#i-chevron-right"
+                                                    /></svg
+                                            ></span>
+                                        </div>
+                                        <div class="semana">
+                                            <span class="vermelho">dom</span
+                                            ><span>seg</span><span>ter</span
+                                            ><span>qua</span><span>qui</span
+                                            ><span>sex</span><span>sáb</span>
+                                        </div>
+                                        <div
+                                            class="dias num"
+                                            id="dias-mes"
+                                        ></div>
+                                        <div class="app__nav">
+                                            <span
+                                                ><svg
+                                                    class="ic"
+                                                    aria-hidden="true"
+                                                >
+                                                    <use href="#i-house" /></svg
+                                                >Início</span
+                                            >
+                                            <span class="app__nav-ativo"
+                                                ><i
+                                                    ><svg
+                                                        class="ic"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <use
+                                                            href="#i-calendar-days"
+                                                        /></svg></i
+                                                >Agenda</span
+                                            >
+                                            <span
+                                                ><svg
+                                                    class="ic"
+                                                    aria-hidden="true"
+                                                >
+                                                    <use href="#i-users" /></svg
+                                                >Família</span
+                                            >
+                                            <span
+                                                ><svg
+                                                    class="ic"
+                                                    aria-hidden="true"
+                                                >
+                                                    <use
+                                                        href="#i-user-round"
+                                                    /></svg
+                                                >Perfil</span
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="cel__sombra"></span>
+                    </div>
                 </div>
-            </div>
+            </section>
+
+            <!-- Como funciona -->
+            <section
+                class="secao como"
+                id="como-funciona"
+                aria-labelledby="titulo-como"
+            >
+                <div class="secao__cabeca revela">
+                    <h2 class="titulo-secao" id="titulo-como">
+                        Três passos, <span class="verde">sem adivinhar.</span>
+                    </h2>
+                    <p class="secao__texto">
+                        Você não precisa saber o nome da especialidade. Basta
+                        dizer o que sente, do seu jeito, como diria para alguém
+                        de casa.
+                    </p>
+                </div>
+
+                <div class="passos">
+                    <ol class="passos__lista">
+                        <li class="passo" data-passo="0">
+                            <span class="passo__num num" aria-hidden="true"
+                                >1</span
+                            >
+                            <div class="passo__corpo">
+                                <h3 class="passo__titulo">
+                                    Conte o que está sentindo
+                                </h3>
+                                <p>
+                                    Escreva como quem fala: “minha mãe está com
+                                    a pressão alta”, “o Davi está com dor de
+                                    ouvido”. Vale para você ou para qualquer
+                                    pessoa da família.
+                                </p>
+                            </div>
+                            <div class="passo__tela" aria-hidden="true">
+                                <div class="cel cel--pequeno">
+                                    <div class="cel__vidro">
+                                        <span class="cel__ilha"></span>
+                                        <div class="app">
+                                            <div class="app__cab app__cab--sub">
+                                                <b>Assistente de saúde</b
+                                                ><span
+                                                    >Orienta, não faz
+                                                    diagnóstico</span
+                                                >
+                                            </div>
+                                            <div class="app__corpo">
+                                                <p class="aviso-app">
+                                                    <svg
+                                                        class="ic"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <use
+                                                            href="#i-info"
+                                                        /></svg
+                                                    >Eu ajudo a encontrar a
+                                                    especialidade certa. Em
+                                                    emergência, ligue 192.
+                                                </p>
+                                                <p class="balao">
+                                                    Olá, Juliana. O que você ou
+                                                    alguém da família está
+                                                    sentindo?
+                                                </p>
+                                                <p class="balao balao--eu">
+                                                    Minha mãe está com a pressão
+                                                    alta
+                                                </p>
+                                                <p class="digitando">
+                                                    <i></i><i></i><i></i>
+                                                </p>
+                                            </div>
+                                            <div class="app__campo">
+                                                <span
+                                                    >Escreva o que está
+                                                    sentindo</span
+                                                ><i
+                                                    ><svg
+                                                        class="ic"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <use
+                                                            href="#i-send"
+                                                        /></svg
+                                                ></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="passo" data-passo="1">
+                            <span class="passo__num num" aria-hidden="true"
+                                >2</span
+                            >
+                            <div class="passo__corpo">
+                                <h3 class="passo__titulo">
+                                    Receba a especialidade certa
+                                </h3>
+                                <p>
+                                    O assistente aponta por onde começar e já
+                                    mostra o próximo horário de cada médico. Ele
+                                    orienta, nunca dá diagnóstico: quem decide é
+                                    o médico.
+                                </p>
+                            </div>
+                            <div class="passo__tela" aria-hidden="true">
+                                <div class="cel cel--pequeno">
+                                    <div class="cel__vidro">
+                                        <span class="cel__ilha"></span>
+                                        <div class="app">
+                                            <div class="app__cab app__cab--sub">
+                                                <b>Assistente de saúde</b
+                                                ><span
+                                                    >Orienta, não faz
+                                                    diagnóstico</span
+                                                >
+                                            </div>
+                                            <div class="app__corpo">
+                                                <p class="balao balao--eu">
+                                                    Minha mãe está com a pressão
+                                                    alta
+                                                </p>
+                                                <p class="balao">
+                                                    Para a Dona Cida, estas
+                                                    especialidades podem ajudar:
+                                                </p>
+                                                <div
+                                                    class="sugestao sugestao--destaque"
+                                                >
+                                                    <b>Cardiologia</b
+                                                    ><span
+                                                        >Coração e pressão
+                                                        arterial</span
+                                                    ><small
+                                                        >Próximo horário: 5 de
+                                                        novembro, 10:30</small
+                                                    >
+                                                </div>
+                                                <div class="sugestao">
+                                                    <b>Clínica geral</b
+                                                    ><span
+                                                        >Primeira consulta para
+                                                        quase tudo</span
+                                                    ><small
+                                                        >Próximo horário:
+                                                        amanhã, 08:00</small
+                                                    >
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="passo" data-passo="2">
+                            <span class="passo__num num" aria-hidden="true"
+                                >3</span
+                            >
+                            <div class="passo__corpo">
+                                <h3 class="passo__titulo">
+                                    Escolha o horário e pronto
+                                </h3>
+                                <p>
+                                    Toque no horário que serve. A consulta entra
+                                    na agenda da família e você recebe um
+                                    lembrete antes do dia.
+                                </p>
+                            </div>
+                            <div class="passo__tela" aria-hidden="true">
+                                <div class="cel cel--pequeno">
+                                    <div class="cel__vidro">
+                                        <span class="cel__ilha"></span>
+                                        <div class="app">
+                                            <div class="app__cab app__cab--sub">
+                                                <b>Marcar consulta</b
+                                                ><span
+                                                    >Cardiologia · para a Dona
+                                                    Cida</span
+                                                >
+                                            </div>
+                                            <div class="app__corpo">
+                                                <div class="medico">
+                                                    <span class="medico__ini"
+                                                        >PM</span
+                                                    >
+                                                    <p>
+                                                        <b>Dr. Paulo Menezes</b
+                                                        ><br />Cardiologia ·
+                                                        Sala 5
+                                                    </p>
+                                                </div>
+                                                <p class="rotulo-app">
+                                                    Quinta, 5 de novembro
+                                                </p>
+                                                <div class="chips">
+                                                    <span
+                                                        class="chip chip--sim num"
+                                                        >10:30</span
+                                                    ><span class="chip num"
+                                                        >11:00</span
+                                                    >
+                                                </div>
+                                                <p class="rotulo-app">
+                                                    Terça, 10 de novembro
+                                                </p>
+                                                <div class="chips">
+                                                    <span class="chip num"
+                                                        >08:00</span
+                                                    >
+                                                </div>
+                                                <div class="confirmada">
+                                                    <span
+                                                        data-folha="2026-11-05"
+                                                        data-menta
+                                                    ></span>
+                                                    <p>
+                                                        <b>Consulta marcada</b
+                                                        ><br />Dona Cida,
+                                                        quinta, 5 de novembro,
+                                                        às 10:30
+                                                    </p>
+                                                </div>
+                                                <p class="lembrete-app">
+                                                    <svg
+                                                        class="ic"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <use
+                                                            href="#i-bell"
+                                                        /></svg
+                                                    >Vamos lembrar você na
+                                                    quarta, um dia antes.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ol>
+                    <div class="passos__palco" aria-hidden="true">
+                        <div class="cel cel--palco">
+                            <div class="cel__vidro" id="palco-vidro">
+                                <span class="cel__ilha"></span>
+                            </div>
+                        </div>
+                        <span class="cel__sombra"></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Família -->
+            <section
+                class="secao familia"
+                id="familia"
+                aria-labelledby="titulo-familia"
+            >
+                <div class="familia__grade">
+                    <div class="secao__cabeca revela">
+                        <h2 class="titulo-secao" id="titulo-familia">
+                            Uma conta,
+                            <span class="verde">a família inteira.</span>
+                        </h2>
+                        <p class="secao__texto">
+                            Filhos, pais e avós no mesmo lugar. Marcar para a
+                            sua mãe é tão fácil quanto marcar para você, e cada
+                            pessoa tem a sua cor para não confundir na agenda.
+                        </p>
+                    </div>
+                    <ul class="pessoas-lista revela">
+                        <li class="gente">
+                            <span
+                                class="gente__foto"
+                                data-avatar="juliana"
+                                data-tam="64"
+                            ></span>
+                            <p class="gente__nome">
+                                <b>Juliana</b><span>Você, 36 anos</span>
+                            </p>
+                            <p class="gente__proxima">
+                                Exames de sangue pedidos
+                            </p>
+                        </li>
+                        <li class="gente">
+                            <span
+                                class="gente__foto"
+                                data-avatar="davi"
+                                data-tam="64"
+                            ></span>
+                            <p class="gente__nome">
+                                <b>Davi</b><span>Filho, 8 anos</span>
+                            </p>
+                            <p class="gente__proxima">
+                                Pediatria, sex 23 out, 14:30
+                            </p>
+                        </li>
+                        <li class="gente">
+                            <span
+                                class="gente__foto"
+                                data-avatar="marina"
+                                data-tam="64"
+                            ></span>
+                            <p class="gente__nome">
+                                <b>Marina</b><span>Filha, 14 anos</span>
+                            </p>
+                            <p class="gente__proxima">
+                                Otorrino, sex 23 out, 17:00
+                            </p>
+                        </li>
+                        <li class="gente">
+                            <span
+                                class="gente__foto"
+                                data-avatar="cida"
+                                data-tam="64"
+                            ></span>
+                            <p class="gente__nome">
+                                <b>Dona Cida</b><span>Mãe, 71 anos</span>
+                            </p>
+                            <p class="gente__proxima">
+                                Retorno no cardiologista
+                            </p>
+                        </li>
+                        <li class="gente">
+                            <span
+                                class="gente__foto"
+                                data-avatar="kenji"
+                                data-tam="64"
+                            ></span>
+                            <p class="gente__nome">
+                                <b>Seu Kenji</b><span>Sogro, 74 anos</span>
+                            </p>
+                            <p class="gente__proxima">
+                                Eletrocardiograma, qua 28 out
+                            </p>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Avisos -->
+            <section
+                class="secao avisos"
+                id="avisos"
+                aria-labelledby="titulo-avisos"
+            >
+                <div class="secao__cabeca revela">
+                    <h2 class="titulo-secao" id="titulo-avisos">
+                        O app avisa
+                        <span class="verde">antes de você esquecer.</span>
+                    </h2>
+                </div>
+
+                <div class="dupla">
+                    <div class="dupla__tela revela" aria-hidden="true">
+                        <div class="cel cel--pequeno cel--esquerda">
+                            <div class="cel__vidro">
+                                <span class="cel__ilha"></span>
+                                <div class="app">
+                                    <div class="notif">
+                                        <svg class="ic" aria-hidden="true">
+                                            <use href="#i-bell-ring" />
+                                        </svg>
+                                        <p>
+                                            <b>Abriu uma vaga para você</b
+                                            ><br />Dermatologia, sexta, 23 de
+                                            outubro, 09:00.
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="app__cab app__cab--sub app__cab--abaixo"
+                                    >
+                                        <b>Lista de espera</b
+                                        ><span>Dermatologia</span>
+                                    </div>
+                                    <div class="app__corpo">
+                                        <div class="fila-cartao">
+                                            <span class="fila-cartao__pos num"
+                                                >1ª</span
+                                            >
+                                            <p>
+                                                <b>Você é a próxima</b
+                                                ><br />Dra. Camila Rocha
+                                            </p>
+                                        </div>
+                                        <p class="tempo">
+                                            <svg class="ic" aria-hidden="true">
+                                                <use href="#i-clock" /></svg
+                                            >Confirme em até
+                                            <b class="num">29 min</b>
+                                        </p>
+                                        <span class="botao-app"
+                                            >Confirmar vaga</span
+                                        >
+                                        <span class="recusar-app"
+                                            >Não quero esta vaga</span
+                                        >
+                                        <p class="fila-app">
+                                            <span class="fila-app__pontos"
+                                                ><i class="sim"></i><i></i
+                                                ><i></i><i></i><i></i
+                                            ></span>
+                                            4 pessoas depois de você na fila
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="cel__sombra"></span>
+                    </div>
+                    <div class="dupla__texto revela">
+                        <h3 class="dupla__titulo">
+                            Sem horário? Entre na lista de espera.
+                        </h3>
+                        <p>
+                            Quando alguém desiste, a vaga vai para a próxima
+                            pessoa da fila. Você recebe o aviso no celular e tem
+                            30 minutos para confirmar. Se não quiser, ela passa
+                            para a próxima, sem ficar vazia.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="dupla dupla--inversa">
+                    <div class="dupla__tela revela" aria-hidden="true">
+                        <div class="cel cel--pequeno cel--direita">
+                            <div class="cel__vidro">
+                                <span class="cel__ilha"></span>
+                                <div class="app">
+                                    <div class="app__cab app__cab--sub">
+                                        <b>Depois da consulta</b
+                                        ><span>Família da Juliana</span>
+                                    </div>
+                                    <div class="app__corpo">
+                                        <div class="pendencia">
+                                            <small>Retorno</small
+                                            ><b>Retorno com cardiologista</b
+                                            ><span
+                                                >Dona Cida, até 16 de
+                                                novembro</span
+                                            ><span class="botao-app"
+                                                >Marcar retorno</span
+                                            >
+                                        </div>
+                                        <div class="pendencia">
+                                            <small>Exame</small
+                                            ><b>Hemograma e glicemia</b
+                                            ><span
+                                                >Juliana, jejum de 8 horas</span
+                                            >
+                                        </div>
+                                        <div class="pendencia">
+                                            <small>Prevenção</small
+                                            ><b>Mamografia</b
+                                            ><span
+                                                >Dona Cida, Outubro Rosa</span
+                                            >
+                                        </div>
+                                        <div class="pendencia">
+                                            <small>Prevenção</small
+                                            ><b>Revisão no dentista</b
+                                            ><span
+                                                >Davi e Marina, a cada 6
+                                                meses</span
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="cel__sombra"></span>
+                    </div>
+                    <div class="dupla__texto revela">
+                        <h3 class="dupla__titulo">
+                            O cuidado continua depois da consulta.
+                        </h3>
+                        <p>
+                            Retorno pedido pelo médico, exames por fazer e as
+                            campanhas de prevenção de cada idade aparecem em um
+                            lugar só, com lembrete na hora certa.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Para todo mundo -->
+            <section
+                class="secao acesso"
+                id="acessivel"
+                aria-labelledby="titulo-acesso"
+            >
+                <div class="acesso__grade">
+                    <div class="secao__cabeca revela">
+                        <h2 class="titulo-secao" id="titulo-acesso">
+                            Feito para quem
+                            <span class="verde">não é da tecnologia.</span>
+                        </h2>
+                        <p class="secao__texto">
+                            Se a avó consegue marcar sozinha, está pronto.
+                            Experimente: o tamanho do texto desta página muda
+                            aqui embaixo, igual no app.
+                        </p>
+                        <div
+                            class="tamanhos"
+                            role="radiogroup"
+                            aria-label="Tamanho do texto desta página"
+                            id="tamanhos"
+                        >
+                            <button
+                                type="button"
+                                role="radio"
+                                aria-checked="true"
+                                data-texto="normal"
+                            >
+                                <span aria-hidden="true">A</span>Normal
+                            </button>
+                            <button
+                                type="button"
+                                role="radio"
+                                aria-checked="false"
+                                data-texto="grande"
+                            >
+                                <span aria-hidden="true">A</span>Grande
+                            </button>
+                            <button
+                                type="button"
+                                role="radio"
+                                aria-checked="false"
+                                data-texto="muito-grande"
+                            >
+                                <span aria-hidden="true">A</span>Extra grande
+                            </button>
+                        </div>
+                    </div>
+                    <ul class="qualidades revela">
+                        <li>
+                            <svg class="ic ic-lg" aria-hidden="true">
+                                <use href="#i-message-circle-heart" />
+                            </svg>
+                            <p>
+                                <b>Palavras do dia a dia.</b> Consulta, horário
+                                e retorno. Nada de termo técnico.
+                            </p>
+                        </li>
+                        <li>
+                            <svg class="ic ic-lg" aria-hidden="true">
+                                <use href="#i-eye" />
+                            </svg>
+                            <p>
+                                <b>Letra fácil de ler.</b> Texto grande, bom
+                                contraste e botões fáceis de tocar.
+                            </p>
+                        </li>
+                        <li>
+                            <svg class="ic ic-lg" aria-hidden="true">
+                                <use href="#i-heart-pulse" />
+                            </svg>
+                            <p>
+                                <b>Seguro na emergência.</b> Se algo parecer
+                                grave, o app manda ligar para o 192 na hora.
+                            </p>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Chamada final -->
+            <section class="final" aria-labelledby="titulo-final">
+                <div class="final__caixa revela">
+                    <canvas
+                        class="ondas ondas--final"
+                        id="ondas-final"
+                        aria-hidden="true"
+                    ></canvas>
+                    <div class="final__conteudo">
+                        <h2 class="titulo-secao" id="titulo-final">
+                            Sua próxima consulta começa com
+                            <span class="destaque-creme">uma frase.</span>
+                        </h2>
+                        <div class="final__acoes">
+                            <a
+                                class="botao-ilha botao-ilha--escuro pressionavel"
+                                href="cadastro.html"
+                            >
+                                Criar minha conta
+                                <span class="botao-ilha__seta">
+                                    <svg class="ic ic-sm" aria-hidden="true">
+                                        <use href="#i-arrow-right" />
+                                    </svg>
+                                </span>
+                            </a>
+                            <a class="link-final" href="login.html"
+                                >Já tenho conta</a
+                            >
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Para clínicas -->
+            <section class="secao clinicas" id="clinicas" aria-labelledby="titulo-clinicas">
+                <div class="clinicas__grade">
+                    <div class="clinicas__chamada revela">
+                        <h2 class="titulo-secao" id="titulo-clinicas">Sua clínica no AgendaPro, <span class="verde">em poucos minutos.</span></h2>
+                        <p class="secao__texto">
+                            Você cadastra a clínica e o seu acesso. Depois, a recepção cuida
+                            da agenda, e os pacientes marcam pelo app, contando o que sentem.
+                        </p>
+                        <div class="clinicas__acoes">
+                            <a class="botao-ilha botao-ilha--escuro pressionavel" href="cadastro-clinica.html">
+                                Cadastrar minha clínica
+                                <span class="botao-ilha__seta">
+                                    <svg class="ic ic-sm" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+                                </span>
+                            </a>
+                            <a class="link-final" href="login.html">Já tenho conta</a>
+                        </div>
+                    </div>
+
+                    <div class="clinicas__lado revela">
+                        <h3 class="clinicas__subtitulo">Como começar</h3>
+                        <ol class="comecar">
+                            <li>
+                                <span class="comecar__num num" aria-hidden="true">1</span>
+                                <p><b>Cadastre a clínica.</b> Nome, CNPJ, telefone, endereço e o seu e-mail de acesso.</p>
+                            </li>
+                            <li>
+                                <span class="comecar__num num" aria-hidden="true">2</span>
+                                <p><b>Monte a equipe.</b> Cadastre os médicos com os horários e dê acesso às recepcionistas.</p>
+                            </li>
+                            <li>
+                                <span class="comecar__num num" aria-hidden="true">3</span>
+                                <p><b>Chame os pacientes.</b> Eles acham a clínica pela busca ou entram com o código que ela recebe no cadastro.</p>
+                            </li>
+                        </ol>
+                        <ul class="recursos" aria-label="O que a recepção ganha">
+                            <li><svg class="ic ic-sm" aria-hidden="true"><use href="#i-calendar-days" /></svg>Agenda por médico, com filtro por situação</li>
+                            <li><svg class="ic ic-sm" aria-hidden="true"><use href="#i-list-ordered" /></svg>Vaga cancelada vai sozinha para a lista de espera</li>
+                            <li><svg class="ic ic-sm" aria-hidden="true"><use href="#i-clock" /></svg>Falta registrada depois de 60 min de atraso</li>
+                            <li><svg class="ic ic-sm" aria-hidden="true"><use href="#i-users" /></svg>Acessos separados para responsável e recepção</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <div>
+            para entrar por enquanto <a href="clinica.html">TELA CLINICA</a
+            ><a href="medico.html">TELA MEDICO</a
+            ><a href="paciente-desktop.html">TELA PACIENTE</a>
         </div>
-
-        <div
-            class="visualmente-oculto"
-            id="anunciador"
-            aria-live="polite"
-        ></div>
-
-        <noscript>
-            <p class="sem-js">
-                Este protótipo precisa de JavaScript ativado para navegar entre
-                as telas.
+        <footer class="rodape">
+            <a
+                class="topo__marca"
+                href="#inicio"
+                aria-label="AgendaPro Saúde, voltar ao início"
+            >
+                <span data-marca="30"></span>
+                <span class="topo__nome">AgendaPro <b>Saúde</b></span>
+            </a>
+            <p>
+                O AgendaPro Saúde não substitui atendimento médico. Em
+                emergência, ligue <a href="tel:192">192 (SAMU)</a>.
             </p>
-        </noscript>
+        </footer>
 
         <script src="assets/js/icones.js"></script>
         <script src="assets/js/dados.js"></script>
+        <script src="assets/js/api.js"></script>
         <script src="assets/js/comum.js"></script>
-        <script src="assets/js/movimento.js"></script>
-        <script src="assets/js/calendario-paciente.js"></script>
-        <script src="assets/js/app.js"></script>
+        <script src="assets/js/landing.js"></script>
     </body>
 </html>

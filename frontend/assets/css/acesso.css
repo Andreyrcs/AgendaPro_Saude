@@ -1,0 +1,694 @@
+/* AgendaPro Saúde — Login e Cadastro
+   Visual neutro e institucional: porta de entrada para os três perfis. */
+
+body {
+    margin: 0;
+    font-family: var(--fonte-texto);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--tinta);
+    background: var(--gelo);
+    min-height: 100dvh;
+}
+
+/* ─── Layout da página ─── */
+
+.acesso {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100dvh;
+}
+
+.acesso__topo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 24px 32px;
+}
+
+.acesso__marca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--noite);
+}
+
+.acesso__marca-nome {
+    font-weight: 800;
+    font-size: 1.125rem;
+    letter-spacing: -0.01em;
+}
+
+.acesso__corpo {
+    display: grid;
+    place-items: center;
+    padding: 0 24px 48px;
+}
+
+.acesso__rodape {
+    text-align: center;
+    padding: 20px 24px;
+    font-size: 0.8125rem;
+    color: var(--tinta-3);
+}
+
+/* ─── Cartão central ─── */
+
+.cartao-acesso {
+    width: 100%;
+    max-width: 420px;
+    background: var(--papel);
+    border-radius: var(--raio-cartao);
+    border: 1.5px solid var(--linha);
+    padding: 40px 36px 36px;
+}
+.acesso__marca-logo svg {
+    font-size: 58px;
+    width: 38px;
+    height: 38px;
+}
+
+.cartao-acesso__titulo {
+    font-size: 1.5rem;
+    font-weight: 800;
+
+    color: var(--noite);
+}
+
+.cartao-acesso__sub {
+    font-size: 0.9375rem;
+    color: var(--tinta-2);
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: center;
+}
+
+/* ─── Campos do formulário ─── */
+
+.campo {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 18px;
+}
+
+.campo__rotulo {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--tinta);
+}
+
+.campo__entrada {
+    box-sizing: border-box;
+    font: inherit;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 16px;
+    border: 1.5px solid var(--linha);
+    border-radius: 12px;
+    background: var(--papel);
+    color: var(--tinta);
+    transition:
+        border-color 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.campo__entrada:focus {
+    outline: none;
+    border-color: var(--noite);
+    box-shadow: 0 0 0 3px rgba(18, 38, 63, 0.12);
+}
+
+.campo__entrada::placeholder {
+    color: var(--tinta-3);
+}
+
+.campo__entrada[type='date'] {
+    font-family: var(--fonte-texto);
+    color-scheme: light;
+}
+
+.campo__entrada--erro {
+    border-color: var(--domingo);
+    box-shadow: 0 0 0 3px rgba(200, 56, 31, 0.1);
+}
+
+.campo__erro {
+    font-size: 0.8125rem;
+    color: var(--domingo);
+    font-weight: 600;
+    min-height: 0;
+    overflow: hidden;
+    transition: opacity 160ms ease;
+}
+
+.campo__erro:empty {
+    display: none;
+}
+.container-acesso__conteudo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-direction: row;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Seletor de tipo de documento (CPF ou RG) */
+.doc-tipo-grupo {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.doc-tipo-opcao {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1.5px solid var(--linha);
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--tinta-2);
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.doc-tipo-opcao input {
+    margin: 0;
+    accent-color: var(--noite);
+}
+
+.doc-tipo-opcao:has(input:checked) {
+    border-color: var(--noite);
+    background: var(--gelo);
+    color: var(--noite);
+}
+
+/* Wrapper para senha com botão ver/ocultar */
+.campo__senha-wrap {
+    position: relative;
+}
+
+.campo__senha-ver {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    translate: 0 -50%;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--tinta-3);
+    cursor: pointer;
+    transition:
+        color 120ms ease,
+        background-color 120ms ease;
+}
+
+.campo__senha-ver:hover {
+    background: var(--gelo);
+    color: var(--tinta);
+}
+
+/* ─── Checkbox ─── */
+
+.check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--tinta-2);
+}
+
+.check input[type='checkbox'] {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    margin: 1px 0 0;
+    accent-color: var(--noite);
+    cursor: pointer;
+}
+
+.check--erro {
+    color: var(--domingo);
+}
+
+/* ─── Botões ─── */
+
+.btn {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 999px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        transform var(--t-toque) var(--ease-out),
+        background-color 160ms ease,
+        opacity 160ms ease;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn--principal {
+    background: var(--noite);
+    color: #fff;
+}
+
+.btn--principal:hover {
+    background: var(--noite-3);
+}
+
+.btn--carregando {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* ─── Links ─── */
+
+.acesso-link {
+    display: inline-block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--noite);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
+    transition: color 120ms ease;
+}
+
+.acesso-link:hover {
+    color: var(--menta-tinta);
+}
+
+/* ─── Separador ─── */
+
+.separador {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0;
+    font-size: 0.8125rem;
+    color: var(--tinta-3);
+    font-weight: 600;
+}
+
+.separador::before,
+.separador::after {
+    content: '';
+    flex: 1;
+    height: 1.5px;
+    background: var(--linha);
+}
+
+/* ─── Botões de demonstração ─── */
+
+.demos {
+    display: grid;
+    gap: 10px;
+}
+
+.demo-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 52px;
+    padding: 10px 16px;
+    border: 1.5px solid var(--linha);
+    border-radius: 14px;
+    background: var(--papel);
+    font: inherit;
+    font-size: 0.9375rem;
+    color: var(--tinta);
+    cursor: pointer;
+    text-align: left;
+    transition:
+        transform var(--t-toque) var(--ease-out),
+        border-color 160ms ease,
+        background-color 160ms ease;
+}
+
+.demo-btn:hover {
+    border-color: var(--noite);
+    background: var(--gelo);
+}
+
+.demo-btn:active {
+    transform: scale(0.98);
+}
+
+.demo-btn__icone {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.demo-btn__icone--paciente {
+    background: var(--menta-2);
+    color: var(--menta-tinta);
+}
+
+.demo-btn__icone--medico {
+    background: #d4e8f4;
+    color: var(--noite);
+}
+
+.demo-btn__icone--recepcao {
+    background: #fdf0d2;
+    color: #7a4a00;
+}
+
+.demo-btn__texto {
+    display: grid;
+    gap: 1px;
+}
+
+.demo-btn__nome {
+    font-weight: 700;
+    font-size: 0.9375rem;
+}
+
+.demo-btn__perfil {
+    font-size: 0.75rem;
+    color: var(--tinta-3);
+    font-weight: 600;
+}
+
+/* ─── Rodapé do cartão ─── */
+
+.cartao-acesso__rodape--clinica {
+    margin-top: 10px !important;
+    padding-top: 14px;
+    border-top: 1.5px solid var(--linha);
+}
+.cartao-acesso__rodape {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 0.875rem;
+    color: var(--tinta-2);
+}
+
+/* ─── Erro geral ─── */
+
+.erro-geral {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: var(--domingo-claro);
+    color: var(--domingo);
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 18px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition:
+        opacity 200ms ease,
+        max-height 200ms ease;
+}
+
+.erro-geral--visivel {
+    opacity: 1;
+    max-height: 80px;
+}
+
+/* ─── Toast ─── */
+
+.toast-acesso {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-12px);
+    padding: 14px 24px;
+    border-radius: 14px;
+    background: var(--noite);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        opacity 260ms var(--ease-out),
+        transform 260ms var(--ease-out);
+    z-index: 10;
+    max-width: calc(100vw - 32px);
+    text-align: center;
+}
+
+.toast-acesso--visivel {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+/* ─── Cadastro de clínica e escolha de clínica ─── */
+
+.cartao-acesso--largo {
+    max-width: 560px;
+}
+.cartao-acesso__titulo--esq {
+    margin: 0 0 6px;
+    font-family: var(--fonte-numero);
+    font-stretch: 90%;
+    font-size: 1.75rem;
+    line-height: 1.1;
+}
+.cartao-acesso__sub--esq {
+    display: block;
+    margin: 0 0 24px;
+    text-wrap: pretty;
+}
+.grupo-form {
+    margin: 0 0 24px;
+    padding: 0;
+    border: 0;
+}
+.grupo-form__titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 0;
+    font-weight: 800;
+    font-size: 1.0625rem;
+    color: var(--noite);
+}
+.grupo-form__num {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--menta);
+    font-family: var(--fonte-numero);
+    font-size: 0.9375rem;
+}
+.campos-linha {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 14px;
+}
+.campos-linha--cidade {
+    grid-template-columns: 1fr 96px;
+}
+.campos-linha:has(#senha.campo__entrada--erro) + .campo__dica {
+    display: none;
+}
+.campo__dica {
+    margin: -8px 0 12px;
+    font-size: 0.8125rem;
+    color: var(--tinta-3);
+}
+.selo-ok {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 16px;
+    border-radius: 50%;
+    background: var(--menta);
+    color: var(--noite);
+}
+.codigo-clinica {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 24px;
+    padding: 18px 20px;
+    border-radius: 16px;
+    background: var(--gelo);
+    border: 1.5px dashed var(--linha);
+}
+.codigo-clinica__rotulo {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--tinta-2);
+}
+.codigo-clinica__valor {
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--noite);
+}
+.codigo-clinica__dica {
+    font-size: 0.8125rem;
+    color: var(--tinta-3);
+}
+.busca-campo {
+    position: relative;
+}
+.busca-campo .ic {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    translate: 0 -50%;
+    color: var(--tinta-3);
+    pointer-events: none;
+}
+.busca-campo .campo__entrada {
+    padding-left: 44px;
+}
+.resultados__conta {
+    margin: -4px 0 10px;
+    font-size: 0.875rem;
+    color: var(--tinta-2);
+}
+.lista-clinicas {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 18px;
+    padding: 0;
+    list-style: none;
+}
+.clinica-opcao {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 64px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--linha);
+    border-radius: 14px;
+    background: var(--papel);
+    color: var(--tinta);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease, transform var(--t-toque) var(--ease-out);
+}
+.clinica-opcao:active {
+    transform: scale(0.98);
+}
+.clinica-opcao__icone {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--menta-2);
+    color: var(--noite);
+}
+.clinica-opcao__texto {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+.clinica-opcao__texto span {
+    font-size: 0.875rem;
+    color: var(--tinta-2);
+}
+.clinica-opcao__acao {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--menta-tinta);
+}
+.clinica-opcao--atual {
+    border-color: var(--menta-tinta);
+    background: var(--menta-2);
+}
+@media (hover: hover) and (pointer: fine) {
+    .clinica-opcao:hover {
+        border-color: var(--noite);
+    }
+}
+.minhas__titulo {
+    margin: 0 0 10px;
+    font-size: 1rem;
+    color: var(--noite);
+}
+.codigo-abre {
+    margin-top: 6px;
+    padding-top: 16px;
+    border-top: 1.5px solid var(--linha);
+}
+.codigo-abre summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    color: var(--noite);
+    cursor: pointer;
+}
+.codigo-form {
+    margin-top: 12px;
+}
+
+/* ─── Responsivo ─── */
+
+@media (max-width: 520px) {
+    .acesso__topo {
+        padding: 16px 20px;
+    }
+    .acesso__corpo {
+        padding: 0 16px 32px;
+    }
+    .cartao-acesso {
+        padding: 28px 24px 24px;
+    }
+    .campos-linha {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .campos-linha--cidade {
+        grid-template-columns: minmax(0, 1fr) 88px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn:active,
+    .demo-btn:active {
+        transform: none;
+    }
+    .erro-geral,
+    .toast-acesso {
+        transition: opacity 0.1s ease;
+    }
+}

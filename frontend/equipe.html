@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";if(p.texto==="grande")document.documentElement.style.fontSize="112.5%"}catch(e){}</script>
+    <title>Clínica e equipe · Clínica</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='26' rx='7' fill='%2312263f'/%3E%3Cpath d='M2 12v-1a7 7 0 0 1 7-7h14a7 7 0 0 1 7 7v1z' fill='%23a8e6cf'/%3E%3Crect x='14.2' y='14.5' width='3.6' height='11.5' rx='1.2' fill='%23fff'/%3E%3Crect x='10.25' y='18.45' width='11.5' height='3.6' rx='1.2' fill='%23fff'/%3E%3C/svg%3E" />
+    <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/clinica/base.css" />
+    <link rel="stylesheet" href="assets/css/clinica/layout.css" />
+    <link rel="stylesheet" href="assets/css/clinica/lateral.css" />
+    <link rel="stylesheet" href="assets/css/clinica/botoes.css" />
+    <link rel="stylesheet" href="assets/css/clinica/cabecalho.css" />
+    <link rel="stylesheet" href="assets/css/clinica/painel.css" />
+    <link rel="stylesheet" href="assets/css/clinica/selos.css" />
+    <link rel="stylesheet" href="assets/css/clinica/paginas.css" />
+    <link rel="stylesheet" href="assets/css/clinica/avisos.css" />
+  </head>
+  <body data-pagina="equipe">
+    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+    <div class="casca">
+      <aside class="lateral" aria-label="Navegação da clínica">
+        <a class="lateral__marca" href="clinica.html">
+          <span data-marca="30"></span>
+          <span>AgendaPro <b>Saúde</b></span>
+        </a>
+        <nav aria-label="Seções">
+          <ul class="lateral__menu" id="lateral-menu" data-pagina="equipe"></ul>
+        </nav>
+        <div class="lateral__pe"></div>
+      </aside>
+
+      <main class="conteudo" id="conteudo">
+        <header class="titulo-linha">
+          <div id="folha-hoje"></div>
+          <div class="titulo-linha__texto">
+            <h1>Clínica e equipe</h1>
+            <p class="titulo-linha__sub" id="subtitulo"></p>
+          </div>
+        </header>
+
+        <div class="ajustes">
+          <section class="ajuste" aria-labelledby="t-clinica">
+            <div class="ajuste__rotulo">
+              <h2 id="t-clinica">Dados da clínica</h2>
+              <p id="clinica-nota">Aparecem para os pacientes no app, na busca e nas confirmações de consulta.</p>
+            </div>
+            <form class="painel ajuste__painel" id="form-clinica" novalidate>
+              <fieldset class="ajuste__grupo" id="grupo-clinica">
+                <div class="campo" id="c-nome">
+                  <label for="f-nome">Nome da clínica</label>
+                  <input id="f-nome" name="nome" autocomplete="organization" />
+                </div>
+                <div class="campos-dupla">
+                  <div class="campo" id="c-unidade">
+                    <label for="f-unidade">Unidade</label>
+                    <input id="f-unidade" name="unidade" autocomplete="off" />
+                  </div>
+                  <div class="campo" id="c-tel">
+                    <label for="f-tel">Telefone da recepção</label>
+                    <input id="f-tel" name="telefone" inputmode="tel" autocomplete="tel" />
+                  </div>
+                </div>
+                <div class="campo" id="c-endereco">
+                  <label for="f-endereco">Endereço</label>
+                  <input id="f-endereco" name="endereco" autocomplete="street-address" />
+                </div>
+                <div class="campos-dupla campos-dupla--cidade">
+                  <div class="campo" id="c-cidade">
+                    <label for="f-cidade">Cidade</label>
+                    <input id="f-cidade" name="cidade" autocomplete="address-level2" />
+                  </div>
+                  <div class="campo" id="c-uf">
+                    <label for="f-uf">UF</label>
+                    <input id="f-uf" name="uf" maxlength="2" autocomplete="address-level1" />
+                  </div>
+                </div>
+                <div class="campo">
+                  <label for="f-cnpj">CNPJ</label>
+                  <input id="f-cnpj" name="cnpj" readonly aria-describedby="dica-cnpj" />
+                  <span class="campo__dica" id="dica-cnpj">O CNPJ não muda depois do cadastro.</span>
+                </div>
+                <label class="marcar"><input type="checkbox" id="f-publica" name="publica" /> Pacientes podem encontrar a clínica pela busca</label>
+              </fieldset>
+              <div class="ajuste__acoes" id="acoes-clinica">
+                <span class="ajuste__salvo" id="salvo-clinica" aria-live="polite"></span>
+                <button type="submit" class="botao botao--principal botao--pequeno">Salvar dados da clínica</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="ajuste" aria-labelledby="t-codigo">
+            <div class="ajuste__rotulo">
+              <h2 id="t-codigo">Código para os pacientes</h2>
+              <p>Quem ainda não acha a clínica pela busca entra com este código, logo depois de criar a conta no app.</p>
+            </div>
+            <div class="painel ajuste__painel">
+              <div class="codigo-equipe">
+                <b class="codigo-equipe__valor num" id="codigo"></b>
+                <button type="button" class="botao botao--secundario botao--pequeno" id="copiar">Copiar código</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="ajuste" aria-labelledby="t-equipe">
+            <div class="ajuste__rotulo">
+              <h2 id="t-equipe">Equipe</h2>
+              <p>Quem tem acesso à área da clínica. Os médicos são cadastrados na página Médicos.</p>
+            </div>
+            <div class="painel ajuste__painel">
+              <ul class="equipe-lista" id="equipe"></ul>
+            </div>
+          </section>
+
+          <section class="ajuste" aria-labelledby="t-nova" id="secao-nova">
+            <div class="ajuste__rotulo">
+              <h2 id="t-nova">Adicionar recepcionista</h2>
+              <p>A pessoa entra com o e-mail e a senha provisória, e troca a senha em Minha conta.</p>
+            </div>
+            <form class="painel ajuste__painel" id="form-nova" novalidate>
+              <div class="campo" id="c-nova-nome">
+                <label for="f-nova-nome">Nome completo</label>
+                <input id="f-nova-nome" name="nome" autocomplete="off" />
+              </div>
+              <div class="campo" id="c-nova-email">
+                <label for="f-nova-email">E-mail de acesso</label>
+                <input id="f-nova-email" name="email" type="email" autocomplete="off" />
+              </div>
+                <div class="campo" id="c-nova-senha">
+                  <label for="f-nova-senha">Senha provisória</label>
+                  <input id="f-nova-senha" name="senha" type="password" autocomplete="new-password" />
+                  <span class="campo__dica">A pessoa troca a senha em Minha conta.</span>
+              </div>
+              <div class="ajuste__acoes">
+                <button type="submit" class="botao botao--principal botao--pequeno">Adicionar à equipe</button>
+              </div>
+              <div class="credencial" id="credencial" hidden aria-live="polite"></div>
+            </form>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="toasts" id="toasts"></div>
+    <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+
+    <script src="assets/js/icones.js"></script>
+    <script src="assets/js/dados.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/comum.js"></script>
+    <script src="assets/js/movimento.js"></script>
+    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-casca.js"></script>
+    <script src="assets/js/pagina-equipe.js"></script>
+  </body>
+</html>

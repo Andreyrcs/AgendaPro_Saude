@@ -62,6 +62,9 @@
     html[data-lateral='recolhida'] .lateral nav {
         margin-top: 56px;
     }
+    html[data-lateral='recolhida'] .lateral .lateral__clinica ~ nav {
+        margin-top: 0;
+    }
     html[data-lateral='recolhida'] .lateral__rotulo {
         opacity: 0;
         transition-delay: 0s;

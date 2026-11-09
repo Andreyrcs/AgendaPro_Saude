@@ -19,9 +19,13 @@ O app mobile é um cliente separado (ver Stack). Quando ele for desenhado, revis
 
 **Paciente (app mobile e web).** Agenda consultas médicas pelo celular, em casa ou no dia a dia, quase sempre com pressa e muitas vezes sem saber qual especialidade procurar. Também cuida das consultas da família (filhos, pais, avós). Entre esses usuários há idosos e pessoas com pouca familiaridade com tecnologia, e o produto precisa funcionar bem para eles.
 
-**Clínica / recepção (área web administrativa).** Cadastra e gerencia médicos, especialidades, horários e a lista de espera.
+**Responsável pela clínica (dono).** Cadastra a clínica (nome, CNPJ, telefone, endereço) junto com o próprio acesso. É o único que muda os dados da clínica e que cadastra ou remove recepcionistas. Cada clínica recebe um código para os pacientes.
 
-Médicos não têm login. A clínica faz o cadastro deles.
+**Clínica / recepção (área web administrativa).** Cadastra e gerencia médicos, especialidades, horários e a lista de espera. Não altera os dados da clínica nem a equipe.
+
+**Médicos.** A clínica (responsável ou recepção) faz o cadastro deles. O acesso próprio do médico mostra só a agenda e o histórico dele.
+
+**Como o paciente chega à clínica.** Depois de criar a conta, escolhe a clínica pela busca (nome ou cidade) ou entra com o código que a recepção passa. Pode estar ligado a mais de uma clínica e trocar no perfil.
 
 ## Product Purpose
 

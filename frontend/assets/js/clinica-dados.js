@@ -139,5 +139,20 @@
     return e ? [hm(e[0]), hm(e[1])] : null;
   }
 
-  window.CLIDADOS = { MEDICOS, DURACAO, INICIO, FIM, ABRE_MESES, ABRE_ATE, consultas, expediente, hm, txt, iso, data, somaDias };
+  /* Quem ainda está "Confirmada" e passou da tolerância de atraso vira falta. Só vale para hoje.
+     Devolve as consultas que mudaram, para a tela avisar. */
+  function aplicarFaltas(minutoAgora) {
+    const limite = D.politica.toleranciaMin;
+    const mudou = [];
+    consultas.forEach((k) => {
+      if (k.data === D.hoje && k.status === "confirmada" && minutoAgora >= k.ini + limite) {
+        k.status = "faltou";
+        k.faltaAuto = true;
+        mudou.push(k);
+      }
+    });
+    return mudou;
+  }
+
+  window.CLIDADOS = { aplicarFaltas, MEDICOS, DURACAO, INICIO, FIM, ABRE_MESES, ABRE_ATE, EXPEDIENTE, consultas, expediente, hm, txt, iso, data, somaDias };
 })();

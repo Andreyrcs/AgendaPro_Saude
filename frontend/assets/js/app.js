@@ -297,27 +297,7 @@
     { t: "Dor no peito e falta de ar", alerta: true },
   ];
 
-  function analisar(texto) {
-    const t = texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-    if (/(suicid|me matar|tirar (a )?minha vida|nao quero mais viver|acabar com tudo)/.test(t)) return { tipo: "cvv" };
-    if (/(dor no peito|aperto no peito|peito doendo|dor forte no peito|falta de ar|nao consigo respirar|dificuldade para respirar|desmai|convuls|boca torta|fraqueza de um lado|nao consegue falar|sangramento forte|sangrando muito|infarto|\bavc\b|inconsciente|engasg)/.test(t)) return { tipo: "emergencia" };
-    let quem = D.titular;
-    if (/(filho|davi|menino|bebe)/.test(t)) quem = "davi";
-    else if (/(filha|marina|menina)/.test(t)) quem = "marina";
-    else if (/(mae|cida)/.test(t)) quem = "cida";
-    else if (/(sogro|kenji)/.test(t)) quem = "kenji";
-    const crianca = pessoa(quem).idade < 18;
-    let esps;
-    if (/(ouvido|orelha|garganta|nariz|sinusite)/.test(t)) esps = crianca ? ["pediatria", "otorrino"] : ["otorrino", "clinica"];
-    else if (/(pele|mancha|coceira|cocam|coca|espinha|acne|cabelo caindo|unha|pinta)/.test(t)) esps = crianca ? ["pediatria", "dermatologia"] : ["dermatologia"];
-    else if (/(costas|coluna|joelho|ombro|torci|tornozelo|fratur|osso)/.test(t)) esps = crianca ? ["pediatria", "ortopedia"] : ["ortopedia", "clinica"];
-    else if (/(pressao|coracao|palpita|batedeira)/.test(t)) esps = ["cardiologia", "clinica"];
-    else if (/(olho|vista|enxerg|visao|oculos|quadro)/.test(t)) esps = ["oftalmologia"];
-    else if (/(menstrua|gravid|preventivo|colica)/.test(t)) esps = ["ginecologia", "clinica"];
-    else if (/(ansied|ansios|triste|depress|nao durmo|sem dormir|insonia|estresse|panico)/.test(t)) esps = ["psiquiatria", "clinica"];
-    else esps = crianca ? ["pediatria"] : ["clinica"];
-    return { tipo: "sugestao", quem, esps };
-  }
+  const analisar = window.TRIAGEM.analisar;
 
   function respostaHTML(r) {
     if (r.tipo === "emergencia") {
@@ -1080,6 +1060,7 @@
           '<a class="botao botao--principal" href="https://www.google.com/maps/search/' + encodeURIComponent(D.clinica.endereco) + '" target="_blank" rel="noopener">' + I("map-pin") + "Como chegar</a>" +
           '<a class="botao botao--secundario" href="#agendar/' + m.esp + "/" + p.id + '">' + I("calendar-days") + "Remarcar</a>" +
           '<a class="botao botao--secundario" href="tel:' + D.clinica.telefoneLink + '">' + I("phone") + "Ligar para a clínica " + D.clinica.telefone + "</a></div>" +
+          '<p class="aviso-falta">' + I("info") + "<span>Se não puder ir, cancele ou remarque antes. Quem passa de " + D.politica.toleranciaMin + " minutos de atraso é marcado como falta, com multa de <b>" + A.reais(D.politica.multa) + "</b>.</span></p>" +
           '<div class="zona-perigo"><button type="button" class="botao botao--texto-perigo" id="cancelar">Cancelar consulta</button><p>A vaga vai para quem está na lista de espera.</p></div>');
 
     function montar(el) {

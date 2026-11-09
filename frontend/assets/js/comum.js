@@ -148,6 +148,34 @@
     );
   }
 
+  function reais(v) {
+    return "R$ " + Number(v).toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  /* Selo no menu lateral: em qual clínica a pessoa está e com qual função.
+     Fica logo acima das seções; com o menu recolhido, vira só o ícone (o nome aparece na dica). */
+  var FUNCOES = { dono: "Responsável", recepcao: "Recepção", medico: "Médico", paciente: "Paciente" };
+  function seloClinica(lateral, papel, opcoes) {
+    if (!lateral || !window.DADOS || lateral.querySelector(".lateral__clinica")) return null;
+    opcoes = opcoes || {};
+    var c = window.DADOS.clinica;
+    var nav = lateral.querySelector("nav");
+    if (!nav) return null;
+    var el = document.createElement(opcoes.href ? "a" : "div");
+    el.className = "lateral__clinica";
+    if (opcoes.href) el.href = opcoes.href;
+    var funcao = FUNCOES[papel] || "";
+    var linha = papel === "paciente" ? (opcoes.acao || "Trocar de clínica") : funcao + " · " + c.unidade;
+    el.dataset.dicaLateral = c.nome + " · " + funcao;
+    el.setAttribute("aria-label", (papel === "paciente" ? "Sua clínica: " : "Clínica em que você atua: ") + c.nome + ", " + linha);
+    el.innerHTML =
+      '<span class="lateral__clinica-icone">' + icone("building", "ic-sm") + "</span>" +
+      '<span class="lateral__rotulo lateral__clinica-texto" aria-hidden="true"><small>' + (papel === "paciente" ? "Sua clínica" : "Você atua em") + "</small>" +
+      "<b>" + esc(c.nome) + "</b><span>" + esc(linha) + "</span></span>";
+    nav.insertAdjacentElement("beforebegin", el);
+    return el;
+  }
+
   function ordinal(n, genero) {
     return n + (genero === "f" ? "ª" : "º");
   }
@@ -156,7 +184,7 @@
     MESES: MESES, MESES_LONGOS: MESES_LONGOS, SEMANA: SEMANA, SEMANA_CURTA: SEMANA_CURTA,
     data: data, hoje: hoje, diasAte: diasAte, relativo: relativo, extenso: extenso, curto: curto,
     esc: esc, icone: icone, folha: folha, folhaMes: folhaMes, avatar: avatar,
-    avatarMedico: avatarMedico, iniciais: iniciais, marca: marca, ordinal: ordinal,
+    avatarMedico: avatarMedico, iniciais: iniciais, marca: marca, ordinal: ordinal, reais: reais, seloClinica: seloClinica,
     movimentoReduzido: function () {
       return document.documentElement.dataset.movimento === "reduzido" ||
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;

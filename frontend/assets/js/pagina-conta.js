@@ -16,7 +16,7 @@
     "Registrar a chegada e chamar pacientes",
     "Oferecer vagas e organizar a lista de espera",
     "Cadastrar e editar médicos, especialidades e horários",
-  ];
+  ].concat(K.conta.papel === "dono" ? ["Mudar o nome e os dados da clínica", "Cadastrar e remover recepcionistas"] : []);
 
   function desenharTopo() {
     $("#conta-avatar").textContent = A.iniciais(K.conta.nome);
@@ -138,8 +138,9 @@
     });
   }
 
-  $("#sair").addEventListener("click", () => {
-    K.toast({ titulo: "Saída desativada no protótipo", texto: "No sistema real, você voltaria para a tela de entrada.", icone: "info" });
+  $("#sair").addEventListener("click", async () => {
+    await window.API.sair();
+    location.href = "login.html";
   });
 
   desenharTopo();

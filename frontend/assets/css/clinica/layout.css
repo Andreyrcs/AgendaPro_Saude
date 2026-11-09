@@ -7,18 +7,19 @@
 .conteudo {
     min-width: 0;
     padding: 26px 32px 48px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .resumo {
     display: grid;
     grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
-    gap: 16px;
-    margin-top: 22px;
+    gap: 5px;
 }
 
 .trabalho {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 360px;
     gap: 16px;
     margin-top: 16px;
     align-items: stretch;
@@ -36,6 +37,15 @@
     flex-direction: column;
     gap: 16px;
 }
+.resumo .fila {
+    max-height: 400px;
+    overflow: hidden;
+}
+.resumo .fila__lista {
+    max-height: 280px;
+    overflow-y: auto;
+}
+
 .proximos {
     margin-top: 20px;
     width: 100%;

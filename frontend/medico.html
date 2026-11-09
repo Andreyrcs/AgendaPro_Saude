@@ -1,122 +1,590 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Minha Agenda — AgendaPro Saúde</title>
-  <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/css/tokens.css">
-  <link rel="stylesheet" href="assets/css/clinica/base.css">
-  <link rel="stylesheet" href="assets/css/clinica/layout.css">
-  <link rel="stylesheet" href="assets/css/clinica/lateral.css">
-  <link rel="stylesheet" href="assets/css/clinica/botoes.css">
-  <link rel="stylesheet" href="assets/css/clinica/cabecalho.css">
-  <link rel="stylesheet" href="assets/css/clinica/contadores.css">
-  <link rel="stylesheet" href="assets/css/clinica/agenda.css">
-  <link rel="stylesheet" href="assets/css/clinica/selos.css">
-  <link rel="stylesheet" href="assets/css/clinica/avisos.css">
-</head>
-<body>
-  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script>
+            try {
+                var _m = localStorage.getItem('medico-menu');
+                document.documentElement.dataset.lateral =
+                    _m === 'recolhido' ? 'recolhida' : 'aberta';
+            } catch (e) {}
+        </script>
+        <title>Minha Agenda — AgendaPro Saúde</title>
+        <link
+            rel="icon"
+            href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='26' rx='7' fill='%2312263f'/%3E%3Cpath d='M2 12v-1a7 7 0 0 1 7-7h14a7 7 0 0 1 7 7v1z' fill='%23a8e6cf'/%3E%3Crect x='14.2' y='14.5' width='3.6' height='11.5' rx='1.2' fill='%23fff'/%3E%3Crect x='10.25' y='18.45' width='11.5' height='3.6' rx='1.2' fill='%23fff'/%3E%3C/svg%3E"
+        />
+        <link
+            rel="preload"
+            href="assets/fonts/atkinson-next-latin.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin
+        />
+        <link
+            rel="preload"
+            href="assets/fonts/archivo-latin.woff2"
+            as="font"
+            type="font/woff2"
+            crossorigin
+        />
+        <link rel="stylesheet" href="assets/css/tokens.css" />
+        <link rel="stylesheet" href="assets/css/clinica/base.css" />
+        <link rel="stylesheet" href="assets/css/clinica/layout.css" />
+        <link rel="stylesheet" href="assets/css/clinica/lateral.css" />
+        <link rel="stylesheet" href="assets/css/clinica/botoes.css" />
+        <link rel="stylesheet" href="assets/css/clinica/cabecalho.css" />
+        <link rel="stylesheet" href="assets/css/clinica/contadores.css" />
+        <link rel="stylesheet" href="assets/css/clinica/agenda.css" />
+        <link rel="stylesheet" href="assets/css/clinica/selos.css" />
+        <link rel="stylesheet" href="assets/css/clinica/avisos.css" />
+        <link rel="stylesheet" href="assets/css/clinica/paginas.css" />
+        <link rel="stylesheet" href="assets/css/medico/medico.css" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css"
+        />
+    </head>
+    <body>
+        <a class="pular" href="#conteudo">Pular para o conteúdo</a>
 
-  <div class="casca">
-    <aside class="lateral" aria-label="Navegação">
-      <a class="lateral__marca" href="inicio.html">
-        <span data-marca="30"></span>
-        <span>AgendaPro <b>Saúde</b></span>
-      </a>
+        <div class="casca">
+            <!-- ─── Sidebar ─── -->
+            <aside class="lateral" aria-label="Navegação do médico">
+                <a
+                    class="lateral__marca"
+                    href="index.html"
+                    data-dica-lateral="Início"
+                >
+                    <span data-marca="30"></span>
+                    <span class="lateral__rotulo">AgendaPro <b>Saúde</b></span>
+                </a>
 
-      <nav aria-label="Seções">
-        <ul class="lateral__menu">
-          <li>
-            <a href="medico.html" aria-current="page">
-              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-calendar-days"/></svg>
-              Minha agenda
-            </a>
-          </li>
-          <li>
-            <a href="clinica.html">
-              <svg class="ic ic-sm" aria-hidden="true"><use href="#i-arrow-left"/></svg>
-              Área da clínica
-            </a>
-          </li>
-        </ul>
-      </nav>
+                <nav aria-label="Seções">
+                    <ul class="lateral__menu">
+                        <li>
+                            <a
+                                href="#"
+                                data-secao="agenda"
+                                aria-current="page"
+                                data-dica-lateral="Minha agenda"
+                            >
+                                <svg class="ic ic-sm" aria-hidden="true">
+                                    <use href="#i-calendar-days" />
+                                </svg>
+                                <span class="lateral__rotulo"
+                                    >Minha agenda</span
+                                >
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href="#"
+                                data-secao="historico"
+                                data-dica-lateral="Histórico"
+                            >
+                                <svg class="ic ic-sm" aria-hidden="true">
+                                    <use href="#i-clock" />
+                                </svg>
+                                <span class="lateral__rotulo">Histórico</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
 
-      <div class="lateral__pe">
-        <span class="avatar-iniciais" style="--tam:36px;background:#d4e8f4" aria-hidden="true">PM</span>
-        <span><b>Dr. Paulo Menezes</b><br>Cardiologia</span>
-      </div>
-    </aside>
+                <a
+                    class="lateral__pe"
+                    href="#"
+                    data-secao="perfil"
+                    data-dica-lateral="Meu perfil"
+                >
+                    <span
+                        class="avatar-iniciais"
+                        style="--tam: 36px; background: #d4e8f4"
+                        aria-hidden="true"
+                        >PM</span
+                    >
+                    <span class="lateral__rotulo"
+                        ><b>Dr. Paulo Menezes</b><br />Cardiologia</span
+                    >
+                </a>
+            </aside>
 
-    <main class="conteudo" id="conteudo">
-      <header class="titulo-linha">
-        <div class="titulo-linha__data" id="folha-hoje"></div>
-        <div class="titulo-linha__texto">
-          <h1>Minha agenda</h1>
-          <p class="titulo-linha__sub" id="subtitulo"></p>
+            <!-- ─── Conteúdo principal ─── -->
+            <main class="conteudo" id="conteudo">
+                <header class="titulo-linha">
+                    <div class="titulo-linha__data" id="folha-hoje"></div>
+                    <div class="titulo-linha__texto">
+                        <h1 id="titulo-pagina">Minha agenda</h1>
+                        <p class="titulo-linha__sub" id="subtitulo"></p>
+                    </div>
+                    <section class="resumo" aria-label="Resumo do dia">
+                        <dl class="contadores" aria-label="Hoje">
+                            <div class="contador">
+                                <dt>Consultas hoje</dt>
+                                <dd>
+                                    <span
+                                        class="contador__n num"
+                                        id="n-consultas"
+                                        >0</span
+                                    >
+                                    <span
+                                        class="contador__sub"
+                                        id="s-consultas"
+                                    ></span>
+                                </dd>
+                            </div>
+                            <div class="contador">
+                                <dt>Realizadas</dt>
+                                <dd>
+                                    <span
+                                        class="contador__n num"
+                                        id="n-atendidas"
+                                        >0</span
+                                    >
+                                </dd>
+                            </div>
+                            <div class="contador">
+                                <dt>Ainda por vir</dt>
+                                <dd>
+                                    <span
+                                        class="contador__n num"
+                                        id="n-restantes"
+                                        >0</span
+                                    >
+                                </dd>
+                            </div>
+                        </dl>
+                    </section>
+
+                    <div class="titulo-linha__acoes" id="acoes-header">
+                        <div
+                            class="vistas"
+                            role="tablist"
+                            aria-label="Visão da agenda"
+                            id="vistas-agenda"
+                        >
+                            <button
+                                type="button"
+                                role="tab"
+                                data-vista="dia"
+                                aria-selected="true"
+                                aria-controls="vista"
+                                id="aba-dia"
+                            >
+                                Dia
+                            </button>
+                            <button
+                                type="button"
+                                role="tab"
+                                data-vista="semana"
+                                aria-selected="false"
+                                aria-controls="vista"
+                                id="aba-semana"
+                            >
+                                Semana
+                            </button>
+                            <button
+                                type="button"
+                                role="tab"
+                                data-vista="mes"
+                                aria-selected="false"
+                                aria-controls="vista"
+                                id="aba-mes"
+                            >
+                                Mês
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- ── Seção: Agenda ── -->
+                <div id="secao-agenda">
+                    <div class="agenda-grade-wrap">
+                        <section
+                            class="painel agenda"
+                            aria-labelledby="t-agenda"
+                        >
+                            <div class="painel__cabeca agenda__cabeca">
+                                <div class="navegar">
+                                    <button
+                                        type="button"
+                                        class="botao-icone"
+                                        id="ant"
+                                        aria-label="Anterior"
+                                    >
+                                        <svg
+                                            class="ic ic-sm"
+                                            aria-hidden="true"
+                                        >
+                                            <use href="#i-chevron-left" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="botao botao--secundario botao--pequeno"
+                                        id="hoje"
+                                    >
+                                        Hoje
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="botao-icone"
+                                        id="prox"
+                                        aria-label="Próximo"
+                                    >
+                                        <svg
+                                            class="ic ic-sm"
+                                            aria-hidden="true"
+                                        >
+                                            <use href="#i-chevron-right" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <h2 id="t-agenda" aria-live="polite"></h2>
+                            </div>
+                            <div
+                                id="vista"
+                                role="tabpanel"
+                                aria-labelledby="aba-dia"
+                            ></div>
+                        </section>
+                    </div>
+                    <section
+                        class="pacientes-dia"
+                        aria-labelledby="t-pacientes-dia"
+                    >
+                        <div class="painel__cabeca">
+                            <h2 id="t-pacientes-dia">Pacientes do dia</h2>
+                            <span
+                                class="painel__meta"
+                                id="meta-pacientes-dia"
+                            ></span>
+                        </div>
+                        <ol class="hist-lista" id="pacientes-dia-lista"></ol>
+                    </section>
+                </div>
+
+                <!-- ── Seção: Histórico ── -->
+                <div id="secao-historico" hidden>
+                    <section class="resumo" aria-label="Totais gerais">
+                        <dl class="contadores" aria-label="Totais">
+                            <div class="contador">
+                                <dt>Realizadas</dt>
+                                <dd>
+                                    <span
+                                        class="contador__n num"
+                                        id="hist-realizadas"
+                                        >0</span
+                                    >
+                                </dd>
+                            </div>
+                            <div class="contador">
+                                <dt>Canceladas</dt>
+                                <dd>
+                                    <span
+                                        class="contador__n num"
+                                        id="hist-canceladas"
+                                        >0</span
+                                    >
+                                </dd>
+                            </div>
+                            <div class="contador">
+                                <dt>Ausências</dt>
+                                <dd>
+                                    <span
+                                        class="contador__n num"
+                                        id="hist-ausencias"
+                                        >0</span
+                                    >
+                                </dd>
+                            </div>
+                        </dl>
+                    </section>
+                    <div style="padding: 0 24px 40px">
+                        <section class="painel" aria-labelledby="t-hist">
+                            <div class="painel__cabeca hist-cabeca">
+                                <h2 id="t-hist">Histórico de consultas</h2>
+                                <div class="hist-controles">
+                                    <div class="campo-data-hist">
+                                        <label
+                                            for="hist-data"
+                                            class="visualmente-oculto"
+                                            >Filtrar por data</label
+                                        >
+                                        <input
+                                            type="date"
+                                            id="hist-data"
+                                            class="hist-data-input"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="botao botao--texto botao--pequeno"
+                                            id="hist-limpar-data"
+                                            hidden
+                                        >
+                                            Limpar data
+                                        </button>
+                                    </div>
+                                    <div
+                                        class="filtros-hist"
+                                        role="group"
+                                        aria-label="Filtrar por status"
+                                    >
+                                        <button
+                                            type="button"
+                                            class="filtro-hist filtro-hist--ativo"
+                                            data-filtro="todos"
+                                        >
+                                            Todos
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="filtro-hist"
+                                            data-filtro="atendida"
+                                        >
+                                            Realizadas
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="filtro-hist"
+                                            data-filtro="cancelada"
+                                        >
+                                            Canceladas
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="filtro-hist"
+                                            data-filtro="faltou"
+                                        >
+                                            Ausências
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <ol class="hist-lista" id="hist-lista"></ol>
+                            <nav
+                                class="paginacao"
+                                id="hist-paginacao"
+                                aria-label="Paginação do histórico"
+                            ></nav>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- ── Seção: Perfil ── -->
+                <div id="secao-perfil" hidden>
+                    <div class="perfil-wrap">
+                        <!-- Cartão de apresentação -->
+                        <div class="perfil-cartao">
+                            <div class="perfil-cartao__fundo"></div>
+                            <div class="perfil-cartao__corpo">
+                                <span
+                                    class="avatar-iniciais perfil-avatar"
+                                    style="--tam: 80px; background: #d4e8f4"
+                                    aria-hidden="true"
+                                    >PM</span
+                                >
+                                <h2 class="perfil-nome" id="perfil-nome">
+                                    Dr. Paulo Menezes
+                                </h2>
+                                <p class="perfil-esp" id="perfil-esp">
+                                    Cardiologia
+                                </p>
+                                <div
+                                    class="perfil-resumo-numeros"
+                                    id="perfil-stats"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <div class="perfil-grid">
+                            <!-- Dados profissionais -->
+                            <section
+                                class="perfil-bloco"
+                                aria-label="Dados profissionais"
+                            >
+                                <h3 class="perfil-secao-titulo">
+                                    Dados profissionais
+                                </h3>
+                                <dl class="perfil-dl">
+                                    <div class="perfil-linha">
+                                        <dt>CRM</dt>
+                                        <dd id="perfil-crm">—</dd>
+                                    </div>
+                                    <div class="perfil-linha">
+                                        <dt>Especialidade</dt>
+                                        <dd id="perfil-espec">—</dd>
+                                    </div>
+                                    <div class="perfil-linha">
+                                        <dt>Sala</dt>
+                                        <dd id="perfil-sala">—</dd>
+                                    </div>
+                                    <div class="perfil-linha">
+                                        <dt>Duração da consulta</dt>
+                                        <dd id="perfil-dur">—</dd>
+                                    </div>
+                                </dl>
+                            </section>
+
+                            <!-- Expediente -->
+                            <section
+                                class="perfil-bloco"
+                                aria-label="Expediente"
+                            >
+                                <h3 class="perfil-secao-titulo">Expediente</h3>
+                                <dl
+                                    class="perfil-dl"
+                                    id="perfil-expediente"
+                                ></dl>
+                            </section>
+                        </div>
+
+                        <!-- Próximos atendimentos -->
+                        <section
+                            class="perfil-bloco"
+                            aria-labelledby="t-proximos"
+                        >
+                            <div
+                                class="painel__cabeca"
+                                style="margin-bottom: 12px"
+                            >
+                                <h3
+                                    id="t-proximos"
+                                    class="perfil-secao-titulo"
+                                    style="margin: 0"
+                                >
+                                    Próximos atendimentos
+                                </h3>
+                                <span
+                                    class="painel__meta"
+                                    id="meta-proximos"
+                                ></span>
+                            </div>
+                            <ol class="hist-lista" id="proximos-lista"></ol>
+                        </section>
+                    </div>
+                </div>
+            </main>
         </div>
-        <div class="titulo-linha__acoes">
-          <div class="vistas" role="tablist" aria-label="Visão da agenda">
-            <button type="button" role="tab" data-vista="dia" aria-selected="true" aria-controls="vista" id="aba-dia">Dia</button>
-            <button type="button" role="tab" data-vista="semana" aria-selected="false" aria-controls="vista" id="aba-semana">Semana</button>
-          </div>
-        </div>
-      </header>
 
-      <section class="resumo" aria-label="Resumo do dia">
-        <dl class="contadores" aria-label="Hoje">
-          <div class="contador">
-            <dt>Consultas hoje</dt>
-            <dd>
-              <span class="contador__n num" id="n-consultas">0</span>
-              <span class="contador__sub" id="s-consultas"></span>
-            </dd>
-          </div>
-          <div class="contador">
-            <dt>Realizadas</dt>
-            <dd>
-              <span class="contador__n num" id="n-atendidas">0</span>
-            </dd>
-          </div>
-          <div class="contador">
-            <dt>Ainda por vir</dt>
-            <dd>
-              <span class="contador__n num" id="n-restantes">0</span>
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      <div style="padding:0 24px 40px">
-        <section class="painel agenda" aria-labelledby="t-agenda">
-          <div class="painel__cabeca agenda__cabeca">
-            <div class="navegar">
-              <button type="button" class="botao-icone" id="ant" aria-label="Anterior">
-                <svg class="ic ic-sm" aria-hidden="true"><use href="#i-chevron-left"/></svg>
-              </button>
-              <button type="button" class="botao botao--secundario botao--pequeno" id="hoje">Hoje</button>
-              <button type="button" class="botao-icone" id="prox" aria-label="Próximo">
-                <svg class="ic ic-sm" aria-hidden="true"><use href="#i-chevron-right"/></svg>
-              </button>
+        <!-- ── Dialog: detalhe da consulta ── -->
+        <dialog
+            class="med-dlg"
+            id="dlg-consulta"
+            aria-labelledby="dlg-consulta-titulo"
+        >
+            <div class="med-dlg__cabeca">
+                <h2 class="med-dlg__titulo" id="dlg-consulta-titulo">
+                    Consulta
+                </h2>
+                <button
+                    type="button"
+                    class="botao-icone"
+                    data-fechar="dlg-consulta"
+                    aria-label="Fechar"
+                >
+                    <svg class="ic ic-sm" aria-hidden="true">
+                        <use href="#i-x" />
+                    </svg>
+                </button>
             </div>
-            <h2 id="t-agenda" aria-live="polite"></h2>
-          </div>
-          <div id="vista" role="tabpanel" aria-labelledby="aba-dia"></div>
-        </section>
-      </div>
-    </main>
-  </div>
+            <div class="med-dlg__corpo" id="dlg-consulta-corpo"></div>
+            <div class="med-dlg__acoes" id="dlg-consulta-acoes"></div>
+        </dialog>
 
-  <div class="toasts" id="toasts"></div>
-  <div class="visualmente-oculto" id="anunciador" aria-live="polite"></div>
+        <!-- ── Dialog: marcar retorno ── -->
+        <dialog
+            class="med-dlg"
+            id="dlg-retorno"
+            aria-labelledby="dlg-retorno-titulo"
+        >
+            <div class="med-dlg__cabeca">
+                <h2 class="med-dlg__titulo" id="dlg-retorno-titulo">
+                    Marcar retorno
+                </h2>
+                <button
+                    type="button"
+                    class="botao-icone"
+                    data-fechar="dlg-retorno"
+                    aria-label="Fechar"
+                >
+                    <svg class="ic ic-sm" aria-hidden="true">
+                        <use href="#i-x" />
+                    </svg>
+                </button>
+            </div>
+            <form class="med-dlg__corpo" id="form-retorno">
+                <div class="campo-med">
+                    <label for="ret-paciente">Paciente</label>
+                    <input type="text" id="ret-paciente" readonly />
+                </div>
 
-  <script src="assets/js/icones.js"></script>
-  <script src="assets/js/dados.js"></script>
-  <script src="assets/js/comum.js"></script>
-  <script src="assets/js/movimento.js"></script>
-  <script src="assets/js/clinica-dados.js"></script>
-  <script src="assets/js/medico.js"></script>
-</body>
+                <fieldset class="campo-med ret-tipo-grupo">
+                    <legend>Como agendar o retorno?</legend>
+                    <label class="ret-opcao">
+                        <input
+                            type="radio"
+                            name="ret-tipo"
+                            value="data"
+                            checked
+                        />
+                        <span class="ret-opcao__texto">
+                            <strong>Marcar data específica</strong>
+                            <small>Escolher dia para o retorno</small>
+                        </span>
+                    </label>
+                    <label class="ret-opcao">
+                        <input type="radio" name="ret-tipo" value="recepcao" />
+                        <span class="ret-opcao__texto">
+                            <strong>Encaminhar para recepção</strong>
+                            <small
+                                >Paciente agenda na saída com a recepção</small
+                            >
+                        </span>
+                    </label>
+                </fieldset>
+
+                <div class="campo-med" id="ret-campo-data">
+                    <label for="ret-data">Data do retorno</label>
+                    <input type="date" id="ret-data" />
+                </div>
+                <div class="campo-med">
+                    <label for="ret-nota">Nota de acompanhamento</label>
+                    <textarea
+                        id="ret-nota"
+                        rows="3"
+                        placeholder="Ex.: Revisar exame de sangue, ajustar medicação…"
+                    ></textarea>
+                </div>
+                <div class="med-dlg__acoes">
+                    <button
+                        type="submit"
+                        class="botao botao--principal botao--largo"
+                        id="ret-btn-submit"
+                    >
+                        <i class="fa-light fa-calendar-days"></i>
+
+                        Confirmar retorno
+                    </button>
+                </div>
+            </form>
+        </dialog>
+
+        <div class="toasts" id="toasts"></div>
+        <div
+            class="visualmente-oculto"
+            id="anunciador"
+            aria-live="polite"
+        ></div>
+
+        <script src="assets/js/icones.js"></script>
+        <script src="assets/js/dados.js"></script>
+        <script src="assets/js/api.js"></script>
+        <script src="assets/js/comum.js"></script>
+        <script src="assets/js/movimento.js"></script>
+        <script src="assets/js/clinica-dados.js"></script>
+        <script src="assets/js/medico.js"></script>
+    </body>
 </html>

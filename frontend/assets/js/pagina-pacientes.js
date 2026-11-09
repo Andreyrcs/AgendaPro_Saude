@@ -134,12 +134,13 @@
     const futuras = p.consultas.filter((k) => FUTURO.includes(k.status) && k.data >= D.hoje);
     const historico = p.passadas.slice(-6).reverse();
     const linhaK = (k) => '<li><span class="historico__quando">' + quando(k) + '</span><span class="historico__quem">' + K.medico(k.medico).nome + " · " + K.esp(K.medico(k.medico).esp).nome + "</span>" +
-      '<span class="selo selo--' + k.status + '">' + ROTULO[k.status] + "</span></li>";
+      '<span class="selo selo--' + k.status + '">' + ROTULO[k.status] + "</span>" + (k.status === "faltou" ? ' <span class="multa">Multa ' + A.reais(D.politica.multa) + "</span>" : "") + "</li>";
     ficha.innerHTML =
       '<div class="ficha__cab"><div><h2 id="t-ficha">' + A.esc(p.nome) + "</h2>" +
       (p.app ? '<p class="painel__titulo-sub">Usa o app AgendaPro: os avisos chegam por lá</p>' : "") + "</div></div>" +
       '<dl class="ficha__numeros"><div><dt>Consultas</dt><dd class="num">' + p.consultas.length + '</dd></div><div><dt>Faltas</dt><dd class="num">' + p.faltas +
       '</dd></div><div><dt>Na fila</dt><dd class="num">' + p.filas.length + "</dd></div></dl>" +
+      (p.faltas ? '<p class="multa multa--total">Multas em aberto: <b class="num">' + A.reais(p.faltas * D.politica.multa) + "</b> (" + p.faltas + (p.faltas === 1 ? " falta" : " faltas") + " × " + A.reais(D.politica.multa) + ")</p>" : "") +
       (p.filas.length
         ? '<p class="ficha__secao">Lista de espera</p><ul class="historico">' + p.filas.map((f) =>
             '<li><span class="historico__quando">' + f.pos + 'ª posição</span><span class="historico__quem">' + K.medico(f.m).nome + " · desde " + A.extenso(f.desde, false) + "</span>" +

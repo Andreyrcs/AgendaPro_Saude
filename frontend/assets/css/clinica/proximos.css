@@ -52,7 +52,7 @@
   max-height: 340px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #b9c6c2 transparent;
+  scrollbar-color: var(--rolagem) transparent;
 }
 
 .proximo {

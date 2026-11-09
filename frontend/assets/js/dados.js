@@ -4,6 +4,10 @@
 window.DADOS = {
   hoje: "2026-10-20",
 
+  /* Política de faltas: depois de 60 min de atraso a consulta vira falta, com multa de R$ 30,00.
+     A cobrança é só visual no protótipo: nada é cobrado de verdade. */
+  politica: { toleranciaMin: 60, multa: 30 },
+
   clinica: {
     nome: "Clínica Ipê",
     unidade: "Unidade Centro",

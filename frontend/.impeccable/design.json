@@ -1,0 +1,805 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T12:00:00Z",
+  "title": "Design System: AgendaPro Saúde",
+  "extensions": {
+    "colorMeta": {
+      "noite": {
+        "role": "primary",
+        "displayName": "Azul-Noite",
+        "canonical": "#12263f",
+        "tonalRamp": [
+          "#000b1f",
+          "#12263f",
+          "#2e435e",
+          "#4c6380",
+          "#6d84a3",
+          "#8fa7c7",
+          "#b2ccec",
+          "#e4f0ff"
+        ]
+      },
+      "noite-2": {
+        "role": "primary",
+        "displayName": "Noite Um Passo Acima",
+        "canonical": "#1c3756",
+        "tonalRamp": [
+          "#000b1e",
+          "#0b2643",
+          "#284463",
+          "#476385",
+          "#6785a9",
+          "#89a8cd",
+          "#acccf3",
+          "#e4f0fe"
+        ]
+      },
+      "noite-3": {
+        "role": "primary",
+        "displayName": "Noite Dois Passos Acima",
+        "canonical": "#2a4a70",
+        "tonalRamp": [
+          "#000b1f",
+          "#052548",
+          "#234369",
+          "#42638b",
+          "#6385af",
+          "#84a8d4",
+          "#a8ccfa",
+          "#e4f0fe"
+        ]
+      },
+      "menta": {
+        "role": "secondary",
+        "displayName": "Verde-Menta",
+        "canonical": "#a8e6cf",
+        "tonalRamp": [
+          "#000f09",
+          "#002d21",
+          "#0a4e3c",
+          "#326e5b",
+          "#55907c",
+          "#77b49e",
+          "#9bd9c2",
+          "#c0ffe7"
+        ]
+      },
+      "menta-2": {
+        "role": "secondary",
+        "displayName": "Menta Clara",
+        "canonical": "#d4f3e6",
+        "tonalRamp": [
+          "#000f09",
+          "#112b22",
+          "#2e483e",
+          "#4d685d",
+          "#6d8a7e",
+          "#90ada1",
+          "#b3d1c5",
+          "#d8f7ea"
+        ]
+      },
+      "menta-tinta": {
+        "role": "secondary",
+        "displayName": "Menta-Tinta",
+        "canonical": "#1f6b52",
+        "tonalRamp": [
+          "#000f08",
+          "#002d1f",
+          "#034f39",
+          "#267057",
+          "#4b9378",
+          "#6eb69a",
+          "#92dbbe",
+          "#c0ffe4"
+        ]
+      },
+      "domingo": {
+        "role": "tertiary",
+        "displayName": "Vermelho de Domingo",
+        "canonical": "#c8381f",
+        "tonalRamp": [
+          "#1e0100",
+          "#4a0700",
+          "#7c1200",
+          "#b21f01",
+          "#da4a31",
+          "#fe755b",
+          "#ffb4a4",
+          "#ffe9e4"
+        ]
+      },
+      "domingo-claro": {
+        "role": "tertiary",
+        "displayName": "Domingo Claro",
+        "canonical": "#fbe7e2",
+        "tonalRamp": [
+          "#140805",
+          "#2f211e",
+          "#4d3e3a",
+          "#6e5d59",
+          "#907e79",
+          "#b3a09c",
+          "#d8c4bf",
+          "#fde9e4"
+        ]
+      },
+      "ambar": {
+        "role": "tertiary",
+        "displayName": "Âmbar (só clínica)",
+        "canonical": "#fdf0d2",
+        "tonalRamp": [
+          "#110a00",
+          "#2e240b",
+          "#4b4128",
+          "#6b6046",
+          "#8d8166",
+          "#b0a488",
+          "#d5c8ab",
+          "#faedd0"
+        ]
+      },
+      "ambar-tinta": {
+        "role": "tertiary",
+        "displayName": "Tinta Âmbar (só clínica)",
+        "canonical": "#7a4a00",
+        "tonalRamp": [
+          "#140800",
+          "#371f00",
+          "#5e3802",
+          "#865513",
+          "#a9763b",
+          "#ce995e",
+          "#f4bd81",
+          "#feebd7"
+        ]
+      },
+      "gelo": {
+        "role": "neutral",
+        "displayName": "Gelo",
+        "canonical": "#f4f7f6",
+        "tonalRamp": [
+          "#0a0c0b",
+          "#232625",
+          "#404342",
+          "#5f6261",
+          "#808382",
+          "#a3a6a5",
+          "#c7cac9",
+          "#ecefee"
+        ]
+      },
+      "gelo-2": {
+        "role": "neutral",
+        "displayName": "Gelo Um Passo Abaixo",
+        "canonical": "#e7eeeb",
+        "tonalRamp": [
+          "#080c0a",
+          "#212624",
+          "#3e4341",
+          "#5d6360",
+          "#7e8481",
+          "#a0a7a4",
+          "#c4cbc8",
+          "#e9f0ed"
+        ]
+      },
+      "papel": {
+        "role": "neutral",
+        "displayName": "Papel",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "linha": {
+        "role": "neutral",
+        "displayName": "Linha",
+        "canonical": "#d9e2df",
+        "tonalRamp": [
+          "#070d0b",
+          "#202725",
+          "#3d4441",
+          "#5b6361",
+          "#7c8482",
+          "#9fa7a4",
+          "#c3cbc8",
+          "#e8f1ee"
+        ]
+      },
+      "tinta": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#12263f",
+        "tonalRamp": [
+          "#000b1f",
+          "#12263f",
+          "#2e435e",
+          "#4c6380",
+          "#6d84a3",
+          "#8fa7c7",
+          "#b2ccec",
+          "#e4f0ff"
+        ]
+      },
+      "tinta-2": {
+        "role": "neutral",
+        "displayName": "Tinta Secundária",
+        "canonical": "#4b5b6c",
+        "tonalRamp": [
+          "#020c19",
+          "#182635",
+          "#344454",
+          "#536374",
+          "#738497",
+          "#95a7ba",
+          "#b9cbdf",
+          "#e3f0ff"
+        ]
+      },
+      "tinta-3": {
+        "role": "neutral",
+        "displayName": "Tinta de Meta",
+        "canonical": "#5d6b7a",
+        "tonalRamp": [
+          "#030c17",
+          "#1a2633",
+          "#364351",
+          "#556372",
+          "#768494",
+          "#98a7b7",
+          "#bbcbdc",
+          "#e3f0fe"
+        ]
+      },
+      "sobre-noite": {
+        "role": "neutral",
+        "displayName": "Sobre a Noite",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "sobre-noite-2": {
+        "role": "neutral",
+        "displayName": "Secundário sobre a Noite",
+        "canonical": "#bccbdc",
+        "tonalRamp": [
+          "#030c17",
+          "#1b2633",
+          "#374351",
+          "#556372",
+          "#768494",
+          "#98a7b7",
+          "#bccbdc",
+          "#e4f0fe"
+        ]
+      },
+      "corpo-aparelho": {
+        "role": "neutral",
+        "displayName": "Corpo do Aparelho",
+        "canonical": "#0a1828",
+        "tonalRamp": [
+          "#020b1a",
+          "#182637",
+          "#344356",
+          "#526377",
+          "#738499",
+          "#95a7bd",
+          "#b8cbe2",
+          "#e4f0fe"
+        ]
+      },
+      "creme": {
+        "role": "neutral",
+        "displayName": "Creme (só landing)",
+        "canonical": "#f5f4ec",
+        "tonalRamp": [
+          "#0c0b07",
+          "#26251f",
+          "#43423c",
+          "#62615b",
+          "#83837b",
+          "#a6a59e",
+          "#cac9c2",
+          "#f0efe7"
+        ]
+      },
+      "creme-2": {
+        "role": "neutral",
+        "displayName": "Creme Um Passo Abaixo (só landing)",
+        "canonical": "#ecebe0",
+        "tonalRamp": [
+          "#0c0b05",
+          "#26251d",
+          "#43423a",
+          "#636258",
+          "#848379",
+          "#a6a69b",
+          "#cbcabf",
+          "#f0efe4"
+        ]
+      },
+      "salvia": {
+        "role": "secondary",
+        "displayName": "Sálvia de Título (só landing)",
+        "canonical": "#5f937e",
+        "tonalRamp": [
+          "#000f08",
+          "#022d20",
+          "#174d3b",
+          "#3a6d59",
+          "#5b8f7a",
+          "#7db29d",
+          "#a1d7c0",
+          "#c6fde5"
+        ]
+      },
+      "salvia-clara": {
+        "role": "secondary",
+        "displayName": "Sálvia de Superfície (só landing)",
+        "canonical": "#8ab8a5",
+        "tonalRamp": [
+          "#000f09",
+          "#002d20",
+          "#204c3c",
+          "#406c5b",
+          "#618d7c",
+          "#83b19e",
+          "#a7d5c2",
+          "#cbfbe7"
+        ]
+      },
+      "salvia-fundo": {
+        "role": "neutral",
+        "displayName": "Sálvia de Fundo (só landing)",
+        "canonical": "#dfeae3",
+        "tonalRamp": [
+          "#060d09",
+          "#1f2722",
+          "#3c453f",
+          "#5a645e",
+          "#7b857f",
+          "#9ea8a1",
+          "#c2ccc5",
+          "#e7f2eb"
+        ]
+      },
+      "grafite-aparelho": {
+        "role": "neutral",
+        "displayName": "Grafite do Aparelho (só landing)",
+        "canonical": "#1b1e22",
+        "tonalRamp": [
+          "#080b10",
+          "#21252a",
+          "#3e4248",
+          "#5d6267",
+          "#7e8389",
+          "#a0a6ac",
+          "#c4cad0",
+          "#eaeff6"
+        ]
+      },
+      "id-juliana": {
+        "role": "identity",
+        "displayName": "Juliana",
+        "canonical": "#cfe2f6",
+        "tonalRamp": [
+          "#020c19",
+          "#182635",
+          "#344454",
+          "#536374",
+          "#738496",
+          "#95a7ba",
+          "#b9cbdf",
+          "#e3f0ff"
+        ]
+      },
+      "id-davi": {
+        "role": "identity",
+        "displayName": "Davi",
+        "canonical": "#fbdcc6",
+        "tonalRamp": [
+          "#160700",
+          "#351f0d",
+          "#543c2a",
+          "#755b48",
+          "#987c68",
+          "#bc9f8a",
+          "#e1c2ad",
+          "#ffeadc"
+        ]
+      },
+      "id-marina": {
+        "role": "identity",
+        "displayName": "Marina",
+        "canonical": "#d3f0e2",
+        "tonalRamp": [
+          "#000f08",
+          "#132b21",
+          "#30483d",
+          "#4e685c",
+          "#6f897d",
+          "#91ad9f",
+          "#b5d1c3",
+          "#d9f7e9"
+        ]
+      },
+      "id-cida": {
+        "role": "identity",
+        "displayName": "Cida",
+        "canonical": "#f6e5a8",
+        "tonalRamp": [
+          "#0f0b00",
+          "#2e2400",
+          "#4f4103",
+          "#706026",
+          "#928248",
+          "#b5a56a",
+          "#dac98d",
+          "#ffefb5"
+        ]
+      },
+      "id-kenji": {
+        "role": "identity",
+        "displayName": "Kenji",
+        "canonical": "#f3d3de",
+        "tonalRamp": [
+          "#17040c",
+          "#341d26",
+          "#533a43",
+          "#745862",
+          "#967983",
+          "#ba9ca6",
+          "#dfbfca",
+          "#fee8ef"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display-landing": {
+        "displayName": "Display da Landing",
+        "purpose": "O título da abertura da landing, em Archivo largo (118%) e 900. O nome da marca ao lado do logo usa a mesma receita, menor."
+      },
+      "headline-landing": {
+        "displayName": "Headline da Landing",
+        "purpose": "Títulos de seção da landing, com o fim da frase em Sálvia de Título."
+      },
+      "title-landing": {
+        "displayName": "Title da Landing",
+        "purpose": "Título de cada passo e dos textos ao lado dos celulares de aviso."
+      },
+      "numeral-passo": {
+        "displayName": "Numeral do Passo",
+        "purpose": "O 1, 2 e 3 dos passos, em Sálvia de Superfície. Decoração escondida de leitores de tela."
+      },
+      "numeral-folha": {
+        "displayName": "Numeral da Folha",
+        "purpose": "O dia na folha do produto."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Título de tela no app."
+      },
+      "carimbo": {
+        "displayName": "Carimbo",
+        "purpose": "Só o carimbo de confirmação, em caixa alta."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "A frase da abertura da landing, com medida de 34rem."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Texto corrido."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Exemplos, horários, notas e links da ilha."
+      }
+    },
+    "shadows": [
+      {
+        "name": "celular-inclinado",
+        "value": "-26px 34px 46px rgba(18, 38, 63, 0.28)",
+        "purpose": "Só o celular inclinado da abertura da landing. Objeto desenhado."
+      },
+      {
+        "name": "sombra-de-chao",
+        "value": "elipse rgba(18, 38, 63, 0.32) com filter: blur(22px)",
+        "purpose": "Sob todos os celulares da landing; na abertura respira junto com a flutuação."
+      },
+      {
+        "name": "ilha-flutuante",
+        "value": "0 0 0 2px #8ab8a5, 0 10px 30px rgba(18, 38, 63, 0.1)",
+        "purpose": "Aro sálvia e sombra baixa da ilha de navegação fixa, sobre creme translúcido com backdrop-filter: blur(10px)."
+      },
+      {
+        "name": "dentro-do-aparelho",
+        "value": "0 0.6em 1.4em rgba(18, 38, 63, 0.3)",
+        "purpose": "Notificação que desce sobre a tela desenhada. Faz parte do objeto."
+      },
+      {
+        "name": "dialogo",
+        "value": "0 24px 48px -16px rgba(10, 24, 40, 0.45)",
+        "purpose": "Diálogo do produto: fora do plano, não em repouso."
+      },
+      {
+        "name": "aviso",
+        "value": "0 18px 36px -12px rgba(10, 24, 40, 0.5)",
+        "purpose": "Aviso que desce no app."
+      },
+      {
+        "name": "toast",
+        "value": "0 16px 32px -12px rgba(10, 24, 40, 0.45)",
+        "purpose": "Toast da clínica."
+      },
+      {
+        "name": "bloco-levantado",
+        "value": "0 18px 28px -12px rgba(10, 24, 40, 0.55)",
+        "purpose": "Consulta sendo arrastada na agenda."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Entradas e toques."
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.77, 0, 0.175, 1)",
+        "purpose": "O que muda de lugar na tela."
+      },
+      {
+        "name": "ease-gaveta",
+        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "Gavetas."
+      },
+      {
+        "name": "t-toque",
+        "value": "160ms",
+        "purpose": "Resposta ao toque, com escala 0,97 ao pressionar."
+      },
+      {
+        "name": "carimbar",
+        "value": "mola 450ms, bounce 0,2",
+        "purpose": "O carimbo de confirmação. Mola só para arrastar, encaixar e carimbar."
+      },
+      {
+        "name": "ondas-de-pontos",
+        "value": "canvas com requestAnimationFrame; malha de 15 ou 16px, fase x*0,0088 - t*0,6; 7 faixas de opacidade; dpr até 1,75",
+        "purpose": "Ondas de pontos que correm da esquerda para a direita na abertura e no painel final da landing. Param fora de vista (IntersectionObserver) e com a aba escondida; com movimento reduzido ficam um quadro parado."
+      },
+      {
+        "name": "flutuar",
+        "value": "translateY 0 a -14px, 7s ease-in-out infinito",
+        "purpose": "O celular da abertura da landing, com a sombra de chão encolhendo para 0,92 e 0,7 de opacidade no mesmo ritmo."
+      },
+      {
+        "name": "entrada-abertura",
+        "value": "linhas do título sobem de 105% em 1000ms (segunda linha +90ms); frase +240ms e botão +320ms em 900ms; celular chega de (60px, 40px) em 1300ms; tudo em ease-out",
+        "purpose": "Entrada da abertura da landing, só com movimento permitido."
+      },
+      {
+        "name": "revelar",
+        "value": "opacity 0 e translateY 32px para repouso, 800ms e 900ms ease-out, uma vez, ao entrar 12% na tela",
+        "purpose": "Blocos da landing que aparecem ao rolar, via IntersectionObserver."
+      },
+      {
+        "name": "troca-de-tela",
+        "value": "tela que sai: opacity 0, translateY 14px, scale 0,985; entra em 360ms e 420ms ease-out",
+        "purpose": "O celular preso de Como funciona trocando de tela quando o passo cruza o meio da tela."
+      },
+      {
+        "name": "foco-do-passo",
+        "value": "opacity 0,32 para 1, 360ms ease-out",
+        "purpose": "O passo ativo acende; os outros ficam apagados enquanto o celular está preso."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "ilha-so-entrar",
+        "value": "560px"
+      },
+      {
+        "name": "uma-coluna",
+        "value": "899px"
+      },
+      {
+        "name": "palco-preso",
+        "value": "900px"
+      },
+      {
+        "name": "ilha-completa",
+        "value": "1100px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão principal",
+      "kind": "button",
+      "refersTo": "botao-principal",
+      "description": "Ação principal de uma tela: pílula azul-noite de 48px.",
+      "html": "<button class=\"ds-botao-principal\" type=\"button\">Marcar consulta</button>",
+      "css": ".ds-botao-principal{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:var(--raio-controle);font-family:var(--fonte-texto);font-weight:700;cursor:pointer;text-decoration:none;transition:transform 160ms var(--ease-out),background-color 160ms ease;min-height:48px;padding:8px 22px;background:var(--noite);color:#fff;} .ds-botao-principal:hover{background:var(--noite-3);} .ds-botao-principal:active{transform:scale(.97);} .ds-botao-principal:focus-visible{outline:3px solid var(--noite);outline-offset:2px;}"
+    },
+    {
+      "name": "Botão secundário",
+      "kind": "button",
+      "refersTo": "botao-secundario",
+      "description": "Papel com fio interno azul-noite, para a ação ao lado da principal.",
+      "html": "<button class=\"ds-botao-secundario\" type=\"button\">Remarcar</button>",
+      "css": ".ds-botao-secundario{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:var(--raio-controle);font-family:var(--fonte-texto);font-weight:700;cursor:pointer;text-decoration:none;transition:transform 160ms var(--ease-out),background-color 160ms ease;min-height:44px;padding:0 18px;background:var(--papel);color:var(--noite);box-shadow:inset 0 0 0 1.5px var(--noite);} .ds-botao-secundario:hover{background:var(--gelo);} .ds-botao-secundario:active{transform:scale(.97);} .ds-botao-secundario:focus-visible{outline:3px solid var(--noite);outline-offset:2px;}"
+    },
+    {
+      "name": "Botão de emergência",
+      "kind": "button",
+      "refersTo": "botao-emergencia",
+      "description": "Só para ligar 192 ou 188. É o único botão cheio de vermelho que uma tela nova deve ter.",
+      "html": "<a class=\"ds-botao-emergencia\" href=\"tel:192\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.85\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384\"/></svg>Ligar 192 (SAMU)</a>",
+      "css": ".ds-botao-emergencia{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:var(--raio-controle);font-family:var(--fonte-texto);font-weight:700;cursor:pointer;text-decoration:none;transition:transform 160ms var(--ease-out),background-color 160ms ease;min-height:48px;padding:8px 22px;background:var(--domingo);color:#fff;} .ds-botao-emergencia:active{transform:scale(.97);} .ds-botao-emergencia:focus-visible{outline:3px solid var(--noite);outline-offset:2px;}"
+    },
+    {
+      "name": "Campo do assistente",
+      "kind": "input",
+      "refersTo": "campo-pergunta",
+      "description": "Pílula de fio interno com o botão de enviar dentro.",
+      "html": "<form class=\"ds-pergunta\" onsubmit=\"return false\"><label class=\"ds-pergunta__rotulo\" for=\"ds-sintoma\">O que você está sentindo?</label><div class=\"ds-pergunta__linha\"><input class=\"ds-pergunta__campo\" id=\"ds-sintoma\" type=\"text\" placeholder=\"Escreva do seu jeito\" /><button class=\"ds-pergunta__enviar\" type=\"submit\" aria-label=\"Enviar\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.85\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z\"/><path d=\"m21.854 2.147-10.94 10.939\"/></svg></button></div></form>",
+      "css": ".ds-pergunta{background:var(--papel);padding:16px;color:var(--tinta);font-family:var(--fonte-texto);} .ds-pergunta__rotulo{display:block;margin-bottom:8px;font-family:var(--fonte-numero);font-stretch:84%;font-weight:700;font-size:1.25rem;line-height:1.15;} .ds-pergunta__linha{display:flex;align-items:center;gap:8px;padding:5px 5px 5px 18px;border-radius:var(--raio-controle);box-shadow:inset 0 0 0 1.5px var(--tinta-3);transition:box-shadow 160ms ease;} .ds-pergunta__linha:focus-within{box-shadow:inset 0 0 0 2.5px var(--noite);} .ds-pergunta__campo{flex:1;min-width:0;min-height:46px;border:0;outline:0;background:none;font:inherit;font-size:1.0625rem;caret-color:var(--menta-tinta);} .ds-pergunta__campo::placeholder{color:var(--tinta-3);opacity:1;} .ds-pergunta__enviar{display:grid;place-items:center;flex:none;width:46px;height:46px;border:0;border-radius:50%;background:var(--noite);color:#fff;cursor:pointer;transition:transform 160ms var(--ease-out);} .ds-pergunta__enviar:active{transform:scale(.97);} .ds-pergunta__enviar:focus-visible{outline:3px solid var(--noite);outline-offset:2px;}"
+    },
+    {
+      "name": "Exemplos e horários",
+      "kind": "chip",
+      "refersTo": "exemplo",
+      "description": "Pílulas de exemplo com fio, a de emergência em vermelho, e etiquetas menta de horário.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-exemplo\" type=\"button\">O Davi está com dor de ouvido</button><button class=\"ds-exemplo ds-exemplo--alerta\" type=\"button\">Dor no peito e falta de ar</button><button class=\"ds-horario\" type=\"button\">5 nov, 10:30</button></div>",
+      "css": ".ds-chips{display:flex;flex-wrap:wrap;gap:8px;font-family:var(--fonte-texto);} .ds-exemplo{min-height:44px;padding:8px 16px;border:0;border-radius:var(--raio-controle);background:none;box-shadow:inset 0 0 0 1.5px var(--noite);color:var(--tinta);font:inherit;font-weight:600;font-size:.9375rem;line-height:1.2;cursor:pointer;transition:background-color 160ms ease,color 160ms ease;} .ds-exemplo:hover{background:var(--noite);color:#fff;} .ds-exemplo--alerta{box-shadow:inset 0 0 0 1.5px var(--domingo);color:var(--domingo);} .ds-exemplo--alerta:hover{background:var(--domingo);color:#fff;} .ds-horario{min-height:44px;padding:6px 14px;border:0;border-radius:12px;background:var(--menta);color:var(--noite);font-family:var(--fonte-numero);font-variant-numeric:tabular-nums lining-nums;font-weight:600;font-size:.9375rem;cursor:pointer;transition:background-color 160ms ease;} .ds-horario:hover{background:var(--menta-2);} .ds-exemplo:focus-visible,.ds-horario:focus-visible{outline:3px solid var(--noite);outline-offset:2px;}"
+    },
+    {
+      "name": "Selos de situação",
+      "kind": "chip",
+      "refersTo": "selo",
+      "description": "Pílula que diz a situação da consulta, por extenso.",
+      "html": "<div class=\"ds-selos\"><span class=\"ds-selo\">Confirmada</span><span class=\"ds-selo ds-selo--chegou\">Na recepção</span><span class=\"ds-selo ds-selo--em\">Em atendimento</span></div>",
+      "css": ".ds-selos{display:flex;flex-wrap:wrap;gap:8px;font-family:var(--fonte-texto);} .ds-selo{display:inline-block;padding:.1em .55em;border-radius:var(--raio-controle);background:var(--gelo-2);color:var(--tinta-2);font-size:.8125rem;font-weight:700;white-space:nowrap;} .ds-selo--chegou{background:var(--menta);color:var(--noite);} .ds-selo--em{background:var(--noite);color:#fff;}"
+    },
+    {
+      "name": "Folha do dia",
+      "kind": "custom",
+      "refersTo": "folha",
+      "description": "A assinatura do mundo: mês, picote, numeral condensado e dia da semana. Vermelho só em domingo e feriado.",
+      "html": "<div class=\"ds-folhas\"><div class=\"ds-folha\"><span class=\"ds-folha__mes\">out</span><span class=\"ds-folha__dia\">20</span><span class=\"ds-folha__semana\">ter</span></div><div class=\"ds-folha ds-folha--menta\"><span class=\"ds-folha__mes\">out</span><span class=\"ds-folha__dia\">26</span><span class=\"ds-folha__semana\">seg</span></div><div class=\"ds-folha ds-folha--domingo\"><span class=\"ds-folha__mes\">nov</span><span class=\"ds-folha__dia\">15</span><span class=\"ds-folha__semana\">dom</span></div></div>",
+      "css": ".ds-folhas{display:flex;gap:12px;} .ds-folha{display:grid;grid-template-rows:auto 1fr auto;width:76px;overflow:hidden;border-radius:var(--raio-folha);background:var(--papel);color:var(--tinta);text-align:center;box-shadow:inset 0 0 0 1.5px var(--linha);} .ds-folha__mes{position:relative;padding:5px 4px 4px;background:var(--noite);color:#fff;font-family:var(--fonte-numero);font-stretch:88%;font-weight:700;font-size:.8125rem;letter-spacing:.02em;} .ds-folha__mes::after{content:'';position:absolute;left:8px;right:8px;bottom:-3px;height:6px;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Ccircle cx='5' cy='3' r='1.6' fill='%23d9e2df'/%3E%3C/svg%3E\");background-repeat:repeat-x;background-position:center;} .ds-folha__dia{padding:8px 2px 0;font-family:var(--fonte-numero);font-stretch:72%;font-weight:800;font-size:3.1rem;line-height:.95;letter-spacing:-.02em;font-variant-numeric:lining-nums;} .ds-folha__semana{padding:2px 4px 8px;color:var(--tinta-2);font-family:var(--fonte-texto);font-weight:600;font-size:.875rem;} .ds-folha--menta .ds-folha__mes{background:var(--menta);color:var(--noite);} .ds-folha--domingo .ds-folha__dia{color:var(--domingo);}"
+    },
+    {
+      "name": "Botão com seta",
+      "kind": "button",
+      "refersTo": "botao-seta",
+      "description": "Chamada da landing: pílula sálvia de 64px com a seta em um círculo creme na ponta. A versão escura fecha a página sobre o painel sálvia.",
+      "html": "<div class=\"ds-seta-palco\"><a class=\"ds-botao-seta\" href=\"#\">Ver como funciona<span class=\"ds-botao-seta__icone\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.85\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></span></a><a class=\"ds-botao-seta ds-botao-seta--escuro\" href=\"#\">Criar minha conta<span class=\"ds-botao-seta__icone\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.85\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></span></a></div>",
+      "css": ".ds-seta-palco{display:flex;flex-wrap:wrap;gap:14px;padding:24px;background:var(--creme,#f5f4ec);} .ds-botao-seta{display:inline-flex;align-items:center;gap:22px;min-height:64px;padding:7px 7px 7px 30px;border-radius:999px;background:var(--salvia-clara,#8ab8a5);color:var(--noite,#12263f);font-family:var(--fonte-texto);font-weight:700;font-size:1.125rem;text-decoration:none;transition:transform 160ms var(--ease-out,cubic-bezier(.23,1,.32,1));} .ds-botao-seta__icone{display:grid;place-items:center;width:50px;height:50px;border-radius:50%;background:var(--creme,#f5f4ec);color:var(--noite,#12263f);transition:transform 260ms var(--ease-out,cubic-bezier(.23,1,.32,1));} .ds-botao-seta--escuro{background:var(--noite,#12263f);color:#fff;} .ds-botao-seta--escuro .ds-botao-seta__icone{background:var(--salvia-clara,#8ab8a5);} .ds-botao-seta:hover .ds-botao-seta__icone{transform:translateX(3px);} .ds-botao-seta:active{transform:scale(.97);} .ds-botao-seta:focus-visible{outline:3px solid var(--noite,#12263f);outline-offset:2px;}"
+    },
+    {
+      "name": "Ilha de navegação",
+      "kind": "nav",
+      "refersTo": "ilha",
+      "description": "Navegação fixa da landing: aro sálvia, folga creme translúcida, miolo sálvia com links em pílula, seção atual em creme e Entrar em azul-noite.",
+      "html": "<div class=\"ds-ilha-palco\"><div class=\"ds-ilha\"><nav class=\"ds-ilha__nucleo\" aria-label=\"Seções\"><a href=\"#\" aria-current=\"true\">Início</a><a href=\"#\">Como funciona</a><a href=\"#\">Família</a><a class=\"ds-ilha__entrar\" href=\"#\">Entrar</a></nav></div></div>",
+      "css": ".ds-ilha-palco{display:flex;justify-content:flex-end;padding:24px;background:var(--creme,#f5f4ec);font-family:var(--fonte-texto);} .ds-ilha{padding:3px;border-radius:999px;background:rgba(245,244,236,.75);box-shadow:0 0 0 2px var(--salvia-clara,#8ab8a5),0 10px 30px rgba(18,38,63,.1);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);} .ds-ilha__nucleo{display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px;background:var(--salvia-clara,#8ab8a5);} .ds-ilha__nucleo a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;color:var(--noite,#12263f);font-weight:700;font-size:.9375rem;text-decoration:none;transition:background-color 180ms ease,color 180ms ease;} .ds-ilha__nucleo a[aria-current='true']{background:var(--creme,#f5f4ec);} .ds-ilha__nucleo a:hover{background:rgba(245,244,236,.55);} .ds-ilha__nucleo .ds-ilha__entrar{margin-left:4px;background:var(--noite,#12263f);color:#fff;} .ds-ilha__nucleo .ds-ilha__entrar:hover{background:var(--noite-2,#1c3756);} .ds-ilha a:focus-visible{outline:3px solid var(--noite,#12263f);outline-offset:0;}"
+    },
+    {
+      "name": "Celular inclinado",
+      "kind": "custom",
+      "refersTo": "grafite-aparelho",
+      "description": "O app do paciente desenhado em um celular grafite, inclinado em perspectiva sobre o creme, com sombra de chão azul-noite. Ilustração, escondida de leitores de tela.",
+      "html": "<div class=\"ds-cel-palco\" aria-hidden=\"true\"><div class=\"ds-cel\"><div class=\"ds-cel__vidro\"><span class=\"ds-cel__ilha\"></span><p class=\"ds-cel__titulo\">Agenda</p><div class=\"ds-cel__mes\">Outubro</div><div class=\"ds-cel__dias\"><span class=\"ds-vermelho\">4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span class=\"ds-vermelho\">11</span><span class=\"ds-vermelho\">12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span class=\"ds-vermelho\">18</span><span>19</span><span class=\"ds-hoje\">20</span><span>21</span><span>22</span><span class=\"ds-marcado\">23</span><span>24</span></div></div></div><span class=\"ds-cel__sombra\"></span></div>",
+      "css": ".ds-cel-palco{position:relative;display:grid;place-items:center;padding:48px 24px 64px;background:var(--creme,#f5f4ec);perspective:2000px;} .ds-cel{--l:220px;width:var(--l);padding:calc(var(--l)*.035);border-radius:calc(var(--l)*.155);background:#1b1e22;font-size:calc(var(--l)/22.5);transform:rotateX(18deg) rotateY(-24deg) rotateZ(13deg);box-shadow:inset 0 0 0 2px #3a3f45,inset 0 0 0 4px #15181b,-26px 34px 46px rgba(18,38,63,.28);} .ds-cel__vidro{position:relative;height:calc(var(--l)*1.5);overflow:hidden;border-radius:calc(var(--l)*.125);background:var(--gelo,#f4f7f6);color:var(--tinta,#12263f);font-family:var(--fonte-texto);} .ds-cel__ilha{position:absolute;left:50%;top:.75em;width:7em;height:2em;translate:-50% 0;border-radius:999px;background:#0d0f11;} .ds-cel__titulo{margin:0;padding:3.3em 1.1em .5em;font-family:var(--fonte-numero);font-weight:800;font-size:1.6em;} .ds-cel__mes{margin:0 .8em;padding:.55em .7em;border-radius:.9em .9em 0 0;background:var(--noite,#12263f);color:#fff;font-family:var(--fonte-numero);font-stretch:90%;font-weight:800;font-style:italic;font-size:1.2em;text-align:center;} .ds-cel__dias{display:grid;grid-template-columns:repeat(7,1fr);gap:.22em;margin:.4em .8em;font-weight:700;font-size:.92em;font-variant-numeric:tabular-nums;} .ds-cel__dias span{display:grid;place-items:center;aspect-ratio:1/1.05;border-radius:.45em;background:var(--papel,#fff);} .ds-cel__dias .ds-vermelho{color:var(--domingo,#c8381f);} .ds-cel__dias .ds-hoje{box-shadow:inset 0 0 0 2px var(--menta-tinta,#1f6b52);} .ds-cel__dias .ds-marcado{background:var(--menta,#a8e6cf);} .ds-cel__sombra{position:absolute;left:30%;right:22%;bottom:30px;height:22px;border-radius:50%;background:rgba(18,38,63,.32);filter:blur(22px);transform:rotate(10deg);} @media (prefers-reduced-motion:no-preference){.ds-cel{animation:ds-flutuar 7s ease-in-out infinite;} @keyframes ds-flutuar{0%,100%{translate:0 0;}50%{translate:0 -14px;}}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Folhinha de Parede",
+    "overview": "As telas do produto são uma folhinha de calendário: papel branco, numeral condensado, tira do mês, picote, e o vermelho reservado aos dias que o calendário já marca de vermelho. Tudo acontece em campos chapados de cor. O azul-noite é a tinta e o topo, o gelo é o chão do app, o papel é a folha, a menta é o que deu certo. A folha do dia, com mês, numeral e dia da semana, é a assinatura que aparece no app do paciente, na área do médico e na recepção.\n\nA densidade segue a pessoa que tem menos familiaridade com tecnologia: texto grande, contraste alto, alvos de toque generosos e um controle de tamanho de texto que a interface inteira acompanha. A recepção trabalha em telas mais densas, com a mesma paleta, as mesmas letras e os mesmos raios. As recusas confirmadas pelo mundo são duas: degradê e sombra em repouso na interface do produto.\n\nA landing (`index.html`) é uma superfície própria do mesmo produto, mais clara e mais solta, desenhada pelo dono do projeto: chão creme, azul-noite no texto, verde-sálvia nas superfícies, títulos em Archivo largo e pesado, ondas de pontos que correm ao fundo e celulares inclinados que mostram o app do paciente. Ela fala a mesma língua (Archivo e Atkinson, azul-noite, pílulas, folha do dia e vermelho de domingo dentro dos celulares), mas o creme e as sálvias são tokens só dela e não entram nas telas do produto. A composição da landing pertence a `.impeccable/surfaces/index-html.md`; aqui ficam as regras que ela e as outras telas herdam.\n\nO movimento obedece a uma gramática curta: só transform e opacity, ease-out para entrar, ease-in-out para mover, mola apenas para arrastar, encaixar e carimbar. Com movimento reduzido, tudo vira opacidade ou corte seco, e as ondas de pontos ficam paradas.",
+    "keyCharacteristics": [
+      "Campos chapados, separados por tom ou por fio interno, nunca por elevação.",
+      "Dois tipos com papéis fechados: Archivo para números e títulos (condensado no produto, largo na landing), Atkinson Hyperlegible Next para leitura.",
+      "Vermelho raro e com significado: calendário e emergência.",
+      "Sombra só em objeto desenhado e no que está flutuando ou sendo arrastado, sempre tingida de azul-noite.",
+      "Alvos de 44px ou mais e tamanho de texto ajustável como requisito de layout.",
+      "A landing é uma superfície creme e sálvia do mesmo produto, não outra marca."
+    ],
+    "rules": [
+      {
+        "name": "The Vermelho de Domingo Rule",
+        "body": "O vermelho marca domingo, feriado e emergência, e nada mais. Se o dia não é vermelho no calendário e ninguém precisa ligar para o 192 ou o 188, não é vermelho. O código de hoje também o usa em erro de formulário e em ação destrutiva; isso é desvio registrado, não precedente para telas novas.",
+        "section": "colors"
+      },
+      {
+        "name": "The Menta-Tinta Rule",
+        "body": "A menta é campo, nunca texto sobre claro. Para escrever em verde sobre papel, gelo ou creme, use a Menta-Tinta.",
+        "section": "colors"
+      },
+      {
+        "name": "The Cor de Gente Rule",
+        "body": "As cores-identidade dizem quem é a pessoa. Elas não carregam estado nem categoria. A folha de mês ainda reaproveita um desses tons; isso é desvio registrado, não precedente.",
+        "section": "colors"
+      },
+      {
+        "name": "The Creme Fica na Vitrine Rule",
+        "body": "Creme e as três sálvias existem só na landing. App do paciente, área do médico, recepção, login e cadastro continuam em gelo, papel e menta. Dentro dos celulares desenhados na landing, o app aparece com as cores dele, não com as da landing.",
+        "section": "colors"
+      },
+      {
+        "name": "The Sálvia de Título Rule",
+        "body": "A Sálvia de Título é para texto grande, a partir do tamanho de título de seção, e nunca para texto corrido ou rótulo. Superfície sálvia usa a Sálvia de Superfície com texto azul-noite por cima.",
+        "section": "colors"
+      },
+      {
+        "name": "The Largura Rule",
+        "body": "No produto, quanto maior o Archivo, mais estreito: 72 no dia da folha, 80 no mês do calendário, 84 no carimbo, 86 no título de tela, 88 na tira do mês. Títulos condensados levam um pouco de espaço entre palavras para não colarem. Na landing a regra se inverte de propósito: títulos abrem para 112 ou 118 e pesam 800 ou 900, com -0,02em de espaço entre letras. Uma largura não atravessa para a outra superfície.",
+        "section": "typography"
+      },
+      {
+        "name": "The Número Rule",
+        "body": "Todo número que se compara, como hora, data e posição na fila, usa Archivo com numerais tabulares e de altura de caixa. Texto corrido nunca usa Archivo.",
+        "section": "typography"
+      },
+      {
+        "name": "The Régua Rule",
+        "body": "A raiz sobe para 118,75% ou 137,5% quando a pessoa escolhe texto maior, e toda a interface acompanha, inclusive a landing. Dimensione em rem ou em, e nunca fixe em px um texto de interface. Só os celulares ilustrados da landing têm base própria em px, porque são desenhos em escala: a largura do aparelho define o tamanho da letra dentro dele.",
+        "section": "typography"
+      },
+      {
+        "name": "The Chapado Rule",
+        "body": "Sem degradê e sem sombra em repouso na interface do produto. A hachura de parada dura que marca uma falta na agenda é padrão de estado, não degradê. As ondas de pontos da landing são pontos sólidos de tamanhos diferentes, não degradê.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Objeto Desenhado Rule",
+        "body": "A sombra dos celulares na landing é uma exceção delimitada, não uma contradição: eles são ilustrações do app, não interface. A ilha só tem sombra porque fica fixa e flutua sobre a página. Se a peça é um botão, um cartão ou uma lista de verdade, ela continua chapada, na landing e no produto.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Sombra Tingida Rule",
+        "body": "Toda sombra sai do azul (rgb(18, 38, 63), o próprio azul-noite, na landing; rgb(10, 24, 40) no produto) e tem deslocamento e desfoque. Preto neutro não pertence a este mundo.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do usar os tokens de `assets/css/tokens.css` como fonte única de cor, raio, fonte e tempo do produto, e os de `assets/css/landing.css` só para a landing.",
+      "Do separar superfícies por passo de tom (gelo, gelo-2, papel) ou fio interno de 1,5px em Linha antes de pensar em sombra.",
+      "Do manter todo alvo de toque com pelo menos 44px, e testar cada tela com a raiz em 137,5%.",
+      "Do usar Menta-Tinta sempre que a menta precisar ser lida sobre fundo claro.",
+      "Do escrever números de hora, data e posição em Archivo com numerais tabulares.",
+      "Do usar a Sálvia de Título (#5f937e) só em título grande, e a Sálvia de Superfície (#8ab8a5) só como campo com texto azul-noite.",
+      "Do entregar todo efeito preso ao rolar como melhoria sobre uma versão empilhada que já funciona sem JavaScript.",
+      "Do reservar hover para `hover: hover` e `pointer: fine`, e dar a toda animação um caminho para movimento reduzido, inclusive o canvas, que fica parado.",
+      "Do pausar toda animação contínua quando ela sai de vista ou a aba fica escondida."
+    ],
+    "donts": [
+      "Don't usar o vermelho de domingo em nada que não seja domingo, feriado ou emergência.",
+      "Don't usar degradê, nem sombra em repouso na interface do produto.",
+      "Don't levar a sombra dos celulares para botões, cartões ou listas de verdade.",
+      "Don't usar preto neutro em sombra: ela sai sempre do azul-noite.",
+      "Don't escrever menta sobre claro, nem usar cor-identidade para indicar estado ou categoria.",
+      "Don't levar o creme ou as sálvias para o app, a área do médico, a recepção, o login ou o cadastro.",
+      "Don't usar Archivo em texto corrido, nem Atkinson em numeral grande.",
+      "Don't usar o Archivo largo da landing nas telas do produto, nem o condensado do produto nos títulos da landing."
+    ]
+  }
+}

@@ -17,6 +17,7 @@
     { id: "horarios", href: "horarios.html", icone: "clock", rotulo: "Horários" },
     { id: "especialidades", href: "especialidades.html", icone: "heart-pulse", rotulo: "Especialidades" },
     { id: "pacientes", href: "pacientes.html", icone: "users", rotulo: "Pacientes" },
+    { id: "equipe", href: "equipe.html", icone: "building", rotulo: "Clínica e equipe" },
   ];
 
   const AGORA0 = 10 * 60 + 40;
@@ -110,8 +111,12 @@
   aplicarPref();
 
   /* ─── A conta de quem está na recepção (dados FICTÍCIOS) ─── */
-  const CHAVE_CONTA = "agendapro.recepcao.conta";
-  const conta = { nome: "Carla Mendes", email: "carla.mendes@clinicaipe.exemplo", tel: "(11) 2345-0000", ramal: "12", funcao: "Recepção" };
+  /* quem entrou pelo login (api.js) aparece aqui; sem login, fica a recepcionista de exemplo */
+  const logado = window.API ? window.API.usuarioAtual() : null;
+  const CHAVE_CONTA = "agendapro.recepcao.conta" + (logado ? "." + logado.id : "");
+  const conta = logado
+    ? { nome: logado.nome, email: logado.email, tel: D.clinica.telefone, ramal: "", funcao: window.API.PAPEIS[logado.papel], papel: logado.papel }
+    : { nome: "Carla Mendes", email: "carla.mendes@clinicaipe.exemplo", tel: "(11) 2345-0000", ramal: "12", funcao: "Recepção", papel: "recepcao" };
   try { Object.assign(conta, JSON.parse(localStorage.getItem(CHAVE_CONTA)) || {}); } catch (e) { /* sem armazenamento */ }
   function salvarConta(campos) {
     Object.assign(conta, campos);
@@ -173,6 +178,7 @@
       pe.replaceWith(link);
     }
     desenharPe();
+    A.seloClinica(lateral, conta.papel, { href: "equipe.html" });
     /* a logo (30px) é desenhada aqui, igual em todas as páginas; só o texto ao lado some quando o menu recolhe */
     lateral.querySelectorAll("[data-marca]").forEach((el) => { el.outerHTML = A.marca(Number(el.dataset.marca) || 30); });
     const marcaTexto = lateral.querySelector(".lateral__marca > span:not(.marca)");

@@ -39,7 +39,7 @@
   let layoutSalvo = null;
   try { layoutSalvo = localStorage.getItem("agendapro.layout"); } catch (e) { /* sem armazenamento */ }
 
-  const est = { vista: "dia", layout: layoutSalvo === "linha" ? "linha" : "coluna", dia: D.hoje, semana: segunda(D.hoje), filaMedico: "camila", sessao: null };
+  const est = { vista: "dia", layout: layoutSalvo === "linha" ? "linha" : "coluna", dia: D.hoje, semana: segunda(D.hoje), filaMedico: "camila", sessao: null, filtro: new Set() };
   const emLinha = () => est.layout === "linha" && est.vista !== "mes";
 
   const $ = (s) => document.querySelector(s);
@@ -59,6 +59,7 @@
     const e = ESTADOS[k.status];
     const quem = k.status === "vaga" ? "Horário livre" : k.paciente;
     return quem + ", " + C.txt(k.ini) + " às " + C.txt(k.ini + k.dur) + ", " + curtoData(k.data) + ", " + m.nome + ". " + e.rotulo + "." +
+      (k.status === "faltou" ? " Multa de " + A.reais(D.politica.multa) + "." : "") +
       (MOVEIS.includes(k.status) ? " Enter abre as opções." : "");
   }
 
@@ -75,7 +76,7 @@
   function blocoHTML(k, c) {
     const e = ESTADOS[k.status];
     const nome = k.status === "vaga" ? "Vaga aberta" : k.status === "oferecida" ? k.paciente : k.paciente;
-    const sub = k.status === "oferecida" ? C.txt(k.ini) + " · aguarda" : C.txt(k.ini);
+    const sub = k.status === "oferecida" ? C.txt(k.ini) + " · aguarda" : k.status === "faltou" ? C.txt(k.ini) + " · multa " + A.reais(D.politica.multa) : C.txt(k.ini);
     return (
       '<button type="button" class="cbloco cbloco--' + k.status + '" data-id="' + k.id + '" style="--c:' + c + ";--ini:" + k.ini + ";--dur:" + k.dur + '"' +
       ' aria-label="' + A.esc(rotuloConsulta(k)) + '" aria-haspopup="menu">' +
@@ -92,6 +93,7 @@
     el.style.cssText = n.style.cssText;
     el.innerHTML = n.innerHTML;
     el.setAttribute("aria-label", n.getAttribute("aria-label"));
+    aplicarFiltro();
   }
   const blocoEl = (id) => vistaEl.querySelector('.cbloco[data-id="' + id + '"]');
 
@@ -446,7 +448,7 @@
     const c = ev.target.closest("[data-dica]");
     if (c) { mostrarDica(c, c.dataset.dica); return; }
     const b = ev.target.closest(".grade--semana .cbloco");
-    if (b) { const k = C.consultas.find((x) => x.id === b.dataset.id); mostrarDica(b, "<b>" + A.esc(k.status === "vaga" ? "Vaga aberta" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + curtoData(k.data) + " · " + medico(k.medico).nome + "<br>" + ESTADOS[k.status].rotulo); return; }
+    if (b) { const k = C.consultas.find((x) => x.id === b.dataset.id); mostrarDica(b, "<b>" + A.esc(k.status === "vaga" ? "Vaga aberta" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + curtoData(k.data) + " · " + medico(k.medico).nome + "<br>" + ESTADOS[k.status].rotulo + (k.status === "faltou" ? " · multa " + A.reais(D.politica.multa) : "")); return; }
     dica.hidden = true;
   });
   document.addEventListener("focusin", (ev) => {
@@ -525,13 +527,13 @@
     }
     if (k.status === "confirmada") {
       const falta = Math.round(k.ini - t);
-      if (falta < 0) return '<span class="selo selo--atraso">' + -falta + " min de atraso</span>";
+      if (falta < 0) return '<span class="selo selo--atraso">' + -falta + " min de atraso</span>" + (-falta >= D.politica.toleranciaMin - 15 ? ' <span class="multa multa--aviso">falta em ' + Math.max(0, D.politica.toleranciaMin + falta) + " min</span>" : "");
       if (falta === 0) return '<span style="white-space:nowrap">horário agora</span>';
       if (falta <= 45) return '<span style="white-space:nowrap">chega em ' + falta + " min</span>";
       return "";
     }
     if (k.status === "atendida") return '<span class="selo selo--atendida">Atendida</span>';
-    if (k.status === "faltou") return '<span class="selo selo--faltou">Faltou</span>';
+    if (k.status === "faltou") return '<span class="selo selo--faltou">Faltou</span> <span class="multa">Multa ' + A.reais(D.politica.multa) + "</span>";
     return "";
   }
 
@@ -640,6 +642,22 @@
     est.proximosTodos = !est.proximosTodos;
     desenharProximos();
   });
+  /* depois de 60 min de atraso, a consulta vira falta sozinha */
+  function verificarFaltas() {
+    const mudou = C.aplicarFaltas(agora());
+    mudou.forEach((k) => { const el = blocoEl(k.id); if (el) atualizarBloco(el, k); });
+    if (!mudou.length) return;
+    desenharProximos();
+    desenharResumo(false);
+    toast({
+      titulo: mudou.length === 1 ? mudou[0].paciente + " não compareceu" : mudou.length + " pacientes não compareceram",
+      texto: "Passou de " + D.politica.toleranciaMin + " min de atraso: marcada como falta, multa de " + A.reais(D.politica.multa) + ".",
+      icone: "x", duracao: 6000,
+    });
+    anunciar(mudou.length + (mudou.length === 1 ? " consulta marcada como falta." : " consultas marcadas como falta."));
+  }
+  setInterval(verificarFaltas, 5000);
+
   /* o relógio anda: atrasos e quem já saiu da lista se atualizam, sem roubar o foco de quem está usando */
   setInterval(() => {
     if ($("#proximos").contains(document.activeElement) && document.activeElement !== $("#busca")) return;
@@ -943,11 +961,12 @@
     menuCamada.innerHTML =
       '<div class="menu" role="dialog" aria-label="Opções da consulta">' +
       '<div class="menu__cab"><p class="menu__nome">' + A.esc(k.status === "vaga" ? "Vaga aberta" : k.paciente) + "</p>" +
-      '<p class="menu__sub">' + curtoData(k.data) + ", " + C.txt(k.ini) + " às " + C.txt(k.ini + k.dur) + "<br>" + m.nome + " · " + ESTADOS[k.status].rotulo + "</p></div>" +
+      '<p class="menu__sub">' + curtoData(k.data) + ", " + C.txt(k.ini) + " às " + C.txt(k.ini + k.dur) + "<br>" + m.nome + " · " + ESTADOS[k.status].rotulo + "</p>" +
+      (k.status === "faltou" ? '<p class="multa">' + I("circle-check", "ic-sm") + "Multa de " + A.reais(D.politica.multa) + (k.faltaAuto ? " · passou de " + D.politica.toleranciaMin + " min de atraso" : " · falta registrada") + "</p>" : "") + "</div>" +
       '<div class="menu__itens" role="menu">' +
       (itens.length
         ? itens.map(([acao, ic, t, perigo]) => '<button type="button" role="menuitem" data-acao="' + acao + '"' + (perigo ? ' class="menu__perigo"' : "") + ">" + I(ic, "ic-sm") + t + "</button>").join("")
-        : '<p class="menu__sub" style="padding:6px 4px">' + (k.status === "oferecida" ? "Aguardando a resposta da pessoa (até 30 minutos)." : "Consulta já atendida: não há o que mudar.") + "</p>") +
+        : '<p class="menu__sub" style="padding:6px 4px">' + (k.status === "oferecida" ? "Aguardando a resposta da pessoa (até 30 minutos)." : k.status === "faltou" ? "O paciente não compareceu: não há o que mudar." : "Consulta já atendida: não há o que mudar.") + "</p>") +
       '<button type="button" role="menuitem" data-acao="fechar">' + I("x", "ic-sm") + "Fechar</button></div></div>";
     menuCamada.hidden = false;
     const menu = menuCamada.querySelector(".menu");
@@ -1146,10 +1165,59 @@
     toast({ titulo: "Fora do escopo deste protótipo", texto: "Esta parte não foi desenhada na v2.", icone: "info", duracao: 3000 });
   }));
 
-  /* ─── Legenda, cabeçalho e primeira pintura ─── */
-  $(".legenda").innerHTML = Object.keys(ESTADOS).map((s) =>
-    '<li><span class="cbloco cbloco--' + s + '" aria-hidden="true">' + (ESTADOS[s].icone ? I(ESTADOS[s].icone) : "") + "</span>" + ESTADOS[s].rotulo + "</li>"
-  ).join("");
+  /* ─── Legenda que filtra: mostra só as situações escolhidas ─── */
+  function desenharLegenda() {
+    const todas = est.filtro.size === 0;
+    $(".legenda").innerHTML =
+      '<li class="legenda__rotulo" aria-hidden="true">Mostrar</li>' +
+      '<li><button type="button" class="filtro-estado" data-estado="todas" aria-pressed="' + todas + '">Todas</button></li>' +
+      Object.keys(ESTADOS).map((s) =>
+        '<li><button type="button" class="filtro-estado" data-estado="' + s + '" aria-pressed="' + est.filtro.has(s) + '">' +
+        '<span class="cbloco cbloco--' + s + '" aria-hidden="true">' + (ESTADOS[s].icone ? I(ESTADOS[s].icone) : "") + "</span>" + ESTADOS[s].rotulo + "</button></li>"
+      ).join("");
+  }
+  function aplicarFiltro() {
+    const blocos = vistaEl.querySelectorAll(".cbloco[data-id]");
+    if (!blocos.length && est.vista === "mes") { $("#filtro-vazio").hidden = true; return; }
+    const porId = new Map(C.consultas.map((k) => [k.id, k]));
+    let visiveis = 0;
+    blocos.forEach((b) => {
+      const k = porId.get(b.dataset.id);
+      const fora = est.filtro.size > 0 && (!k || !est.filtro.has(k.status));
+      b.classList.toggle("cbloco--fora", fora);
+      if (fora) { b.tabIndex = -1; b.setAttribute("aria-hidden", "true"); }
+      else { b.removeAttribute("tabindex"); b.removeAttribute("aria-hidden"); visiveis += 1; }
+    });
+    const vazio = est.filtro.size > 0 && visiveis === 0 && est.vista !== "mes";
+    $("#filtro-vazio").hidden = !vazio;
+    if (vazio) {
+      const nomes = Array.from(est.filtro).map((s) => ESTADOS[s].rotulo.toLowerCase()).join(" ou ");
+      $("#filtro-vazio-texto").textContent = "Nenhuma consulta " + nomes + " " + (est.vista === "dia" ? "neste dia." : "nesta semana.");
+    }
+    return visiveis;
+  }
+  function mudarFiltro(estado) {
+    if (estado === "todas") est.filtro.clear();
+    else if (est.filtro.has(estado)) est.filtro.delete(estado);
+    else est.filtro.add(estado);
+    if (est.filtro.size === Object.keys(ESTADOS).length) est.filtro.clear();
+    desenharLegenda();
+    const n = aplicarFiltro();
+    if (est.filtro.size === 0) anunciar("Mostrando todas as consultas.");
+    else if (n === 0) anunciar($("#filtro-vazio-texto").textContent);
+    else anunciar("Mostrando " + n + (n === 1 ? " horário: " : " horários: ") + Array.from(est.filtro).map((s) => ESTADOS[s].rotulo).join(", ") + ".");
+    const foco = $('.legenda [data-estado="' + estado + '"]');
+    if (foco) foco.focus();
+  }
+  $(".legenda").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-estado]");
+    if (b) mudarFiltro(b.dataset.estado);
+  });
+  $("#filtro-limpar").addEventListener("click", () => mudarFiltro("todas"));
+  new MutationObserver(() => aplicarFiltro()).observe(vistaEl, { childList: true });
+
+  /* ─── Cabeçalho e primeira pintura ─── */
+  desenharLegenda();
   $("#folha-hoje").innerHTML = A.folha(D.hoje, { menta: true });
   $("#subtitulo").textContent = cap(A.extenso(D.hoje)) + " · " + D.clinica.nome + ", " + D.clinica.unidade + " · 6 médicos atendendo";
   document.querySelectorAll("[data-marca]").forEach((el) => { el.outerHTML = A.marca(Number(el.dataset.marca)); });
