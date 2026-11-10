@@ -54,7 +54,12 @@ export default function PrevencaoTela({ navigation }) {
   const filtros = [{ id: 'todos', rotulo: 'Todos' }, ...dados.familia.map((p) => ({ id: p.id, rotulo: p.titular ? 'Você' : p.curto }))];
 
   return (
-    <Tela titulo="Prevenção" subtitulo="Check-ups e exames de rotina do ano" rolavel={false}>
+    <Tela
+      titulo="Prevenção"
+      subtitulo="Check-ups e exames de rotina do ano"
+      rolavel={false}
+      acaoDireita={{ icone: 'plus', rotulo: 'Incluir alguém na prevenção', onPress: () => navigation.navigate('AdicionarPrevencao') }}
+    >
       <FlatList
         data={meses}
         keyExtractor={(m) => m.mes}
@@ -85,7 +90,7 @@ export default function PrevencaoTela({ navigation }) {
           <EstadoVazio
             icone="heart"
             titulo="Nenhum lembrete de prevenção"
-            texto="Quando a clínica sugerir check-ups e exames de rotina para a sua família, eles aparecem aqui."
+            texto="Toque no + lá em cima para incluir alguém da sua família numa campanha."
           />
         }
         renderItem={({ item: mes }) => (

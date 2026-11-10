@@ -2,8 +2,8 @@
 // Lista: próximas consultas, e embaixo as que já aconteceram.
 // Mês: uma folhinha do mês com marcação nos dias que têm consulta.
 
-import { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Tela from '../componentes/Tela';
 import Texto from '../componentes/Texto';
@@ -13,6 +13,7 @@ import CabecalhoSecao from '../componentes/CabecalhoSecao';
 import { Carregando, EstadoVazio, MensagemErro } from '../componentes/Estados';
 import useDadosDaTela from '../componentes/useDadosDaTela';
 import { useSessao } from '../contexto/SessaoContext';
+import { usePreferencias } from '../contexto/PreferenciasContext';
 import { listarConsultas } from '../servicos/consultas';
 import { cores } from '../estilos/cores';
 import { fontes } from '../estilos/tipografia';
@@ -165,8 +166,16 @@ export default function AgendaTela({ navigation }) {
 
 // A folhinha do mês: 7 colunas, de domingo a sábado
 function GradeDoMes({ mes, consultas, diaEscolhido, aoEscolherDia, aoMudarMes }) {
+  const { reduzirMovimento } = usePreferencias();
   const casas = casasDoMes(mes);
   const diasComConsulta = new Set(consultas.map((c) => c.data));
+  const aparecer = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (reduzirMovimento) return;
+    aparecer.setValue(0.2);
+    Animated.timing(aparecer, { toValue: 1, duration: 260, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+  }, [mes]);
 
   return (
     <Cartao style={estilos.grade}>
@@ -190,7 +199,8 @@ function GradeDoMes({ mes, consultas, diaEscolhido, aoEscolherDia, aoMudarMes })
         ))}
       </View>
 
-      <View style={estilos.dias}>
+      {/* Ao trocar de mês, os dias aparecem com um fade rápido */}
+      <Animated.View style={[estilos.dias, { opacity: aparecer }]}>
         {casas.map((dia, i) => {
           if (!dia) return <View key={`vazio-${i}`} style={estilos.casa} />;
           const tem = diasComConsulta.has(dia);
@@ -207,26 +217,75 @@ function GradeDoMes({ mes, consultas, diaEscolhido, aoEscolherDia, aoMudarMes })
               accessibilityState={{ selected: escolhido }}
               style={estilos.casa}
             >
-              <View style={[estilos.numero, hoje && estilos.hoje, escolhido && estilos.escolhido]}>
-                <Texto
-                  style={[
-                    estilos.textoNumero,
-                    vermelho && { color: cores.domingo },
-                    escolhido && { color: cores.sobreNoite },
-                  ]}
-                >
-                  {numero}
-                </Texto>
-              </View>
-              <View style={[estilos.ponto, tem && { backgroundColor: escolhido ? cores.menta : cores.noite }]} />
+              <NumeroDoDia numero={numero} hoje={hoje} escolhido={escolhido} vermelho={vermelho} />
+              {tem && <View style={[estilos.ponto, { marginTop: 4 }]} />}
             </Pressable>
           );
         })}
+      </Animated.View>
+
+      <View style={estilos.legenda}>
+        <View style={estilos.itemLegenda}>
+          <View style={estilos.exemploHoje} />
+          <Texto variante="meta">Hoje</Texto>
+        </View>
+        <View style={estilos.itemLegenda}>
+          <View style={estilos.ponto} />
+          <Texto variante="meta">Tem consulta</Texto>
+        </View>
+        <View style={estilos.itemLegenda}>
+          <View style={estilos.exemploEscolhido} />
+          <Texto variante="meta">Dia escolhido</Texto>
+        </View>
       </View>
-      <Texto variante="meta" style={estilos.legenda}>
-        Toque num dia para ver as consultas dele. O ponto marca os dias com consulta.
-      </Texto>
     </Cartao>
+  );
+}
+
+// O círculo de um dia. Todo dia tem o mesmo tamanho; hoje ganha um anel.
+// Quando o dia é escolhido, o círculo azul-noite "estoura" de dentro para fora
+// (com um pulinho) e o número troca para branco. Ao desmarcar, ele some suavemente.
+function NumeroDoDia({ numero, hoje, escolhido, vermelho }) {
+  const { reduzirMovimento } = usePreferencias();
+  const preenchimento = useRef(new Animated.Value(escolhido ? 1 : 0)).current; // 0 = vazio, 1 = cheio
+  const pulo = useRef(new Animated.Value(1)).current;
+  const primeiraVez = useRef(true);
+
+  useEffect(() => {
+    if (primeiraVez.current) {
+      primeiraVez.current = false;
+      return;
+    }
+    if (reduzirMovimento) {
+      preenchimento.setValue(escolhido ? 1 : 0);
+      return;
+    }
+    if (escolhido) {
+      pulo.setValue(0.8);
+      Animated.parallel([
+        Animated.timing(preenchimento, { toValue: 1, duration: 180, useNativeDriver: false }),
+        Animated.spring(pulo, { toValue: 1, friction: 4, tension: 180, useNativeDriver: false }),
+      ]).start();
+    } else {
+      Animated.timing(preenchimento, { toValue: 0, duration: 140, useNativeDriver: false }).start();
+    }
+  }, [escolhido]);
+
+  const corDoTexto = preenchimento.interpolate({
+    inputRange: [0, 1],
+    outputRange: [vermelho ? cores.domingo : cores.tinta, cores.sobreNoite],
+  });
+
+  return (
+    <Animated.View style={[estilos.numero, hoje && estilos.hoje, { transform: [{ scale: pulo }] }]}>
+      <Animated.View
+        style={[
+          estilos.preenchimento,
+          { opacity: preenchimento, transform: [{ scale: preenchimento.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) }] },
+        ]}
+      />
+      <Animated.Text style={[estilos.textoNumero, { color: corDoTexto }]}>{numero}</Animated.Text>
+    </Animated.View>
   );
 }
 
@@ -246,15 +305,46 @@ const estilos = StyleSheet.create({
   pos: { flexDirection: 'row', alignItems: 'center', gap: espaco.m },
   grade: { padding: espaco.p }, // padding menor para cada dia ter pelo menos 48 de largura
   mesTopo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  seta: { width: TOQUE_MINIMO, height: TOQUE_MINIMO, alignItems: 'center', justifyContent: 'center' },
-  semana: { flexDirection: 'row', marginTop: espaco.p },
+  // Setas dentro de um círculo suave, para combinar com os dias
+  seta: {
+    width: TOQUE_MINIMO,
+    height: TOQUE_MINIMO,
+    borderRadius: TOQUE_MINIMO / 2,
+    backgroundColor: cores.gelo,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  semana: { flexDirection: 'row', marginTop: espaco.m, paddingBottom: espaco.p, borderBottomWidth: 1, borderBottomColor: cores.linha },
   celulaSemana: { width: `${100 / 7}%`, textAlign: 'center' },
-  dias: { flexDirection: 'row', flexWrap: 'wrap' },
-  casa: { width: `${100 / 7}%`, height: 52, alignItems: 'center', justifyContent: 'center' },
-  numero: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  hoje: { borderWidth: 2, borderColor: cores.mentaTinta },
-  escolhido: { backgroundColor: cores.noite },
-  textoNumero: { fontFamily: fontes.numero, fontSize: 16, color: cores.tinta },
-  ponto: { width: 6, height: 6, borderRadius: 3, marginTop: 2 },
-  legenda: { marginTop: espaco.p },
+  dias: { flexDirection: 'row', flexWrap: 'wrap', marginTop: espaco.p },
+  casa: { width: `${100 / 7}%`, height: 56, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 2 },
+  // Círculo de 42 com borda transparente: hoje e escolhido só trocam a cor da borda/fundo,
+  // então o tamanho e o formato nunca mudam.
+  numero: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  hoje: { borderColor: cores.mentaTinta, backgroundColor: cores.menta2 },
+  preenchimento: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: cores.noite },
+  textoNumero: { fontFamily: fontes.numero, fontSize: 16, lineHeight: 20, color: cores.tinta },
+  ponto: { width: 6, height: 6, borderRadius: 3, backgroundColor: cores.noite },
+  legenda: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: espaco.g,
+    marginTop: espaco.m,
+    paddingTop: espaco.m,
+    borderTopWidth: 1,
+    borderTopColor: cores.linha,
+  },
+  itemLegenda: { flexDirection: 'row', alignItems: 'center', gap: espaco.p },
+  exemploHoje: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: cores.mentaTinta, backgroundColor: cores.menta2 },
+  exemploEscolhido: { width: 16, height: 16, borderRadius: 8, backgroundColor: cores.noite },
 });

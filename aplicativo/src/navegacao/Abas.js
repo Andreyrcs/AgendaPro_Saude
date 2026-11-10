@@ -3,10 +3,8 @@
 
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Feather } from '@expo/vector-icons';
 import { usePreferencias } from '../contexto/PreferenciasContext';
-import { cores } from '../estilos/cores';
-import { fontes } from '../estilos/tipografia';
+import BarraAbas from './BarraAbas';
 
 import InicioTela from '../telas/InicioTela';
 import AssistenteTela from '../telas/AssistenteTela';
@@ -19,6 +17,7 @@ import FamiliaTela from '../telas/FamiliaTela';
 import PessoaTela from '../telas/PessoaTela';
 import AdicionarFamiliarTela from '../telas/AdicionarFamiliarTela';
 import PrevencaoTela from '../telas/PrevencaoTela';
+import AdicionarPrevencaoTela from '../telas/AdicionarPrevencaoTela';
 import PerfilTela from '../telas/PerfilTela';
 
 const Aba = createBottomTabNavigator();
@@ -73,12 +72,13 @@ function PrevencaoAba() {
   return (
     <PilhaPrevencao.Navigator screenOptions={useOpcoesDaPilha()}>
       <PilhaPrevencao.Screen name="Prevencao" component={PrevencaoTela} />
+      <PilhaPrevencao.Screen name="AdicionarPrevencao" component={AdicionarPrevencaoTela} />
       <PilhaPrevencao.Screen name="Agendar" component={AgendarTela} />
     </PilhaPrevencao.Navigator>
   );
 }
 
-// Nome da aba → ícone (Feather) e rótulo
+// Nome da aba → ícone (Feather) e rótulo (a barra está em BarraAbas.js)
 const ABAS = {
   InicioAba: { icone: 'home', rotulo: 'Início' },
   AgendaAba: { icone: 'calendar', rotulo: 'Agenda' },
@@ -90,17 +90,8 @@ const ABAS = {
 export default function Abas() {
   return (
     <Aba.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: cores.noite,
-        tabBarInactiveTintColor: cores.tinta3,
-        tabBarStyle: { backgroundColor: cores.papel, borderTopColor: cores.linha, minHeight: 64 },
-        tabBarLabelStyle: { fontFamily: fontes.textoMedio, fontSize: 12 },
-        tabBarLabel: ABAS[route.name].rotulo,
-        tabBarAccessibilityLabel: ABAS[route.name].rotulo,
-        tabBarIcon: ({ color, size }) => <Feather name={ABAS[route.name].icone} size={size} color={color} />,
-      })}
+      tabBar={(props) => <BarraAbas {...props} abas={ABAS} />}
+      screenOptions={{ headerShown: false }}
     >
       <Aba.Screen name="InicioAba" component={InicioAba} />
       <Aba.Screen name="AgendaAba" component={AgendaAba} />

@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { Feather } from '@expo/vector-icons';
 import Texto from './Texto';
+import Entrada from './Entrada';
 import { cores } from '../estilos/cores';
 import { espaco, TOQUE_MINIMO } from '../estilos/espacos';
 
@@ -64,17 +65,19 @@ export default function Tela({
         </View>
       </View>
 
-      {rolavel ? (
-        <ScrollView
-          style={estilos.corpo}
-          contentContainerStyle={estilos.conteudo}
-          keyboardShouldPersistTaps="handled"
-        >
-          {children}
-        </ScrollView>
-      ) : (
-        <View style={estilos.corpo}>{children}</View>
-      )}
+      <Entrada style={estilos.corpo}>
+        {rolavel ? (
+          <ScrollView
+            style={estilos.corpo}
+            contentContainerStyle={estilos.conteudo}
+            keyboardShouldPersistTaps="handled"
+          >
+            {children}
+          </ScrollView>
+        ) : (
+          <View style={estilos.corpo}>{children}</View>
+        )}
+      </Entrada>
 
       {rodape && <View style={estilos.rodape}>{rodape}</View>}
     </KeyboardAvoidingView>
