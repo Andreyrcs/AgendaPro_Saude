@@ -18,26 +18,33 @@ export const clinica = {
   telefoneLink: 'tel:+551123450000',
 };
 
+// Clínicas que aceitam pacientes pelo código (as mesmas da web; tabela Clinica)
+export const clinicas = [
+  { id: 'ipe', nome: 'Clínica Ipê', codigo: 'IPE-4821' },
+  { id: 'jacaranda', nome: 'Clínica Jacarandá', codigo: 'JAC-2093' },
+  { id: 'aroeira', nome: 'Centro Médico Aroeira', codigo: 'ARO-7716' },
+];
+
 export const pessoas = [
   {
-    id: 'juliana', nome: 'Juliana Santos', curto: 'Juliana', relacao: 'Você', idade: 36, genero: 'f',
-    cor: cores.familia.juliana, alergias: 'Nenhuma informada', sus: '•••• 7310', titular: true,
+    id: 'juliana', nome: 'Juliana Santos', curto: 'Juliana', relacao: 'Titular', idade: 36, genero: 'f',
+    cor: cores.familia.juliana, alergias: 'Nenhuma informada', titular: true,
   },
   {
     id: 'davi', nome: 'Davi Santos Tanaka', curto: 'Davi', relacao: 'Filho', idade: 8, genero: 'm',
-    cor: cores.familia.davi, alergias: 'Nenhuma informada', sus: '•••• 2284', titular: false,
+    cor: cores.familia.davi, alergias: 'Nenhuma informada', titular: false,
   },
   {
     id: 'marina', nome: 'Marina Santos Tanaka', curto: 'Marina', relacao: 'Filha', idade: 14, genero: 'f',
-    cor: cores.familia.marina, alergias: 'Rinite alérgica', sus: '•••• 5521', titular: false,
+    cor: cores.familia.marina, alergias: 'Rinite alérgica', titular: false,
   },
   {
     id: 'cida', nome: 'Maria Aparecida Santos', curto: 'Dona Cida', relacao: 'Mãe', idade: 71, genero: 'f',
-    cor: cores.familia.cida, alergias: 'Alergia a dipirona', sus: '•••• 0937', titular: false,
+    cor: cores.familia.cida, alergias: 'Alergia a dipirona', titular: false,
   },
   {
     id: 'kenji', nome: 'Kenji Tanaka', curto: 'Seu Kenji', relacao: 'Sogro', idade: 74, genero: 'm',
-    cor: cores.familia.kenji, alergias: 'Nenhuma informada', sus: '•••• 4468', titular: false,
+    cor: cores.familia.kenji, alergias: 'Nenhuma informada', titular: false,
   },
 ];
 
@@ -117,6 +124,13 @@ export const fila = {
 // Quantas pessoas já esperam na fila de cada médico (contagem das filas da web).
 // Quem entra numa fila nova fica na posição seguinte.
 export const pessoasNaFila = { camila: 7, paulo: 4, fernanda: 2, luana: 3, andre: 1 };
+
+// Avisos da conta da Juliana (tabela Notificacoes: tipo, mensagem, data de envio, lida)
+export const notificacoes = [
+  { id: 'n1', tipo: 'LEMBRETE', mensagem: 'A consulta do Davi com a Dra. Fernanda Lima é em ' + diaEMes(diaDaqui(3)) + ', às 14:30.', dataEnvio: diaDaqui(0, false), lida: false },
+  { id: 'n2', tipo: 'FILA', mensagem: 'Você subiu para 3ª na fila de Dermatologia.', dataEnvio: diaDaqui(-1, false), lida: false },
+  { id: 'n3', tipo: 'RETORNO', mensagem: 'Dona Cida precisa marcar o retorno com o cardiologista até ' + diaEMes(diaDaqui(27)) + '.', dataEnvio: diaDaqui(-3, false), lida: true },
+];
 
 export const acompanhamento = {
   retornos: [

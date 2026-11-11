@@ -117,15 +117,15 @@
             <div class="campo"><label for="f-b-fim">Termina</label><select id="f-b-fim" name="bFim"></select></div>
           </div>
         </fieldset>
-        <div class="campo">
-          <label for="f-dur">Duração de cada consulta</label>
-          <select id="f-dur" name="dur">
-            <option value="20">20 minutos</option>
-            <option value="30">30 minutos</option>
-            <option value="40">40 minutos</option>
-            <option value="60">1 hora</option>
-          </select>
-        </div>
+        <fieldset class="campo" style="border:0;padding:0;margin:0">
+          <legend class="campo__rotulo">Almoço</legend>
+          <label class="marcar"><input type="checkbox" name="almoco" /> Para para almoçar</label>
+          <div class="campos-dupla">
+            <div class="campo"><label for="f-a-ini">Começa</label><select id="f-a-ini" name="aIni"></select></div>
+            <div class="campo"><label for="f-a-fim">Termina</label><select id="f-a-fim" name="aFim"></select></div>
+          </div>
+        </fieldset>
+        <p class="dialogo__texto" id="dlg-dur"></p>
         <p class="campo__erro" id="e-exp" hidden></p>
         <div class="dialogo__acoes">
           <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>

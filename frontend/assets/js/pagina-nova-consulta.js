@@ -376,7 +376,7 @@
       const k = C.consultas[i];
       if (k.horario === "livre" && k.medico === est.medico && k.data === est.dia && k.ini < ini + dur && ini < k.ini + k.dur) C.consultas.splice(i, 1);
     }
-    C.consultas.push({ id: C.novoId(), medico: est.medico, data: est.dia, ini, dur, paciente: nome, status: "confirmada" });
+    C.consultas.push({ id: C.novoId(), medico: est.medico, data: est.dia, ini, dur, paciente: nome, status: "confirmada", motivo: $("#f-motivo-consulta").value.trim() });
     C.salvar();
     if (fora) {
       K.guardar.foraDaFila({

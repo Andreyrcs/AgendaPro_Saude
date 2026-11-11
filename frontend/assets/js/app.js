@@ -441,7 +441,8 @@
   }
 
   /* Agendar */
-  function telaAgendar(espId, pessoaId) {
+  /* itemId: o item de prevenção que esta consulta resolve (vem do "Marcar" da Prevenção) */
+  function telaAgendar(espId, pessoaId, itemId) {
     const e = esp(espId) ? espId : "clinica";
     const elegivel = (p) => (e === "pediatria" ? p.idade < 18 : true);
     let quem = pessoa(pessoaId) && elegivel(pessoa(pessoaId)) ? pessoaId : (D.pessoas.find(elegivel) || pessoa(D.titular)).id;
@@ -596,8 +597,12 @@
           return;
         }
         const nova = { id: "n" + Date.now(), pessoa: quem, medico: escolha.medico, data: escolha.data, hora: escolha.hora, sala: "Sala 3", status: "confirmada", motivo: "Marcada pelo app" };
+        /* marcada a partir da Prevenção: a consulta fica ligada ao item */
+        const itemPrev = itemId ? PACIENTE.itemPrevencao(itemId) : null;
+        if (itemPrev) nova.motivo = itemPrev.titulo;
         D.consultas.push(nova);
         PACIENTE.marcar(nova);
+        if (itemPrev) PACIENTE.marcarItemPrevencao(itemPrev.id, "agendado", nova.id);
         tirarHorario(escolha);
         sucessoConsulta(nova);
       });
@@ -830,12 +835,13 @@
       abrirGaveta(
         '<h2 class="gaveta__titulo" id="gaveta-titulo">Adicionar familiar</h2>' +
         '<p class="gaveta__texto">Depois de adicionar, você pode marcar consultas para essa pessoa.</p>' +
-        '<form id="form-familiar" class="formulario">' +
-        '<div class="campo"><label for="f-nome">Nome completo</label><input id="f-nome" type="text" autocomplete="off" placeholder="Ex.: Ana Beatriz Santos"></div>' +
-        '<div class="campo"><span class="campo__rotulo" id="f-rel">Parentesco</span><div class="opcoes" role="radiogroup" aria-labelledby="f-rel">' +
-        ["Filho ou filha", "Mãe ou pai", "Avó ou avô", "Outra pessoa"].map((o, i) => '<button type="button" role="radio" aria-checked="' + (i === 0) + '">' + o + "</button>").join("") +
+        '<form id="form-familiar" class="formulario" novalidate>' +
+        '<div class="campo" id="c-nome"><label for="f-nome">Nome completo</label><input id="f-nome" type="text" autocomplete="off" placeholder="Ex.: Ana Beatriz Santos"></div>' +
+        '<div class="campo" id="c-rel"><span class="campo__rotulo" id="f-rel">Parentesco (obrigatório)</span><div class="opcoes" role="radiogroup" aria-labelledby="f-rel" aria-required="true">' +
+        PACIENTE.PARENTESCOS.map((o) => '<button type="button" role="radio" aria-checked="false">' + o + "</button>").join("") +
         "</div></div>" +
-        '<div class="campo"><label for="f-nasc">Data de nascimento</label><input id="f-nasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa"></div>' +
+        '<div class="campo" id="c-nasc"><label for="f-nasc">Data de nascimento</label><input id="f-nasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10"></div>' +
+        '<div class="campo"><label for="f-alergias">Alergias (opcional)</label><input id="f-alergias" type="text" placeholder="Ex.: Penicilina, dipirona"></div>' +
         '<div class="gaveta__acoes"><button type="submit" class="botao botao--principal">Adicionar</button><button type="button" class="botao botao--secundario" data-fechar>Cancelar</button></div>' +
         "</form>",
         {
@@ -845,17 +851,22 @@
             );
             g.querySelector("#form-familiar").addEventListener("submit", (ev) => {
               ev.preventDefault();
-              const nome = g.querySelector("#f-nome").value.trim();
-              if (!nome) {
-                const campo = g.querySelector("#f-nome");
-                campo.setAttribute("aria-invalid", "true");
-                if (!g.querySelector(".campo__erro")) campo.insertAdjacentHTML("afterend", '<p class="campo__erro">Escreva o nome da pessoa para continuar.</p>');
-                campo.focus();
+              /* nome, parentesco e nascimento obrigatórios (paciente-servicos.js) */
+              const r = PACIENTE.adicionarFamiliar({
+                nome: g.querySelector("#f-nome").value,
+                relacao: (g.querySelector('.opcoes [aria-checked="true"]') || {}).textContent || "",
+                nascimento: g.querySelector("#f-nasc").value,
+                alergias: g.querySelector("#f-alergias").value,
+              });
+              g.querySelectorAll(".campo__erro").forEach((x) => x.remove());
+              if (!r.familiar) {
+                [["#c-nome", r.erros.nome], ["#c-rel", r.erros.relacao], ["#c-nasc", r.erros.nascimento]].forEach(([c, t]) => {
+                  if (t) g.querySelector(c).insertAdjacentHTML("beforeend", '<p class="campo__erro" role="alert">' + t + "</p>");
+                });
+                (r.erros.nome ? g.querySelector("#f-nome") : r.erros.relacao ? g.querySelector('#c-rel [role="radio"]') : g.querySelector("#f-nasc")).focus();
                 return;
               }
-              const rel = (g.querySelector('.opcoes [aria-checked="true"]') || {}).textContent || "Familiar";
-              D.pessoas.push({ id: "f" + Date.now(), nome, curto: nome.split(" ")[0], tratamento: nome.split(" ")[0], relacao: rel, idade: null, genero: null, cor: "var(--id-davi)", alergias: "Nenhuma informada", sus: "" });
-              PACIENTE.salvar();
+              const nome = r.familiar.nome;
               fecharGaveta();
               navegar();
               aviso({ titulo: "Prontinho: " + nome.split(" ")[0] + " agora está na família", texto: "Você já pode marcar consultas para essa pessoa.", icone: "users" });
@@ -918,83 +929,16 @@
         : "") +
       '<section class="secao">' + cabecaSecao("Dados de saúde") +
       '<dl class="cartao lista-cartao ficha">' +
-      "<div><dt>Cartão do SUS</dt><dd>" + p.sus + "</dd></div>" +
+      "<div><dt>Parentesco</dt><dd>" + A.esc(p.relacao) + "</dd></div>" +
       "<div><dt>Alergias</dt><dd>" + p.alergias + "</dd></div>" +
       "</dl></section>";
     return { titulo: p.curto, html };
   }
 
-  /* Prevenção */
+  /* Prevenção: a mesma tela do app (prevencao-tela.js) */
   function telaPrevencao() {
-    const html =
-      barra("Calendário de prevenção", "Check-ups e exames de rotina") +
-      '<div class="filtros" role="group" aria-label="Filtrar por pessoa" id="filtros"></div>' +
-      '<div id="meses"></div>' +
-      '<p class="nota-rodape">Sugestões feitas com base na idade de cada pessoa e nas campanhas do Ministério da Saúde. Elas não substituem a orientação do seu médico.</p>';
-
-    function montar(el) {
-      const filtros = el.querySelector("#filtros");
-      const meses = el.querySelector("#meses");
-
-      function desenhar() {
-        const f = estado.prevFiltro;
-        const conta = (id) => D.prevencao.reduce((s, m) => s + m.itens.filter((it) => id === "todos" || it.pessoa === id).length, 0);
-        filtros.innerHTML =
-          '<button type="button" class="filtro" aria-pressed="' + (f === "todos") + '" data-f="todos">Todos <span class="filtro__n">' + conta("todos") + "</span></button>" +
-          D.pessoas.map((p) => '<button type="button" class="filtro" aria-pressed="' + (f === p.id) + '" data-f="' + p.id + '">' + A.avatar(p, 28) + nomeCurto(p) + ' <span class="filtro__n">' + conta(p.id) + "</span></button>").join("");
-
-        meses.innerHTML = D.prevencao.map((mes, i) => {
-          const itens = mes.itens.filter((it) => f === "todos" || it.pessoa === f);
-          if (!itens.length) return "";
-          return (
-            '<div class="mes-bloco">' + A.folhaMes(mes.mes, { menta: i === 0 }) +
-            '<div class="mes-bloco__corpo"><h2 class="mes-bloco__campanha">' + (mes.campanha || cap(A.MESES_LONGOS[A.data(mes.mes + "-01").getMonth()])) + '</h2><p class="mes-bloco__tema">' + mes.tema + "</p>" +
-            '<div class="cartao">' +
-            itens.map((it) => {
-              const p = pessoa(it.pessoa);
-              const feito = it.status === "agendado" || it.status === "feito";
-              return (
-                '<div class="prev-item">' + A.avatar(p, 36) +
-                '<div class="item__corpo"><p class="prev-item__titulo">' + it.titulo + '</p><p class="prev-item__nota">Para ' + (p.id === D.titular ? "você" : p.tratamento) + " · " + it.nota + "</p>" +
-                '<div class="prev-item__acao">' +
-                (feito
-                  ? '<span class="selo selo--feito">' + I("check") + (it.status === "feito" ? "Feito" : "Marcado") + "</span>" +
-                    (it.status === "feito" ? '<button type="button" class="botao botao--texto-perigo botao--pequeno" data-desfazer="' + mes.mes + "|" + it.pessoa + "|" + it.titulo + '">Desfazer</button>' : "")
-                  : '<span class="selo selo--alerta">Não marcado</span>' +
-                    (it.esp
-                      ? '<a class="botao botao--secundario botao--pequeno" href="#agendar/' + it.esp + "/" + it.pessoa + '">Agendar</a>'
-                      : '<button type="button" class="botao botao--secundario botao--pequeno" data-feito="' + mes.mes + "|" + it.pessoa + "|" + it.titulo + '">Já fiz</button>')) +
-                "</div></div></div>"
-              );
-            }).join("") +
-            "</div></div></div>"
-          );
-        }).join("");
-      }
-
-      desenhar();
-      el.addEventListener("click", (ev) => {
-        const bf = ev.target.closest("[data-f]");
-        if (bf) { estado.prevFiltro = bf.dataset.f; desenhar(); return; }
-        const bd = ev.target.closest("[data-desfazer]");
-        if (bd) {
-          const [mesId, pid, titulo] = bd.dataset.desfazer.split("|");
-          D.prevencao.find((x) => x.mes === mesId).itens.find((x) => x.pessoa === pid && x.titulo === titulo).status = "pendente";
-          desenhar();
-          anunciar(titulo + " voltou para não marcado.");
-          return;
-        }
-        const bk = ev.target.closest("[data-feito]");
-        if (bk) {
-          const [mesId, pid, titulo] = bk.dataset.feito.split("|");
-          const it = D.prevencao.find((m) => m.mes === mesId).itens.find((x) => x.pessoa === pid && x.titulo === titulo);
-          it.status = "feito";
-          desenhar();
-          anunciar(titulo + " marcado como feito.");
-        }
-      });
-    }
-    return { titulo: "Calendário de prevenção", html, montar };
+    const op = { titulo: (t, sub) => barra(t, sub), estado, abrirGaveta, fecharGaveta, anunciar };
+    return { titulo: "Prevenção", html: PREVENCAO_TELA.html(op), montar: (el) => PREVENCAO_TELA.montar(el, op) };
   }
 
   /* Agenda */

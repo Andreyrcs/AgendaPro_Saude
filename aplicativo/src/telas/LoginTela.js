@@ -10,6 +10,7 @@ import CampoTexto from '../componentes/CampoTexto';
 import Marca from '../componentes/Marca';
 import { useSessao } from '../contexto/SessaoContext';
 import { entrar } from '../servicos/autenticacao';
+import { validarLogin } from '../utilitarios/validacao';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 
@@ -25,8 +26,9 @@ export default function LoginTela({ navigation }) {
   const [enviando, setEnviando] = useState(false);
 
   async function fazerLogin(emailUsado, senhaUsada) {
-    if (!emailUsado.trim() || !senhaUsada) {
-      setErro('Preencha o e-mail e a senha.');
+    const problema = validarLogin(emailUsado, senhaUsada); // "Preencha e-mail e senha."
+    if (problema) {
+      setErro(problema);
       return;
     }
     setErro(null);
@@ -92,11 +94,12 @@ export default function LoginTela({ navigation }) {
             </View>
           )}
 
-          <Botao titulo="Entrar" icone="log-in" onPress={() => fazerLogin(email, senha)} carregando={enviando} />
+          <Botao titulo="Entrar" icone="log-in" onPress={() => fazerLogin(email, senha)} carregando={enviando} accessibilityLabel="Entrar" />
 
           <Pressable
             onPress={() => navigation.navigate('Cadastro')}
             accessibilityRole="link"
+            accessibilityLabel="Ainda não tem conta? Criar conta"
             style={estilos.link}
           >
             <Texto>

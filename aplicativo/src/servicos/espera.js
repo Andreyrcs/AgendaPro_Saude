@@ -6,7 +6,7 @@
 // Regra simples deste app: cada conta fica em uma fila por vez.
 
 import {
-  contaDe, esperar, novoId, garantirDaFamilia, medicoPorId, especialidadePorId,
+  contaDe, esperar, novoId, garantirDaFamilia, medicoPorId, especialidadePorId, avisar,
 } from '../dados/bancoSimulado';
 import { pessoasNaFila } from '../dados/dadosFicticios';
 import { montarConsulta } from './consultas';
@@ -82,6 +82,7 @@ export async function responderVaga(usuario, idFila, aceitar) {
   };
   conta.consultas.push(consulta);
   conta.fila = null;
+  avisar(conta, 'CONSULTA_CONFIRMADA', `Consulta confirmada em ${consulta.data.split('-').reverse().join('/')} às ${consulta.hora}.`);
   return montarConsulta(conta, consulta);
 }
 

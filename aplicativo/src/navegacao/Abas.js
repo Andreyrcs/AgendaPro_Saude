@@ -13,6 +13,7 @@ import AgendaTela from '../telas/AgendaTela';
 import ConsultaTela from '../telas/ConsultaTela';
 import EsperaTela from '../telas/EsperaTela';
 import PosConsultaTela from '../telas/PosConsultaTela';
+import NotificacoesTela from '../telas/NotificacoesTela';
 import FamiliaTela from '../telas/FamiliaTela';
 import PessoaTela from '../telas/PessoaTela';
 import AdicionarFamiliarTela from '../telas/AdicionarFamiliarTela';
@@ -40,6 +41,7 @@ function InicioAba() {
       <PilhaInicio.Screen name="Consulta" component={ConsultaTela} />
       <PilhaInicio.Screen name="Espera" component={EsperaTela} />
       <PilhaInicio.Screen name="PosConsulta" component={PosConsultaTela} />
+      <PilhaInicio.Screen name="Notificacoes" component={NotificacoesTela} />
     </PilhaInicio.Navigator>
   );
 }

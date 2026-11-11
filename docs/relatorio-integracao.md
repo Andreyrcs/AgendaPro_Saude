@@ -102,7 +102,8 @@ na seção "Status da consulta e estado do horário".
 | `sairDaFila(usuario, idFila)` | `DELETE /api/lista-espera/{id}` | Falta |
 | `listarAcompanhamento(usuario)` | `GET /api/pacientes/{id}/acompanhamento` | Falta |
 | `listarPrevencao(usuario)` | `GET /api/pacientes/{id}/prevencao` | Falta |
-| `marcarItemPrevencao(usuario, idItem, status)` | `PUT /api/prevencao/{id}` | Falta |
+| `marcarItemPrevencao(usuario, idItem, status, idConsulta?)` | `PUT /api/prevencao/{id}` | Falta |
+| `incluirNaPrevencao(usuario, dados)` · `sugestoesDoMes(mes)` | `POST /api/pacientes/{id}/prevencao` · (sugestões locais) | Falta |
 | `analisarSintomas(texto, familia)` | — (local de propósito: o alerta de emergência não pode depender da rede) | — |
 
 ## Resumo
@@ -119,3 +120,54 @@ na seção "Status da consulta e estado do horário".
 `PUT /api/consultas/{id}/presenca` com `{ "idUsuarioLogado", "vou": true | false }`.
 `vou: true` grava a confirmação; `vou: false` cancela pelas mesmas regras de `DELETE /api/consultas/{id}`.
 Os campos e as regras completas estão em `aplicativo/docs/aplicativo-integracao-api.md`, seção "Presença e faltas".
+
+## Formato de Familiar
+
+`{ id, nome, curto, relacao, nascimento, cor, alergias, titular }` — o mesmo de
+`aplicativo/docs/aplicativo-integracao-api.md`. O sistema não guarda número de documento de saúde do familiar.
+
+- `relacao` é a coluna `Pacientes.Parentesco`: `Titular` para o dono da conta e, para familiares,
+  uma destas opções: `Filho(a)`, `Cônjuge`, `Pai/Mãe`, `Irmão(ã)`, `Outro` (obrigatório).
+- `nascimento` (`AAAA-MM-DD`, coluna `Pacientes.Data_Nascimento`, obrigatória): a idade é calculada por ela
+  nas telas. Não há `idade` nem `genero` no formato.
+- `cor` é `Pacientes.Cor` (`#RRGGBB`).
+
+## Funções novas (comparação com o banco SQL Server)
+
+| Função (arquivo) | Endpoint | Tabela | Backend |
+|---|---|---|---|
+| `cadastrar(dados)` (app, `servicos/autenticacao.js`) | `POST /api/usuarios` + `POST /api/pacientes` (titular, parentesco `Titular`) + `GET /api/clinicas/codigo/{codigo}` + `POST /api/pacientes/{id}/clinicas` | Usuarios, Pacientes, Paciente_Clinica | Só `POST /api/usuarios` existe |
+| `cadastrarContaMedico(dados)` (web, `api.js`) | `POST /api/clinicas/{id}/medicos` (cria o usuário `MEDICO` e o médico com CRM) | Usuarios, Medicos | Falta |
+| `registrarExame` / `mudarStatusExame` (web, `clinica-dados.js`) | `POST /api/exames` · `PUT /api/exames/{id}` | Exames | Falta |
+| `registrarRetorno` (web, `clinica-dados.js`) | `POST /api/retornos` | Retornos | Falta |
+| `retirarFalta(id, por, motivo)` (web, `clinica-dados.js`) | `PUT /api/faltas/{id}/retirar` corpo `{ idUsuarioLogado, motivo }` | Faltas.MotivoRetirada | Falta |
+| `guardar.expediente` com `almoco` (web, `pagina-horarios.js`) | `PUT /api/medicos/{id}/expediente` | Horarios_Atendimento (InicioAlmoco, FimAlmoco) | Falta |
+| `guardar.especialidade` com `duracao` | `POST /api/clinicas/{id}/especialidades` | Especialidades.DuracaoPadrao | Falta |
+| `listarNotificacoes` · `marcarTodasComoLidas` (app, `servicos/notificacoes.js`) | `GET /api/pacientes/{id}/notificacoes` · `PUT /api/pacientes/{id}/notificacoes/lidas` | Notificacoes | Falta |
+
+### Valores das telas × códigos do banco
+
+O script do banco guarda o status da consulta e o estado do horário na mesma tabela (`Status_Consulta`).
+A API traduz assim:
+
+| Tela (web e app) | Banco (`Status_Consulta.Codigo_consulta`) |
+|---|---|
+| `confirmada`, `na_recepcao`, `em_atendimento`, `atendida`, `faltou`, `cancelada` | `CONFIRMADA`, `NA_RECEPCAO`, `EM_ATENDIMENTO`, `ATENDIDA`, `FALTOU`, `CANCELADA` |
+| horário `livre` | `VAGA` |
+| horário `oferecido` | `OFERECIDA` |
+| restrição `normal`, `so_fila`, `so_recepcao` | `Usuarios.Restricao`: `NORMAL`, `SO_FILA`, `SO_RECEPCAO` |
+| exame `pendente`, `realizado` | `Exames.Status`: `PENDENTE`, `REALIZADO` |
+| retorno `encaminhado`, `agendado`, `realizado`, `cancelado` | `Retornos.Status`: `ENCAMINHADO`, `AGENDADO`, `REALIZADO`, `CANCELADO` |
+| prevenção `pendente`, `agendado`, `feito` | `Pessoa_Prevencao.Status`: `NAO_AGENDADO`, `AGENDADO`, `REALIZADO` |
+
+## Prevenção na web do paciente (`paciente-servicos.js` + `prevencao-tela.js`)
+
+As mesmas funções do app, com os mesmos nomes e mensagens:
+
+| Função | Endpoint | Backend |
+|---|---|---|
+| `sugestoesDoMes(mes)` | — (lista local, igual à do app) | — |
+| `incluirNaPrevencao(d)` | `POST /api/pacientes/{id}/prevencao` | Falta |
+| `marcarItemPrevencao(id, status, idConsulta?)` | `PUT /api/prevencao/{id}` | Falta |
+
+Formato do item: `{ id, pessoa, titulo, status, nota, esp, consulta? }` (o mesmo do app).

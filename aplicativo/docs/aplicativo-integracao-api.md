@@ -58,10 +58,11 @@ como a API atual já faz com `nomeOrganizador`. Assim a tela não precisa de cha
 
 ### Familiar
 ```json
-{ "id": "davi", "nome": "Davi Santos Tanaka", "curto": "Davi", "relacao": "Filho", "idade": 8,
-  "genero": "m", "cor": "#fbdcc6", "alergias": "Nenhuma informada", "sus": "•••• 2284", "titular": false }
+{ "id": "davi", "nome": "Davi Santos Tanaka", "curto": "Davi", "relacao": "Filho(a)", "nascimento": "2018-05-14",
+  "cor": "#fbdcc6", "alergias": "Nenhuma informada", "titular": false }
 ```
 `POST /api/pacientes/{id}/familiares` recebe `{ "nome", "relacao", "nascimento": "AAAA-MM-DD", "alergias", "cor" }`.
+`relacao` = `Pacientes.Parentesco` (`Titular`, ou `Filho(a)`, `Cônjuge`, `Pai/Mãe`, `Irmão(ã)`, `Outro`); a idade é calculada pela data de nascimento.
 
 ### Consulta
 ```json
@@ -203,9 +204,14 @@ O médico sem horário vem com `"dias": []`; o app então oferece a lista de esp
 ```json
 [ { "mes": "2026-10", "campanha": "Outubro Rosa", "tema": "Prevenção do câncer de mama",
     "itens": [ { "id": "v1", "titulo": "Mamografia", "status": "pendente|agendado|feito",
-                 "nota": "A cada 2 anos, dos 50 aos 74 anos", "esp": "ginecologia", "pessoa": {} } ] } ]
+                 "nota": "A cada 2 anos, dos 50 aos 74 anos", "esp": "ginecologia", "pessoa": {},
+                 "consulta": null } ] } ]
 ```
-`PUT /api/prevencao/{id}` recebe `{ "idUsuarioLogado", "status" }`.
+- `PUT /api/prevencao/{id}` recebe `{ "idUsuarioLogado", "status", "idConsulta"? }`. Ao marcar a partir do item,
+  `idConsulta` liga a consulta ao item (`Pessoa_Prevencao.IdConsulta`) e a consulta passa a ter `"tipo": "prevencao"`.
+- `POST /api/pacientes/{id}/prevencao` recebe `{ "mes": "AAAA-MM", "pessoa", "titulo", "nota", "esp" }` (incluir alguém numa campanha).
+  Erros: "Escolha uma campanha.", "Escolha quem vai entrar na prevenção.", "Escolha o exame ou check-up.",
+  "Essa pessoa já está nesse item da prevenção."
 
 ## Pendências no backend que afetam o app
 

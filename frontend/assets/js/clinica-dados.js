@@ -108,7 +108,9 @@
   loja.expedientes = loja.expedientes || {};
   const MEDICOS = (NA_AGENDA[CLINICA] || []).concat(Object.keys(loja.expedientes))
     .filter((id, i, l) => l.indexOf(id) === i && D.medicos.some((m) => m.id === id));
-  const DURACAO = { paulo: 40, renata: 40 };
+  /* duração de cada consulta: vem da especialidade do médico (Especialidades.DuracaoPadrao) */
+  const DURACAO = {};
+  D.medicos.forEach((m) => { DURACAO[m.id] = (D.especialidades[m.esp] || {}).duracao || 30; });
   guardar.expediente = (id, e) => { loja.expedientes[id] = e; gravarLoja(); };
 
   /* Configuração da clínica: até quando a agenda fica aberta para marcar (2 meses à frente de hoje) */
@@ -135,10 +137,16 @@
   Object.keys(loja.expedientes).forEach((id) => {
     const e = loja.expedientes[id];
     const par = (x) => (x ? [txt(x[0]), txt(x[1])] : null);
-    EXPEDIENTE[id] = { semana: par(e.semana), sabado: par(e.sabado) };
-    if (e.dur) DURACAO[id] = e.dur;
+    EXPEDIENTE[id] = { semana: par(e.semana), sabado: par(e.sabado), almoco: e.almoco === undefined ? [720, 780] : e.almoco };
   });
   MEDICOS.forEach((m) => { if (!EXPEDIENTE[m]) EXPEDIENTE[m] = PADRAO; });
+  /* almoço de cada médico em minutos [início, fim], ou null se não para (Horarios_Atendimento.InicioAlmoco/FimAlmoco).
+     Na carga inicial todos param das 12h às 13h. */
+  function almocoDe(m) {
+    const e = EXPEDIENTE[m] || PADRAO;
+    return e.almoco === undefined ? [720, 780] : e.almoco;
+  }
+  const noAlmoco = (m, ini, dur) => { const a = almocoDe(m); return !!a && ini < a[1] && ini + dur > a[0]; };
   const OCUPACAO = { helena: 0.8, fernanda: 0.68, paulo: 0.86, camila: 0.9, luana: 0.5, andre: 0.6 };
 
   /* Agenda detalhada de hoje na Clínica Ipê: [início, duração, paciente, como estava na carga inicial] */
@@ -229,7 +237,7 @@
         }
         const dur = DURACAO[m] || 30;
         for (let t = e[0]; t + dur <= e[1]; t += dur) {
-          if (t < 13 * 60 && t + dur > 12 * 60) continue; /* almoço */
+          if (noAlmoco(m, t, dur)) continue; /* almoço */
           const r = sorte();
           const nome = PRIMEIROS[Math.floor(sorte() * PRIMEIROS.length)] + " " + SOBRENOMES[Math.floor(sorte() * SOBRENOMES.length)];
           const ocup = OCUPACAO[m] || 0.6;
@@ -291,6 +299,8 @@
   }
   const agenda = carregar();
   agenda.faltas = agenda.faltas || [];
+  agenda.retornos = agenda.retornos || [];
+  agenda.exames = agenda.exames || [];
   const consultas = agenda.consultas;
 
   function salvar() {
@@ -421,6 +431,8 @@
         novo.consultas.forEach((k) => consultas.push(k));
         agenda.seq = novo.seq;
         agenda.faltas = novo.faltas || [];
+        agenda.retornos = novo.retornos || [];
+        agenda.exames = novo.exames || [];
       } catch (e) { return; }
       ouvintes.forEach((fn) => fn("agenda"));
     } else if (ev.key === CHAVE_LOJA) {
@@ -455,14 +467,17 @@
   }
 
   /* falta justificada: a recepção retira (fica no histórico como retirada, não conta mais) */
-  function retirarFalta(id, por) {
+  function retirarFalta(id, por, motivo) {
     const f = agenda.faltas.find((x) => x.id === id);
     if (!f) return;
     f.retirada = true;
     f.retiradaPor = por || "";
     f.retiradaEm = new Date().toISOString();
+    f.motivoRetirada = String(motivo || "").trim();
     salvar();
   }
+  /* todas as faltas, inclusive as retiradas (histórico da ficha) */
+  const historicoFaltasDe = (nomes) => agenda.faltas.filter((f) => [].concat(nomes).includes(f.paciente));
 
   /* faltas de uma ou mais pessoas (nomes), sem as retiradas */
   function faltasDe(nomes) {
@@ -508,10 +523,35 @@
     return porMedico;
   }
 
+  /* ─── Retornos e exames pedidos pelo médico (tabelas Retornos e Exames) ───
+     Retorno: { id, paciente, medico, consulta, data, nota, status: encaminhado | agendado | realizado | cancelado }
+     Exame:   { id, paciente, medico, consulta, nome, status: pendente | realizado }
+     Ficam na agenda da clínica: o médico pede, a recepção e o paciente veem. */
+  const novoIdItem = (p) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  function registrarRetorno(r) {
+    const x = Object.assign({ id: novoIdItem("r"), status: "encaminhado", criadoEm: new Date().toISOString() }, r);
+    agenda.retornos.push(x);
+    salvar();
+    return x;
+  }
+  function registrarExame(e) {
+    const x = Object.assign({ id: novoIdItem("e"), status: "pendente", criadoEm: new Date().toISOString() }, e);
+    agenda.exames.push(x);
+    salvar();
+    return x;
+  }
+  function mudarStatusExame(id, status) {
+    const x = agenda.exames.find((e) => e.id === id);
+    if (x) { x.status = status; salvar(); }
+  }
+  const retornosDe = (nomes) => agenda.retornos.filter((r) => [].concat(nomes).includes(r.paciente));
+  const examesDe = (nomes) => agenda.exames.filter((e) => [].concat(nomes).includes(e.paciente));
+
   window.CLIDADOS = {
-    CLINICA, MEDICOS, DURACAO, INICIO, FIM, ABRE_MESES, ABRE_ATE, EXPEDIENTE,
+    registrarRetorno, registrarExame, mudarStatusExame, retornosDe, examesDe,
+    CLINICA, MEDICOS, DURACAO, INICIO, FIM, ABRE_MESES, ABRE_ATE, EXPEDIENTE, almocoDe, noAlmoco,
     consultas, expediente, salvar, apagar, novoId, guardar, aoMudar,
-    confirmarPresenca, registrarFalta, retirarFalta, faltasDe, restricaoDe, horariosLivres,
+    confirmarPresenca, registrarFalta, retirarFalta, faltasDe, historicoFaltasDe, restricaoDe, horariosLivres,
     horarioDe, ehConsulta, ativa, cancelarConsulta, oferecerHorario, ocuparHorario, liberarHorario,
     vagaOferecida, responderVaga, sincronizarEspera, marcarConsulta, cancelarPeloPaciente, consultaDoPaciente,
     minutoAgora, hm, txt, iso, data, somaDias,

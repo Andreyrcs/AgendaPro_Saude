@@ -135,7 +135,8 @@ function EscolherHorario({ navigation, params }) {
         data: escolha.data,
         hora: escolha.hora,
       });
-      if (params.itemPrevencao) await marcarItemPrevencao(usuario, params.itemPrevencao, 'agendado');
+      // a consulta fica ligada ao item de prevenção (Pessoa_Prevencao.IdConsulta)
+      if (params.itemPrevencao) await marcarItemPrevencao(usuario, params.itemPrevencao, 'agendado', consulta.id);
       setMarcada(consulta);
     } catch (e) {
       setErroEnvio(e.message);

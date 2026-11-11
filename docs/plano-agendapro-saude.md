@@ -447,7 +447,7 @@ Chatbot de triagem baseado em palavras-chave:
 - Tela de detalhe de um membro da família
 - Consultas agendadas
 - Retornos e exames pendentes
-- Cartão SUS, alergias
+- Alergias
 - Botão para marcar consulta
 
 #### 4.2.6 Prevenção
@@ -489,7 +489,7 @@ Chatbot de triagem baseado em palavras-chave:
 - Detecção de conflito para agendamentos simultâneos
 
 #### 4.2.12 Adicionar Familiar
-- Formulário: nome, relação, data de nascimento, cartão SUS, alergias
+- Formulário: nome, relação, data de nascimento, alergias
 - **Seletor de cor**: 8 opções de cores para o avatar
 - Preview do avatar em tempo real
 
@@ -573,7 +573,7 @@ Contém os dados estáticos do sistema:
 
 **Pessoas (5 membros da família):**
 - Titular + 4 dependentes
-- Cada pessoa: nome, nome curto, relação, data de nascimento, cartão SUS, alergias, cor do avatar, características visuais do avatar (tom de pele, cabelo, óculos, roupa)
+- Cada pessoa: nome, nome curto, relação, data de nascimento, alergias, cor do avatar, características visuais do avatar (tom de pele, cabelo, óculos, roupa)
 
 **Especialidades (9):**
 - Nome, duração padrão da consulta

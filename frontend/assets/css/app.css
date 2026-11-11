@@ -1877,6 +1877,7 @@ a.item {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    justify-content: center;
 }
 .opcoes button {
     min-height: 46px;
@@ -1886,6 +1887,21 @@ a.item {
     background: var(--papel);
     font-weight: 700;
     font-size: 0.9375rem;
+}
+
+.preven_family button {
+    min-height: 76px;
+    padding: 0 14px;
+    border-radius: 9px;
+    border: 1.5px solid var(--linha);
+    background: var(--papel);
+    font-weight: 700;
+    font-size: 0.9375rem;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 .opcoes button[aria-checked='true'] {
     background: var(--noite);
@@ -2295,3 +2311,34 @@ html[data-movimento='reduzido'] .digitando span {
 }
 .confirmar-presenca__acoes { display: flex; gap: 10px; flex-wrap: wrap; }
 .confirmar-presenca__acoes .botao { flex: 1 1 120px; justify-content: center; }
+
+/* ─── Prevenção: botão de incluir e as escolhas em lista (campanha e exame) ─── */
+.prev-topo {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 12px;
+}
+.opcoes--lista {
+  display: grid;
+  gap: 8px;
+}
+.opcoes--lista button {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  padding: 10px 16px;
+  border-radius: 16px;
+  text-align: left;
+}
+.opcoes--lista button small {
+  font-weight: 400;
+  font-size: 0.8125rem;
+  color: var(--tinta-2);
+}
+.opcoes--lista button[aria-checked='true'] small {
+  color: inherit;
+}
+.opcoes button:focus-visible {
+  outline: 3px solid var(--noite);
+  outline-offset: 2px;
+}

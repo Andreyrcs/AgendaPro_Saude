@@ -7,6 +7,7 @@
 
 import * as ficticios from './dadosFicticios';
 import { primeiroNome } from '../utilitarios/texto';
+import { idadeEm } from '../utilitarios/datas';
 
 export const EMAIL_CARGA_INICIAL = 'juliana.santos@email.com';
 
@@ -30,7 +31,7 @@ export function novoId(prefixo) {
 // A senha fica em texto aqui porque é só memória do aparelho e some ao fechar o app.
 // Com a API, a senha vai por HTTPS e o servidor guarda só o hash BCrypt.
 export const usuariosLocais = [
-  { idUsuario: 1, nome: 'Juliana Santos', email: EMAIL_CARGA_INICIAL, senha: 'paciente123' },
+  { idUsuario: 1, nome: 'Juliana Santos', email: EMAIL_CARGA_INICIAL, senha: 'paciente123', clinicas: ['ipe'] },
 ];
 
 // Horários livres da clínica. São de todos os pacientes, não de uma conta só.
@@ -53,23 +54,28 @@ function contaDaCargaInicial() {
     consultas: copiar(ficticios.consultas),
     fila: copiar(ficticios.fila),
     acompanhamento: copiar(ficticios.acompanhamento),
+    notificacoes: copiar(ficticios.notificacoes),
     prevencao: copiar(ficticios.prevencao),
     faltas: [], // { id, consulta, data, confirmou, motivo, retirada }
   };
 }
 
+// Conta nova: o titular é salvo como paciente com parentesco "Titular" (tabela Pacientes)
 function contaNova(usuario) {
+  const dados = usuariosLocais.find((u) => u.idUsuario === usuario.idUsuario) || {};
   return {
     familia: [
       {
         id: 'titular', nome: usuario.nome || 'Você', curto: primeiroNome(usuario.nome) || 'Você',
-        relacao: 'Você', idade: null, genero: null, cor: ficticios.pessoas[0].cor,
-        alergias: 'Nenhuma informada', sus: 'Não informado', titular: true,
+        relacao: 'Titular', nascimento: dados.nascimento || null,
+        idade: dados.nascimento ? idadeEm(dados.nascimento) : null, genero: null, cor: ficticios.pessoas[0].cor,
+        alergias: dados.alergias || 'Nenhuma informada', titular: true,
       },
     ],
     consultas: [],
     fila: null,
     acompanhamento: { retornos: [], exames: [] },
+    notificacoes: [],
     prevencao: [],
     faltas: [], // { id, consulta, data, confirmou, motivo, retirada }
   };
@@ -85,11 +91,19 @@ export function horarioCanceladoDoMedico(idMedico, data, hora) {
   Object.values(contas).forEach((conta) => {
     const f = conta.fila;
     if (!f || f.medico !== idMedico || f.vagaOferecida) return;
-    if (f.posicao === 1) f.vagaOferecida = { data, hora, expiraEm: Date.now() + TRINTA_MINUTOS };
+    if (f.posicao === 1) {
+      f.vagaOferecida = { data, hora, expiraEm: Date.now() + TRINTA_MINUTOS };
+      avisar(conta, 'VAGA_OFERECIDA', `Abriu uma vaga em ${data.split('-').reverse().join('/')} às ${hora}. Aceite ou recuse em até 30 minutos.`);
+    }
     else { f.posicao -= 1; f.naFila = Math.max(f.posicao, f.naFila - 1); }
   });
   naFila[idMedico] -= 1; // a 1ª pessoa saiu da fila com a vaga
   return true;
+}
+
+// Novo aviso para a conta (o servidor grava em Notificacoes nos mesmos momentos)
+export function avisar(conta, tipo, mensagem) {
+  conta.notificacoes.unshift({ id: novoId('n'), tipo, mensagem, dataEnvio: new Date().toISOString().slice(0, 10), lida: false });
 }
 
 // Regra de negócio: o paciente só mexe na própria família.

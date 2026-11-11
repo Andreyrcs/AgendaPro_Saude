@@ -142,6 +142,7 @@
       '<dl class="ficha__numeros"><div><dt>Consultas</dt><dd class="num">' + p.consultas.length + '</dd></div><div><dt>Faltas</dt><dd class="num">' + p.faltas +
       '</dd></div><div><dt>Na fila</dt><dd class="num">' + p.filas.length + "</dd></div></dl>" +
       faltasHTML(p) +
+      retornosExamesHTML(p) +
       (p.filas.length
         ? '<p class="ficha__secao">Lista de espera</p><ul class="historico">' + p.filas.map((f) =>
             '<li><span class="historico__quando">' + f.pos + 'ª posição</span><span class="historico__quem">' + K.medico(f.m).nome + " · desde " + A.extenso(f.desde, false) + "</span>" +
@@ -154,19 +155,48 @@
       '<div class="ficha__acoes"><a class="botao botao--secundario botao--pequeno" href="nova-consulta.html?paciente=' + encodeURIComponent(p.nome) + '">Marcar consulta</a></div>';
   }
 
-  /* Faltas registradas e a restrição atual. A recepção retira a falta justificada (ela deixa de contar). */
+  /* Faltas (tabela Faltas): data, se tinha confirmado presença, quem registrou, e a restrição atual.
+     A recepção retira a falta justificada informando o motivo; a retirada fica no histórico. */
   function faltasHTML(p) {
-    const faltas = C.faltasDe(p.nome);
+    const todas = C.historicoFaltasDe(p.nome);
     const r = C.restricaoDe(p.nome);
     const aviso = r.tipo === "so_fila" ? "Só pode marcar pela lista de espera até " + A.extenso(r.ate, false) + "."
       : r.tipo === "so_recepcao" ? "Só agenda com a recepção até " + A.extenso(r.ate, false) + "." : "";
-    if (!faltas.length) return "";
+    if (!todas.length) return "";
     return '<p class="ficha__secao">Faltas registradas</p>' +
       (aviso ? '<p class="ficha__restricao">' + aviso + "</p>" : "") +
-      '<ul class="historico">' + faltas.map((f) =>
-        '<li><span class="historico__quando">' + K.curtoData(f.data) + " · " + f.hora + '</span><span class="historico__quem">' + A.esc(f.motivo) +
-        (f.confirmou ? " · tinha confirmado presença" : " · sem confirmação (não conta)") + "</span>" +
-        '<button type="button" class="link-acao" data-retirar="' + f.id + '" style="grid-row:1/span 2;grid-column:2;align-self:center">Retirar (justificada)</button></li>'
+      '<ul class="historico">' + todas.map((f) =>
+        '<li><span class="historico__quando">' + K.curtoData(f.data) + " · " + f.hora + (f.retirada ? " · retirada" : "") + "</span>" +
+        '<span class="historico__quem">' + A.esc(f.motivo) + (f.por ? " · registrada por " + A.esc(f.por) : "") +
+        (f.confirmou ? " · tinha confirmado presença" : " · sem confirmação (não conta)") +
+        (f.retirada ? "<br>Retirada por " + A.esc(f.retiradaPor || "recepção") + (f.motivoRetirada ? ": " + A.esc(f.motivoRetirada) : "") : "") + "</span>" +
+        (f.retirada ? "" :
+          '<button type="button" class="link-acao" data-retirar="' + f.id + '" style="grid-row:1/span 2;grid-column:2;align-self:center">Retirar (justificada)</button>' +
+          '<form class="retirar" data-form-retirar="' + f.id + '" hidden>' +
+          '<label for="mot-' + f.id + '">Motivo da justificativa</label>' +
+          '<input id="mot-' + f.id + '" maxlength="300" placeholder="Ex.: atestado médico apresentado" required />' +
+          '<span style="display:flex;gap:8px"><button type="submit" class="botao botao--principal botao--pequeno">Retirar falta</button>' +
+          '<button type="button" class="botao botao--secundario botao--pequeno" data-cancelar-retirar>Cancelar</button></span></form>') +
+        "</li>"
+      ).join("") + "</ul>";
+  }
+
+  /* Retornos e exames pedidos pelo médico (tabelas Retornos e Exames) */
+  const SITUACAO_RETORNO = { encaminhado: "Encaminhado à recepção", agendado: "Agendado", realizado: "Realizado", cancelado: "Cancelado" };
+  function retornosExamesHTML(p) {
+    const retornos = C.retornosDe(p.nome);
+    const exames = C.examesDe(p.nome);
+    if (!retornos.length && !exames.length) return "";
+    return '<p class="ficha__secao">Retornos e exames</p><ul class="historico">' +
+      retornos.map((r) =>
+        '<li><span class="historico__quando">Retorno' + (r.data ? " · " + K.curtoData(r.data) : "") + '</span><span class="historico__quem">' +
+        K.medico(r.medico).nome + " · " + SITUACAO_RETORNO[r.status] + (r.nota ? "<br>" + A.esc(r.nota) : "") + "</span>" +
+        (r.status === "encaminhado" ? '<a class="link-acao" href="nova-consulta.html?paciente=' + encodeURIComponent(p.nome) + '" style="grid-row:1/span 2;grid-column:2;align-self:center">Marcar</a>' : "") + "</li>"
+      ).join("") +
+      exames.map((e) =>
+        '<li><span class="historico__quando">Exame · ' + A.esc(e.nome) + '</span><span class="historico__quem">' + K.medico(e.medico).nome + " · " +
+        (e.status === "realizado" ? "Realizado" : "Pendente") + "</span>" +
+        (e.status === "realizado" ? "" : '<button type="button" class="link-acao" data-exame-feito="' + e.id + '" style="grid-row:1/span 2;grid-column:2;align-self:center">Marcar como realizado</button>') + "</li>"
       ).join("") + "</ul>";
   }
 
@@ -192,11 +222,32 @@
     desenharLista();
     $('#filtros [data-filtro="' + est.filtro + '"]').focus();
   });
-  /* retirar falta justificada: deixa de contar para a restrição */
+  /* retirar falta justificada: abre o campo do motivo; confirmada, deixa de contar para a restrição */
   $("#ficha").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-retirar]");
-    if (!b || !est.escolhido) return;
-    C.retirarFalta(b.dataset.retirar, K.conta.nome);
+    if (b) {
+      const f = $('[data-form-retirar="' + b.dataset.retirar + '"]');
+      f.hidden = false;
+      b.hidden = true;
+      f.querySelector("input").focus();
+      return;
+    }
+    const cancelar = ev.target.closest("[data-cancelar-retirar]");
+    if (cancelar) { desenharFicha(); return; }
+    const feito = ev.target.closest("[data-exame-feito]");
+    if (feito) {
+      C.mudarStatusExame(feito.dataset.exameFeito, "realizado");
+      desenharFicha();
+      K.toast({ titulo: "Exame marcado como realizado", icone: "check" });
+    }
+  });
+  $("#ficha").addEventListener("submit", (ev) => {
+    const f = ev.target.closest("[data-form-retirar]");
+    if (!f || !est.escolhido) return;
+    ev.preventDefault();
+    const motivo = f.querySelector("input").value.trim();
+    if (!motivo) { f.querySelector("input").focus(); return; }
+    C.retirarFalta(f.dataset.formRetirar, K.conta.nome, motivo);
     est.escolhido.faltas = C.faltasDe(est.escolhido.nome).length;
     desenharFicha();
     desenharLista();

@@ -262,6 +262,20 @@
     gravar();
     return { usuario: u, senhaProvisoria };
   }
+  /* POST /api/clinicas/{id}/medicos  (cria a conta de acesso do médico: tabela Medicos.IdUsuario)
+     dados = { nome, email, medicoId } → { usuario, senhaProvisoria } */
+  async function cadastrarContaMedico(dados) {
+    await pronto;
+    exigir(["dono", "recepcao"]);
+    const c = clinicaAtual();
+    if (emailEmUso(dados.email)) throw new Error("Este e-mail já tem uma conta.");
+    const senhaProvisoria = gerarSenhaProvisoria();
+    const u = { id: novoId("u"), nome: dados.nome.trim(), email: dados.email.toLowerCase().trim(), senha: await resumo(senhaProvisoria), papel: "medico", clinicaId: c.id, medicoId: dados.medicoId, provisoria: true };
+    ler().usuarios.push(u);
+    gravar();
+    return { usuario: u, senhaProvisoria };
+  }
+  function emailLivre(email) { return !emailEmUso(email); }
   function gerarSenhaProvisoria() {
     const letras = "abcdefghjkmnpqrstuvwxyz";
     let s = "";
@@ -356,7 +370,7 @@
     sessao, usuarioAtual, clinicaAtual, destinoDe,
     entrar, sair, trocarSenha,
     cadastrarClinica, atualizarClinica,
-    listarEquipe, cadastrarRecepcionista, removerDaEquipe,
+    listarEquipe, cadastrarRecepcionista, removerDaEquipe, cadastrarContaMedico, emailLivre,
     cadastrarPaciente, buscarClinicas, clinicaPorCodigo, vincularClinica, clinicasDoPaciente,
     validarCNPJ, formatarCNPJ, formatarTelefone,
   };

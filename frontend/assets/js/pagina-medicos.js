@@ -22,7 +22,8 @@
   function capacidade(m, dia) {
     const e = C.expediente(m, dia);
     if (!e) return 0;
-    return e[1] - e[0] - Math.max(0, Math.min(e[1], 780) - Math.max(e[0], 720));
+    const a = C.almocoDe(m);
+    return e[1] - e[0] - (a ? Math.max(0, Math.min(e[1], a[1]) - Math.max(e[0], a[0])) : 0);
   }
 
   function numeros(m) {
@@ -46,7 +47,7 @@
   }
 
   function quemHTML(md) {
-    return '<span class="quem">' + A.avatarMedico(md, 36) + '<span class="quem__texto"><span class="quem__nome">' + md.nome + '</span><span class="tabela__sub">' + K.esp(md.esp).nome + "</span></span></span>";
+    return '<span class="quem">' + A.avatarMedico(md, 36) + '<span class="quem__texto"><span class="quem__nome">' + md.nome + '</span><span class="tabela__sub">' + K.esp(md.esp).nome + (md.crm ? " · " + A.esc(md.crm) : "") + "</span></span></span>";
   }
 
   function desenhar() {
@@ -124,8 +125,11 @@
       ? "Mude o que for preciso. O expediente se edita em Horários."
       : "Depois do cadastro, defina o expediente em Horários para abrir a agenda.";
     $("#dlg-ok").textContent = md ? "Salvar alterações" : "Cadastrar";
+    /* o e-mail de acesso só é pedido no cadastro: ele cria a conta do médico */
+    $("#c-email").hidden = !!md;
     if (md) {
       form.nome.value = md.nome;
+      form.crm.value = md.crm || "";
       form.esp.value = md.esp;
       form.tel.value = md.tel || "";
       form.sala.value = md.sala || "";
@@ -145,15 +149,24 @@
     let nome = form.nome.value.trim().replace(/\s+/g, " ");
     const semTitulo = nome.replace(/^(Dra?\.?|Dr\(a\)\.)\s+/i, "");
     if (semTitulo.split(" ").length < 2) { erro("#c-nome", form.nome, "Escreva o nome e o sobrenome."); return; }
+    /* CRM: obrigatório e único (coluna Medicos.CRM) */
+    const crm = form.crm.value.trim().toUpperCase().replace(/\s+/g, " ");
+    if (!/^CRM\/[A-Z]{2} ?\d{4,7}$/.test(crm)) { erro("#c-crm", form.crm, "Use o formato CRM/UF e o número, como CRM/SP 123456."); return; }
+    if (D.medicos.some((x) => x !== editando && (x.crm || "").replace(/\s/g, "") === crm.replace(/\s/g, ""))) { erro("#c-crm", form.crm, "Já existe um médico com este CRM."); return; }
+    const email = form.email.value.trim().toLowerCase();
+    if (!editando) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { erro("#c-email", form.email, "Informe o e-mail que o médico vai usar para entrar."); return; }
+      if (!API.emailLivre(email)) { erro("#c-email", form.email, "Este e-mail já tem uma conta."); return; }
+    }
     const digitos = form.tel.value.replace(/\D/g, "");
     if (digitos && (digitos.length < 10 || digitos.length > 11)) { erro("#c-tel", form.tel, "Use o DDD e o número, com 10 ou 11 dígitos."); return; }
     if (!/^(Dra?\.|Dr\(a\)\.)/.test(nome)) nome = "Dr(a). " + semTitulo;
     const tel = digitos ? "(" + digitos.slice(0, 2) + ") " + digitos.slice(2, -4) + "-" + digitos.slice(-4) : "";
-    const campos = { nome, esp: form.esp.value, tel, sala: form.sala.value.trim() };
+    const campos = { nome, crm: crm.replace(/^CRM\/([A-Z]{2}) ?/, "CRM/$1 "), esp: form.esp.value, tel, sala: form.sala.value.trim() };
 
     if (editando) {
       const md = editando;
-      const antes = { nome: md.nome, esp: md.esp, tel: md.tel || "", sala: md.sala || "" };
+      const antes = { nome: md.nome, crm: md.crm || "", esp: md.esp, tel: md.tel || "", sala: md.sala || "" };
       Object.assign(md, campos);
       K.guardar.edicaoMedico(md.id, campos);
       K.fecharDialogo(dlg);
@@ -180,7 +193,14 @@
       linha.scrollIntoView({ block: "nearest", behavior: M.reduzido() ? "auto" : "smooth" });
       if (!M.reduzido()) linha.animate([{ backgroundColor: "#d4f3e6" }, { backgroundColor: "transparent" }], { duration: 1200, easing: "ease" });
     }
-    K.toast({ titulo: nome + " cadastrado", texto: "Agora defina o expediente em Horários para abrir a agenda.", icone: "stethoscope" });
+    /* a conta de acesso do médico (login com o e-mail e uma senha provisória) */
+    API.cadastrarContaMedico({ nome, email, medicoId: id }).then((r) => {
+      K.toast({
+        titulo: nome + " cadastrado",
+        texto: "Acesso: " + email + " · senha provisória " + r.senhaProvisoria + " (anote e entregue ao médico). Agora defina o expediente em Horários.",
+        icone: "stethoscope", duracao: 20000,
+      });
+    }).catch((e) => K.toast({ titulo: nome + " cadastrado, mas sem conta de acesso", texto: e.message, icone: "info", duracao: 8000 }));
   });
 
   desenhar();

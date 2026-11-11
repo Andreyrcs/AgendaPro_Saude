@@ -237,6 +237,16 @@
         const r = PACIENTE.avisoDeRestricao();
         if (r) h += restricaoHTML(r);
         if (PACIENTE.situacao().faltas) h += '<p style="margin:0 0 16px;color:var(--tinta-2)">' + PACIENTE.textoDasFaltas() + '</p>';
+        /* avisos da clínica ainda não lidos (tabela Notificacoes: tipo, mensagem, data de envio, lida) */
+        const novos = (D.notificacoes || []).filter((n) => n.nova);
+        if (novos.length) {
+            h += '<section class="grupo" aria-label="Avisos novos" style="margin-bottom:16px">' +
+                cabecaSecao('Avisos') + '<div class="cartao lista-cartao">' +
+                novos.map((n) => '<p class="notif" style="padding:12px 16px">' + I(n.icone || 'bell') +
+                    '<span class="item__corpo"><span style="display:block">' + A.esc(n.texto) + '</span>' +
+                    '<span class="item__sub" style="display:block">' + A.esc(n.quando) + '</span></span></p>').join('') +
+                '</div></section>';
+        }
         return h;
     }
 
@@ -898,8 +908,8 @@
                   '</div></div>'
                 : '') +
             '<dl class="cartao lista-cartao ficha grupo">' +
-            '<div><dt>Cartão do SUS</dt><dd>' +
-            p.sus +
+            '<div><dt>Parentesco</dt><dd>' +
+            A.esc(p.relacao) +
             '</dd></div>' +
             '<div><dt>Alergias</dt><dd>' +
             p.alergias +
@@ -910,130 +920,10 @@
         return { titulo: p.curto, html };
     }
 
+    /* Prevenção: a mesma tela do app (prevencao-tela.js) */
     function renderPrevencao() {
-        const html =
-            tituloPagina(
-                'Prevenção',
-                'Check-ups e exames de rotina ao longo do ano.',
-            ) +
-            '<div class="filtros" role="group" aria-label="Filtrar por pessoa" id="filtros-prev"></div>' +
-            '<div id="meses-prev"></div>';
-
-        function montar(el) {
-            const filtros = el.querySelector('#filtros-prev');
-            const meses = el.querySelector('#meses-prev');
-
-            function desenhar() {
-                const f = estado.prevFiltro;
-                const conta = (id) =>
-                    D.prevencao.reduce(
-                        (s, m) =>
-                            s +
-                            m.itens.filter(
-                                (it) => id === 'todos' || it.pessoa === id,
-                            ).length,
-                        0,
-                    );
-                filtros.innerHTML =
-                    '<button type="button" class="filtro" aria-pressed="' +
-                    (f === 'todos') +
-                    '" data-f="todos">Todos <span class="filtro__n">' +
-                    conta('todos') +
-                    '</span></button>' +
-                    D.pessoas
-                        .map(
-                            (p) =>
-                                '<button type="button" class="filtro" aria-pressed="' +
-                                (f === p.id) +
-                                '" data-f="' +
-                                p.id +
-                                '">' +
-                                A.avatar(p, 28) +
-                                nomeCurto(p) +
-                                ' <span class="filtro__n">' +
-                                conta(p.id) +
-                                '</span></button>',
-                        )
-                        .join('');
-
-                meses.innerHTML = D.prevencao
-                    .map((mes, i) => {
-                        const itens = mes.itens.filter(
-                            (it) => f === 'todos' || it.pessoa === f,
-                        );
-                        if (!itens.length) return '';
-                        return (
-                            '<div class="mes-bloco"><div class="container--folha">' +
-                            A.folhaMes(mes.mes, { menta: i === 0 }) +
-                            '</div>' +
-                            '<div class="mes-bloco__corpo"><h2 class="mes-bloco__campanha">' +
-                            (mes.campanha ||
-                                cap(
-                                    A.MESES_LONGOS[
-                                        A.data(mes.mes + '-01').getMonth()
-                                    ],
-                                )) +
-                            '</h2>' +
-                            '<p class="mes-bloco__tema">' +
-                            mes.tema +
-                            '</p>' +
-                            '<div class="cartao">' +
-                            itens
-                                .map((it) => {
-                                    const p = pessoa(it.pessoa);
-                                    const feito =
-                                        it.status === 'agendado' ||
-                                        it.status === 'feito';
-                                    return (
-                                        '<div class="prev-item">' +
-                                        A.avatar(p, 36) +
-                                        '<div class="item__corpo"><p class="prev-item__titulo">' +
-                                        it.titulo +
-                                        '</p><p class="prev-item__nota">Para ' +
-                                        (p.id === D.titular
-                                            ? 'você'
-                                            : p.tratamento) +
-                                        ' · ' +
-                                        it.nota +
-                                        '</p>' +
-                                        '<div class="prev-item__acao">' +
-                                        (feito
-                                            ? '<span class="selo selo--feito">' +
-                                              I('check') +
-                                              (it.status === 'feito'
-                                                  ? 'Feito'
-                                                  : 'Marcado') +
-                                              '</span>'
-                                            : '<span class="selo selo--alerta">Não marcado</span>' +
-                                              (it.esp
-                                                  ? '<a class="botao botao--secundario botao--pequeno" href="#agendar/' +
-                                                    it.esp +
-                                                    '/' +
-                                                    it.pessoa +
-                                                    '">Agendar</a>'
-                                                  : '')) +
-                                        '</div></div></div>'
-                                    );
-                                })
-                                .join('') +
-                            '</div></div></div>'
-                        );
-                    })
-                    .join('');
-            }
-
-            desenhar();
-
-            el.addEventListener('click', (ev) => {
-                const bf = ev.target.closest('[data-f]');
-                if (bf) {
-                    estado.prevFiltro = bf.dataset.f;
-                    desenhar();
-                }
-            });
-        }
-
-        return { titulo: 'Prevenção', html, montar };
+        const op = { titulo: tituloPagina, estado, abrirGaveta, fecharGaveta, anunciar };
+        return { titulo: 'Prevenção', html: PREVENCAO_TELA.html(op), montar: (el) => PREVENCAO_TELA.montar(el, op) };
     }
 
     function renderAcompanhamento() {
@@ -1607,7 +1497,8 @@
         );
     }
 
-    function renderAgendar(espId, pessoaId) {
+    /* itemId: o item de prevenção que esta consulta resolve (vem do "Marcar" da Prevenção) */
+    function renderAgendar(espId, pessoaId, itemId) {
         const espObj = espId ? esp(espId) : null;
         const titulo = espObj
             ? 'Marcar consulta de ' + espObj.nome
@@ -1820,8 +1711,12 @@
                                         status: 'confirmada',
                                         motivo: 'Consulta de ' + mEsp.nome,
                                     };
+                                    /* marcada a partir da Prevenção: a consulta fica ligada ao item */
+                                    const itemPrev = itemId ? PACIENTE.itemPrevencao(itemId) : null;
+                                    if (itemPrev) c.motivo = itemPrev.titulo;
                                     D.consultas.push(c);
                                     PACIENTE.marcar(c);
+                                    if (itemPrev) PACIENTE.marcarItemPrevencao(itemPrev.id, 'agendado', c.id);
                                     if (D.horarios[mId]) {
                                         D.horarios[mId] = D.horarios[mId]
                                             .map((bloco) => ({
@@ -1871,33 +1766,18 @@
             ) +
             '<div class="grade grade--2" style="gap:24px;align-items:start">' +
             '<div>' +
-            '<form id="form-familiar" class="formulario">' +
+            '<form id="form-familiar" class="formulario" novalidate>' +
             '<div class="campo"><label for="f-nome">Nome completo</label>' +
             '<input id="f-nome" type="text" autocomplete="off" placeholder="Ex.: Ana Beatriz Santos" required></div>' +
-            '<div class="campo"><span class="campo__rotulo" id="f-rel-label">Parentesco</span>' +
-            '<div class="opcoes" role="radiogroup" aria-labelledby="f-rel-label">' +
-            [
-                'Filho/a',
-                'Mãe/pai',
-                'Avó/avô',
-                'Cônjuge/companheiro(a)',
-                'Outra pessoa',
-            ]
-                .map(
-                    (o, i) =>
-                        '<button type="button" role="radio" aria-checked="' +
-                        (i === 0) +
-                        '">' +
-                        o +
-                        '</button>',
-                )
-                .join('') +
+            '<div class="campo" id="c-rel"><span class="campo__rotulo" id="f-rel-label">Parentesco (obrigatório)</span>' +
+            '<div class="opcoes" role="radiogroup" aria-labelledby="f-rel-label" aria-required="true">' +
+            PACIENTE.PARENTESCOS.map(
+                (o) => '<button type="button" role="radio" aria-checked="false">' + o + '</button>',
+            ).join('') +
             '</div></div>' +
-            '<div class="campo"><label for="f-nasc">Data de nascimento</label>' +
-            '<input id="f-nasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa"></div>' +
-            '<div class="campo"><label for="f-sus">Cartão do SUS <span style="font-weight:400;color:var(--tinta-2)">(opcional)</span></label>' +
-            '<input id="f-sus" type="text" inputmode="numeric"></div>' +
-            '<div class="campo"><label for="f-alergias">Alergias</label>' +
+            '<div class="campo" id="c-nasc"><label for="f-nasc">Data de nascimento</label>' +
+            '<input id="f-nasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" required></div>' +
+            '<div class="campo"><label for="f-alergias">Alergias (opcional)</label>' +
             '<input id="f-alergias" type="text" placeholder="Ex.: Penicilina, dipirona"></div>' +
             '<div class="gaveta__acoes">' +
             '<button type="submit" class="botao botao--principal">Adicionar familiar</button>' +
@@ -1955,44 +1835,30 @@
                 'submit',
                 (ev) => {
                     ev.preventDefault();
-                    const nome = el.querySelector('#f-nome').value.trim();
-                    if (!nome) {
-                        el.querySelector('#f-nome').focus();
+                    const relBtn = el.querySelector('.opcoes [aria-checked="true"]');
+                    /* nome, parentesco e nascimento obrigatórios (paciente-servicos.js) */
+                    const r = PACIENTE.adicionarFamiliar({
+                        nome: el.querySelector('#f-nome').value,
+                        relacao: relBtn ? relBtn.textContent.trim() : '',
+                        nascimento: el.querySelector('#f-nasc').value,
+                        alergias: el.querySelector('#f-alergias').value,
+                        cor: corSelecionada,
+                    });
+                    el.querySelectorAll('.campo__erro').forEach((x) => x.remove());
+                    const mostrarErro = (campo, alvo, texto) => {
+                        if (!texto) return;
+                        el.querySelector(campo).insertAdjacentHTML('beforeend', '<p class="campo__erro" role="alert">' + texto + '</p>');
+                        if (alvo) alvo.focus();
+                    };
+                    if (!r.familiar) {
+                        mostrarErro('#c-nasc', null, r.erros.nascimento);
+                        mostrarErro('#c-rel', null, r.erros.relacao);
+                        if (r.erros.nome) el.querySelector('#f-nome').focus();
+                        else if (r.erros.relacao) el.querySelector('#c-rel [role="radio"]').focus();
+                        else el.querySelector('#f-nasc').focus();
                         return;
                     }
-                    const relBtn = el.querySelector(
-                        '.opcoes [aria-checked="true"]',
-                    );
-                    const relacao = relBtn
-                        ? relBtn.textContent.trim()
-                        : 'Familiar';
-                    const sus = el.querySelector('#f-sus').value.trim() || '—';
-                    const alergias =
-                        el.querySelector('#f-alergias').value.trim() ||
-                        'Nenhuma conhecida';
-                    const nascStr = el.querySelector('#f-nasc').value.trim();
-                    let idade = 0;
-                    if (nascStr.length === 10) {
-                        const partes = nascStr.split('/');
-                        if (partes.length === 3) {
-                            const ano = parseInt(partes[2], 10);
-                            if (!isNaN(ano))
-                                idade = new Date().getFullYear() - ano;
-                        }
-                    }
-                    const novaPessoa = {
-                        id: 'novo-' + Date.now(),
-                        nome: nome,
-                        curto: nome.split(' ')[0],
-                        tratamento: nome.split(' ')[0],
-                        relacao: relacao,
-                        idade: idade,
-                        cor: corSelecionada,
-                        sus: sus,
-                        alergias: alergias,
-                        genero: 'o',
-                    };
-                    D.pessoas.push(novaPessoa);
+                    const nome = r.familiar.nome;
                     navegar('#familia');
                     setTimeout(() => {
                         aviso({

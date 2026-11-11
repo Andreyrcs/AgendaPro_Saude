@@ -108,7 +108,9 @@
       const y = (t - INICIO) * PX;
       h += '<div class="grade__linha' + (t % 60 ? " grade__linha--meia" : "") + '" style="top:' + y + 'px"></div>';
     }
-    h += '<div class="grade__almoco" style="top:' + (300 * PX) + "px;height:" + (60 * PX) + 'px">' + (semana ? "" : "Almoço") + "</div>";
+    /* a faixa do almoço só aparece quando todos os médicos param no mesmo horário */
+    const a0 = C.MEDICOS.length ? C.almocoDe(C.MEDICOS[0]) : null;
+    if (a0 && C.MEDICOS.every((m) => String(C.almocoDe(m)) === String(a0))) h += '<div class="grade__almoco" style="top:' + ((a0[0] - INICIO) * PX) + "px;height:" + ((a0[1] - a0[0]) * PX) + 'px">' + (semana ? "" : "Almoço") + "</div>";
     for (let i = 1; i < n; i++) {
       const dia = semana && i % 6 === 0;
       if (semana && !dia) continue;
@@ -382,7 +384,8 @@
     return C.MEDICOS.reduce((t, m) => {
       const e = C.expediente(m, dia);
       if (!e) return t;
-      return t + (e[1] - e[0]) - Math.max(0, Math.min(e[1], 780) - Math.max(e[0], 720));
+      const a = C.almocoDe(m);
+      return t + (e[1] - e[0]) - (a ? Math.max(0, Math.min(e[1], a[1]) - Math.max(e[0], a[0])) : 0);
     }, 0);
   }
   function celulaCalor(dia, h) {
@@ -390,8 +393,9 @@
     let cap = 0, ocup = 0, total = 0, livres = 0;
     C.MEDICOS.forEach((m) => {
       const e = C.expediente(m, dia);
-      if (!e || h === 12) return;
-      cap += Math.max(0, Math.min(e[1], fim) - Math.max(e[0], ini));
+      if (!e) return;
+      const al = C.almocoDe(m);
+      cap += Math.max(0, Math.min(e[1], fim) - Math.max(e[0], ini)) - (al ? Math.max(0, Math.min(al[1], fim, e[1]) - Math.max(al[0], ini, e[0])) : 0);
     });
     doDia(dia).forEach((k) => {
       const sob = Math.max(0, Math.min(k.ini + k.dur, fim) - Math.max(k.ini, ini));
@@ -414,8 +418,8 @@
       horas.forEach((x) => {
         const c = celulaCalor(dia, x);
         if (c.o === null) {
-          h += '<span class="calor__celula calor__celula--vazia">' + (x === 12 ? "" : "–") + "</span>";
-          tabela += "<td>" + (x === 12 ? "almoço" : "fechado") + "</td>";
+          h += '<span class="calor__celula calor__celula--vazia">' + (c.cap === 0 && x === 12 ? "" : "–") + "</span>";
+          tabela += "<td>" + (x === 12 ? "almoço ou fechado" : "fechado") + "</td>";
           return;
         }
         const p = passoCalor(c.o);
@@ -730,7 +734,7 @@
     if (md.esp !== medico(k.medico).esp) return md.nome.replace(/^Dra?\. /, "") + " atende " + esp(md.esp).nome;
     const e = C.expediente(alvo.medico, alvo.data);
     if (!e || ini < e[0] || ini + k.dur > e[1]) return "Fora do expediente";
-    if (ini < 780 && ini + k.dur > 720) return "Horário de almoço";
+    if (C.noAlmoco(alvo.medico, ini, k.dur)) return "Horário de almoço";
     if (alvo.data < D.hoje || (alvo.data === D.hoje && ini < agora())) return "Esse horário já passou";
     const choque = C.consultas.find((x) => x !== k && ativas(x) && x.horario !== "livre" && x.medico === alvo.medico && x.data === alvo.data && x.ini < ini + k.dur && ini < x.ini + x.dur);
     if (choque) return "Ocupado: " + (choque.paciente || "vaga oferecida");
@@ -991,6 +995,7 @@
       '<div class="menu" role="dialog" aria-label="Opções da consulta">' +
       '<div class="menu__cab"><p class="menu__nome">' + A.esc(k.horario === "livre" ? "Horário livre" : k.paciente) + "</p>" +
       '<p class="menu__sub">' + curtoData(k.data) + ", " + C.txt(k.ini) + " às " + C.txt(k.ini + k.dur) + "<br>" + m.nome + " · " + ESTADOS[chave(k)].rotulo + "</p>" +
+      (k.motivo ? '<p class="menu__sub">Motivo: ' + A.esc(k.motivo) + "</p>" : "") +
       (k.presencaConfirmada && MOVEIS.includes(k.status) ? '<p class="menu__sub">' + I("circle-check", "ic-sm") + " Presença confirmada pelo paciente</p>" : "") + "</div>" +
       '<div class="menu__itens" role="menu">' +
       (itens.length

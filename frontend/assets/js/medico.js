@@ -74,6 +74,7 @@
 
     /* ─── Dialogs ─── */
     function abrirDlg(dlg) {
+        if (dlg.open) return; /* já aberto: só o conteúdo foi redesenhado */
         const semMov = window.matchMedia(
             '(prefers-reduced-motion: reduce)',
         ).matches;
@@ -277,12 +278,15 @@
                 y +
                 'px"></div>';
         }
-        h +=
-            '<div class="grade__almoco" style="top:' +
-            300 * PX +
-            'px;height:' +
-            60 * PX +
-            'px">Almoço</div>';
+        /* o almoço deste médico (Horários), se ele para */
+        const almoco = C.almocoDe(MEDICO_ID);
+        if (almoco)
+            h +=
+                '<div class="grade__almoco" style="top:' +
+                (almoco[0] - INICIO) * PX +
+                'px;height:' +
+                (almoco[1] - almoco[0]) * PX +
+                'px">Almoço</div>';
         for (let i = 1; i < n; i++) {
             h +=
                 '<div class="grade__sep grade__sep--dia" style="left:calc(' +
@@ -730,7 +734,39 @@
                   k.sala +
                   '</span></div>'
                 : '') +
+            (k.motivo
+                ? '<div class="med-dlg__linha"><span class="med-dlg__rotulo">Motivo</span><span>' +
+                  A.esc(k.motivo) +
+                  '</span></div>'
+                : '') +
+            (k.presencaConfirmada
+                ? '<div class="med-dlg__linha"><span class="med-dlg__rotulo">Presença</span><span>Confirmada pelo paciente</span></div>'
+                : '') +
             '</div>';
+
+        /* exames pedidos nesta consulta, e o campo para pedir outro (atendimento em andamento ou concluído) */
+        const exames = C.examesDe(k.paciente).filter((e) => e.consulta === k.id);
+        if (exames.length) {
+            corpo.innerHTML +=
+                '<div class="med-dlg__notas"><h3>Exames pedidos</h3>' +
+                exames.map((e) => '<div class="med-nota"><span class="med-nota__data">' + A.esc(e.nome) + ' · ' + (e.status === 'realizado' ? 'realizado' : 'pendente') + '</span></div>').join('') +
+                '</div>';
+        }
+        if (k.status === 'em_atendimento' || k.status === 'atendida') {
+            corpo.innerHTML +=
+                '<form class="med-dlg__exame" id="form-exame" novalidate>' +
+                '<label for="f-exame">Pedir exame</label>' +
+                '<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="f-exame" maxlength="150" placeholder="Ex.: Hemograma completo" style="flex:1 1 180px;min-height:44px" />' +
+                '<button type="submit" class="botao botao--secundario botao--pequeno">Pedir</button></div></form>';
+            corpo.querySelector('#form-exame').addEventListener('submit', (ev) => {
+                ev.preventDefault();
+                const nome = corpo.querySelector('#f-exame').value.trim();
+                if (!nome) { corpo.querySelector('#f-exame').focus(); return; }
+                C.registrarExame({ paciente: k.paciente, medico: MEDICO_ID, consulta: k.id, nome });
+                toast('Exame pedido', nome + ' · ' + k.paciente, 'check-circle');
+                abrirConsulta(chave);
+            });
+        }
 
         // Notas de retorno salvas
         const retornos = lerRetornos().filter((r) => r.paciente === k.paciente);
@@ -852,12 +888,9 @@
     }
 
     /* ─── Retorno com nota ─── */
+    /* retornos e exames ficam na agenda da clínica (clinica-dados.js): a recepção e o paciente também veem */
     function lerRetornos() {
-        try {
-            return JSON.parse(localStorage.getItem('medico.retornos') || '[]');
-        } catch (e) {
-            return [];
-        }
+        return C.retornosDe(C.consultas.map((k) => k.paciente).filter(Boolean)).filter((r) => r.medico === MEDICO_ID);
     }
 
     function abrirRetorno(k) {
@@ -908,18 +941,14 @@
             : document.getElementById('ret-data').value;
         const nota = document.getElementById('ret-nota').value.trim();
 
-        try {
-            const retornos = lerRetornos();
-            retornos.push({
-                medico: MEDICO_ID,
-                paciente,
-                data,
-                nota,
-                tipo: isRecepcao ? 'recepcao' : 'data',
-                ts: Date.now(),
-            });
-            localStorage.setItem('medico.retornos', JSON.stringify(retornos));
-        } catch (e) {}
+        /* Retornos: "encaminhado" (a recepção marca a data) ou "agendado" (o médico já indicou a data) */
+        C.registrarRetorno({
+            medico: MEDICO_ID,
+            paciente,
+            data,
+            nota,
+            status: isRecepcao ? 'encaminhado' : 'agendado',
+        });
 
         // Notificar recepção via localStorage
         try {
@@ -1177,7 +1206,7 @@
         };
         set('#perfil-nome', (md.titulo || 'Dr.') + ' ' + md.nome);
         set('#perfil-esp', esp ? esp.nome : '');
-        set('#perfil-crm', md.crm || 'CRM/SP 142.857');
+        set('#perfil-crm', md.crm || '—');
         set('#perfil-espec', esp ? esp.nome : '—');
         set('#perfil-sala', md.sala || 'Sala 3');
         set('#perfil-dur', dur);

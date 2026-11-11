@@ -59,7 +59,8 @@ export async function incluirNaPrevencao(usuario, dados) {
   return item;
 }
 
-// Formato: [{ mes: 'AAAA-MM', campanha, tema, itens: [{ id, pessoa, titulo, status, nota, esp }] }]
+// Formato: [{ mes: 'AAAA-MM', campanha, tema, itens: [{ id, pessoa, titulo, status, nota, esp, consulta? }] }]
+// consulta = id da consulta marcada a partir do item (Pessoa_Prevencao.IdConsulta)
 // TODO: troca pra chamada real quando o endpoint GET /api/pacientes/{id}/prevencao existir
 export async function listarPrevencao(usuario) {
   await esperar();
@@ -73,15 +74,24 @@ export async function listarPrevencao(usuario) {
   }));
 }
 
-// status: 'pendente' | 'agendado' | 'feito'
+// status: 'pendente' | 'agendado' | 'feito'; ao agendar, idConsulta liga a consulta ao item
 // TODO: troca pra chamada real quando o endpoint PUT /api/prevencao/{id} existir
-export async function marcarItemPrevencao(usuario, idItem, status) {
+export async function marcarItemPrevencao(usuario, idItem, status, idConsulta) {
   if (!SITUACOES.includes(status)) throw new Error('Situação inválida.');
   await esperar(150);
-  for (const mes of contaDe(usuario).prevencao) {
+  const conta = contaDe(usuario);
+  for (const mes of conta.prevencao) {
     const item = mes.itens.find((i) => i.id === idItem);
     if (item) {
       item.status = status;
+      if (status === 'pendente') delete item.consulta;
+      const consulta = idConsulta && conta.consultas.find((c) => c.id === idConsulta);
+      if (consulta) {
+        item.consulta = consulta.id;
+        consulta.tipo = 'prevencao'; // na agenda, a consulta aparece como "Prevenção"
+        consulta.titulo = item.titulo;
+        consulta.prevencao = item.id;
+      }
       return;
     }
   }

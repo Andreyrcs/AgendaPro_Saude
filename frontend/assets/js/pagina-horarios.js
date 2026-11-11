@@ -25,22 +25,23 @@
       semana: naAgenda ? min(e.semana) : null,
       sabado: naAgenda ? min(e.sabado) : null,
       dur: C.DURACAO[md.id] || 30,
+      almoco: C.almocoDe(md.id),
     };
   });
   const temHorario = (id) => !!(exp[id] && (exp[id].semana || exp[id].sabado));
 
-  function horariosNoDia(e, dur) {
+  function horariosNoDia(e, dur, almoco) {
     if (!e) return 0;
     let n = 0;
-    for (let t = e[0]; t + dur <= e[1]; t += dur) if (!(t < 780 && t + dur > 720)) n += 1;
+    for (let t = e[0]; t + dur <= e[1]; t += dur) if (!(almoco && t < almoco[1] && t + dur > almoco[0])) n += 1;
     return n;
   }
 
-  function barra(e, agoraNaFaixa) {
+  function barra(e, agoraNaFaixa, al) {
     if (!e) return '<span class="expediente expediente--fechado"><span class="expediente__trilho" aria-hidden="true"></span><span class="expediente__texto">Não atende</span></span>';
     const pct = (m) => ((m - C.INICIO) / JANELA) * 100;
-    const almoco = e[0] < 780 && e[1] > 720
-      ? '<b style="left:' + pct(Math.max(720, e[0])) + "%;width:" + (pct(Math.min(780, e[1])) - pct(Math.max(720, e[0]))) + '%"></b>' : "";
+    const almoco = al && e[0] < al[1] && e[1] > al[0]
+      ? '<b style="left:' + pct(Math.max(al[0], e[0])) + "%;width:" + (pct(Math.min(al[1], e[1])) - pct(Math.max(al[0], e[0]))) + '%"></b>' : "";
     const agora = agoraNaFaixa ? '<em style="left:' + pct(K.agora()) + '%"></em>' : "";
     return '<span class="expediente"><span class="expediente__trilho" aria-hidden="true"><i style="left:' + pct(e[0]) + "%;width:" + (pct(e[1]) - pct(e[0])) + '%"></i>' + almoco + agora + "</span>" +
       '<span class="expediente__texto">' + C.txt(e[0]) + "–" + C.txt(e[1]) + "</span></span>";
@@ -66,11 +67,11 @@
 
     $("#linhas").innerHTML = com.map((md) => {
       const e = exp[md.id];
-      const porSemana = horariosNoDia(e.semana, e.dur) * 5 + horariosNoDia(e.sabado, e.dur);
+      const porSemana = horariosNoDia(e.semana, e.dur, e.almoco) * 5 + horariosNoDia(e.sabado, e.dur, e.almoco);
       return '<tr data-id="' + md.id + '">' +
         "<td>" + quemHTML(md) + "</td>" +
-        '<td data-rotulo="Segunda a sexta">' + barra(e.semana, HOJE_SEMANA) + "</td>" +
-        '<td data-rotulo="Sábado">' + barra(e.sabado, false) + "</td>" +
+        '<td data-rotulo="Segunda a sexta">' + barra(e.semana, HOJE_SEMANA, e.almoco) + "</td>" +
+        '<td data-rotulo="Sábado">' + barra(e.sabado, false, e.almoco) + "</td>" +
         '<td class="num" data-rotulo="Consulta">' + e.dur + " min</td>" +
         '<td class="num" data-rotulo="Horários por semana">' + porSemana + "</td>" +
         '<td class="tabela__acao"><button type="button" class="link-acao" data-editar="' + md.id + '" aria-label="Editar expediente de ' + md.nome + '">Editar</button></td></tr>';
@@ -102,14 +103,16 @@
     for (let t = C.INICIO; t <= C.FIM; t += 10) if (t % 30 === 0 || t % 40 === 0) h += '<option value="' + t + '">' + C.txt(t) + "</option>";
     return h;
   };
-  ["#f-s-ini", "#f-s-fim", "#f-b-ini", "#f-b-fim"].forEach((s) => { $(s).innerHTML = opcoes(); });
+  ["#f-s-ini", "#f-s-fim", "#f-b-ini", "#f-b-fim", "#f-a-ini", "#f-a-fim"].forEach((s) => { $(s).innerHTML = opcoes(); });
 
   function alternar() {
     ["sIni", "sFim"].forEach((n) => { form[n].disabled = !form.semana.checked; });
     ["bIni", "bFim"].forEach((n) => { form[n].disabled = !form.sabado.checked; });
+    ["aIni", "aFim"].forEach((n) => { form[n].disabled = !form.almoco.checked; });
   }
   form.semana.addEventListener("change", alternar);
   form.sabado.addEventListener("change", alternar);
+  form.almoco.addEventListener("change", alternar);
 
   function abrir(id) {
     const md = K.medico(id);
@@ -124,7 +127,10 @@
     form.sFim.value = String((e.semana || [480, 1020])[1]);
     form.bIni.value = String((e.sabado || [480])[0]);
     form.bFim.value = String((e.sabado || [480, 720])[1]);
-    form.dur.value = String(e.dur);
+    form.almoco.checked = !!e.almoco;
+    form.aIni.value = String((e.almoco || [720])[0]);
+    form.aFim.value = String((e.almoco || [720, 780])[1]);
+    $("#dlg-dur").textContent = "Cada consulta dura " + e.dur + " minutos: é a duração da especialidade (" + K.esp(md.esp).nome + ").";
     $("#e-exp").hidden = true;
     alternar();
     K.abrirDialogo(dlg);
@@ -134,10 +140,13 @@
     ev.preventDefault();
     const s = form.semana.checked ? [Number(form.sIni.value), Number(form.sFim.value)] : null;
     const b = form.sabado.checked ? [Number(form.bIni.value), Number(form.bFim.value)] : null;
-    const dur = Number(form.dur.value);
+    const dur = exp[editando].dur;
+    const al = form.almoco.checked ? [Number(form.aIni.value), Number(form.aFim.value)] : null;
     let erro = "";
     if (!s && !b) erro = "Marque pelo menos um período de atendimento.";
     else if ((s && s[1] - s[0] < 60) || (b && b[1] - b[0] < 60)) erro = "O fim precisa ser pelo menos 1 hora depois do começo.";
+    else if (al && al[1] <= al[0]) erro = "O fim do almoço precisa ser depois do começo.";
+    else if (al && s && (al[0] < s[0] || al[1] > s[1])) erro = "O almoço precisa ficar dentro do expediente.";
     if (erro) {
       const e = $("#e-exp");
       e.textContent = erro;
@@ -147,7 +156,7 @@
     }
     const md = K.medico(editando);
     const antes = Object.assign({}, exp[editando]);
-    exp[editando] = { semana: s, sabado: b, dur };
+    exp[editando] = { semana: s, sabado: b, dur, almoco: al };
     K.guardar.expediente(editando, exp[editando]);
     K.fecharDialogo(dlg);
     desenhar();

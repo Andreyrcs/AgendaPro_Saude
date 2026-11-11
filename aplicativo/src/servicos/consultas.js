@@ -2,7 +2,7 @@
 
 import {
   contaDe, esperar, novoId, garantirDaFamilia, medicoPorId, especialidadePorId,
-  ocuparHorario, liberarHorario, horarioCanceladoDoMedico,
+  ocuparHorario, liberarHorario, horarioCanceladoDoMedico, avisar,
 } from '../dados/bancoSimulado';
 import { HOJE } from '../utilitarios/datas';
 import { STATUS_FUTUROS, avisoAte, restricaoDe } from '../utilitarios/status';
@@ -100,10 +100,14 @@ export async function cancelarConsulta(usuario, idConsulta) {
   const oferecidoAFila = horarioCanceladoDoMedico(consulta.medico, consulta.data, consulta.hora);
   if (!oferecidoAFila) liberarHorario(consulta.medico, consulta.data, consulta.hora);
   if (falta) {
+    const antes = restricaoDe(conta.faltas, HOJE).tipo;
     conta.faltas.push({
       id: novoId('fa'), consulta: consulta.id, data: consulta.data, confirmou: true,
       motivo: 'Cancelou no dia, depois de confirmar presença', retirada: false,
     });
+    const depois = restricaoDe(conta.faltas, HOJE).tipo;
+    if (depois !== antes && depois === 'so_fila') avisar(conta, 'RESTRICAO', 'Por 30 dias, você pode agendar só pela lista de espera.');
+    if (depois !== antes && depois === 'so_recepcao') avisar(conta, 'RESTRICAO', 'Por 30 dias, agende suas consultas pela recepção da clínica.');
   }
   return { falta, oferecidoAFila };
 }

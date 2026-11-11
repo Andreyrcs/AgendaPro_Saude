@@ -19,7 +19,8 @@
   function numeros(id) {
     const naAgenda = C.MEDICOS.filter((m) => K.medico(m).esp === id);
     const semHorario = D.medicos.filter((md) => md.esp === id && !C.MEDICOS.includes(md.id));
-    const duracoes = Array.from(new Set(naAgenda.map((m) => C.DURACAO[m] || 30)));
+    /* a duração é da especialidade (Especialidades.DuracaoPadrao), igual para todos os médicos dela */
+    const duracoes = [D.especialidades[id].duracao || 30];
     return {
       naAgenda,
       semHorario,
@@ -103,7 +104,7 @@
       M.tremer(form.nome);
       return;
     }
-    D.especialidades[id] = { nome: nome.charAt(0).toUpperCase() + nome.slice(1), desc: form.desc.value.trim() };
+    D.especialidades[id] = { nome: nome.charAt(0).toUpperCase() + nome.slice(1), desc: form.desc.value.trim(), duracao: Number(form.dur.value) || 30 };
     K.guardar.especialidade(id, D.especialidades[id]);
     K.fecharDialogo(dlg);
     desenhar();

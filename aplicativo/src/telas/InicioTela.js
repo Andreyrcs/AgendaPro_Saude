@@ -21,6 +21,7 @@ import { textoDasFaltas } from '../utilitarios/status';
 import { buscarMinhaFila } from '../servicos/espera';
 import { listarFamiliares } from '../servicos/familia';
 import { listarAcompanhamento } from '../servicos/acompanhamento';
+import { listarNotificacoes } from '../servicos/notificacoes';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 import { HOJE, diaEMes, extenso, relativo } from '../utilitarios/datas';
@@ -37,15 +38,16 @@ export default function InicioTela({ navigation }) {
   const { usuario } = useSessao();
   const { dados, erro, recarregar } = useDadosDaTela(async () => {
     // As buscas são independentes: pede todas ao mesmo tempo
-    const [consultas, fila, familia, acompanhamento, paraConfirmar, situacao] = await Promise.all([
+    const [consultas, fila, familia, acompanhamento, paraConfirmar, situacao, avisos] = await Promise.all([
       listarConsultas(usuario),
       buscarMinhaFila(usuario),
       listarFamiliares(usuario),
       listarAcompanhamento(usuario),
       listarParaConfirmar(usuario),
       buscarSituacao(usuario),
+      listarNotificacoes(usuario),
     ]);
-    return { consultas, fila, familia, acompanhamento, paraConfirmar, situacao };
+    return { consultas, fila, familia, acompanhamento, paraConfirmar, situacao, avisos };
   });
   const [respondendo, setRespondendo] = useState(false);
   const [aviso, setAviso] = useState(null);
@@ -92,7 +94,15 @@ export default function InicioTela({ navigation }) {
   ].slice(0, 2);
 
   return (
-    <Tela titulo={titulo} subtitulo={subtitulo}>
+    <Tela
+      titulo={titulo}
+      subtitulo={subtitulo}
+      acaoDireita={{
+        icone: 'bell',
+        rotulo: (() => { const n = dados.avisos.filter((a) => !a.lida).length; return n ? `Avisos, ${n} ${n === 1 ? 'novo' : 'novos'}` : 'Avisos'; })(),
+        onPress: () => navigation.navigate('Notificacoes'),
+      }}
+    >
       {/* Confirmação de presença, a partir do início da véspera */}
       {dados.paraConfirmar.map((c) => (
         <CartaoConfirmarPresenca

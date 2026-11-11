@@ -63,8 +63,8 @@ export default function PessoaTela({ route, navigation }) {
 
       <Cartao style={estilos.ficha}>
         <View>
-          <Texto variante="meta">Cartão do SUS</Texto>
-          <Texto variante="negrito">{pessoa.sus}</Texto>
+          <Texto variante="meta">Parentesco</Texto>
+          <Texto variante="negrito">{pessoa.relacao}</Texto>
         </View>
         <View>
           <Texto variante="meta">Alergias</Texto>

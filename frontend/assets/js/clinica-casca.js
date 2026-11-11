@@ -206,7 +206,7 @@
     const ks = C.consultas.filter((k) => k.medico === m && k.data === dia && C.ativa(k));
     const lista = [];
     for (let t = e[0]; t + dur <= e[1]; t += dur) {
-      if (t < 780 && t + dur > 720) continue; /* almoço */
+      if (C.noAlmoco(m, t, dur)) continue; /* almoço do médico */
       if (dia === D.hoje && t < agora()) continue;
       const k = ks.find((x) => x.ini < t + dur && t < x.ini + x.dur);
       if (k && C.horarioDe(k) !== "livre") continue;

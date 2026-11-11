@@ -14,7 +14,8 @@ import { cores, opcoesFamilia } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 import { HOJE, brParaIso, mascararData } from '../utilitarios/datas';
 
-const PARENTESCOS = ['Filho', 'Filha', 'Mãe', 'Pai', 'Cônjuge', 'Sogro', 'Sogra', 'Outro'];
+// Parentesco é obrigatório (coluna Pacientes.Parentesco); as mesmas opções da web
+const PARENTESCOS = ['Filho(a)', 'Cônjuge', 'Pai/Mãe', 'Irmão(ã)', 'Outro'];
 
 export default function AdicionarFamiliarTela({ navigation }) {
   const { usuario } = useSessao();
@@ -53,11 +54,11 @@ export default function AdicionarFamiliarTela({ navigation }) {
       </View>
 
       <View style={estilos.campos}>
-        <CampoTexto rotulo="Nome completo" value={nome} onChangeText={setNome} erro={erros.nome} />
+        <CampoTexto rotulo="Nome completo" value={nome} onChangeText={setNome} erro={erros.nome} autoComplete="name" />
 
         <View style={estilos.grupo}>
           <Texto variante="rotulo" cor={cores.tinta}>
-            Parentesco
+            Parentesco (obrigatório)
           </Texto>
           <View style={estilos.chips} accessibilityRole="radiogroup">
             {PARENTESCOS.map((p) => (
@@ -65,6 +66,7 @@ export default function AdicionarFamiliarTela({ navigation }) {
                 key={p}
                 onPress={() => setRelacao(p)}
                 accessibilityRole="radio"
+                accessibilityLabel={`Parentesco: ${p}`}
                 accessibilityState={{ checked: relacao === p }}
                 style={[estilos.chip, relacao === p && estilos.chipAtivo]}
               >

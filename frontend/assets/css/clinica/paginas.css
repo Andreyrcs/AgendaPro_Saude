@@ -1837,3 +1837,17 @@ a.botao {
     font-size: 0.875rem;
     font-weight: 600;
 }
+
+/* retirar falta justificada: o campo do motivo abre embaixo da falta */
+.retirar {
+    display: grid;
+    gap: 6px;
+    grid-column: 1 / -1;
+    margin-top: 6px;
+}
+.retirar[hidden] {
+    display: none;
+}
+.retirar input {
+    min-height: 44px;
+}

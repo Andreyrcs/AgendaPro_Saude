@@ -13,5 +13,7 @@
 export const config = {
   USAR_API_REAL: false,
   ENDERECO_API: 'http://192.168.0.10:5000',
+  // Onde a web do AgendaPro está publicada (o cadastro abre a política de privacidade de lá)
+  ENDERECO_WEB: 'http://192.168.0.10:5510',
   TEMPO_LIMITE_MS: 8000, // se a API não responder nesse tempo, o app avisa
 };

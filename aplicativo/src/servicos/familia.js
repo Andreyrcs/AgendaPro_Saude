@@ -5,8 +5,9 @@ import { contaDe, esperar, novoId } from '../dados/bancoSimulado';
 import { idadeEm } from '../utilitarios/datas';
 import { primeiroNome } from '../utilitarios/texto';
 
-// Formato de cada familiar:
-// { id, nome, curto, relacao, idade, genero, cor, alergias, sus, titular }
+// Formato de cada familiar (o mesmo do contrato da API):
+// { id, nome, curto, relacao, nascimento, cor, alergias, titular }
+// O app ainda guarda "idade" (calculada do nascimento) e "genero" para frases como "a 3ª da fila".
 
 // TODO: troca pra chamada real quando o endpoint GET /api/pacientes/{id}/familiares existir
 export async function listarFamiliares(usuario) {
@@ -28,11 +29,11 @@ export async function adicionarFamiliar(usuario, dados) {
     nome,
     curto: primeiroNome(nome),
     relacao: dados.relacao,
+    nascimento: dados.nascimento,
     idade: idadeEm(dados.nascimento),
     genero: null,
     cor: dados.cor,
     alergias: (dados.alergias || '').trim() || 'Nenhuma informada',
-    sus: 'Não informado',
     titular: false,
   };
   contaDe(usuario).familia.push(familiar);

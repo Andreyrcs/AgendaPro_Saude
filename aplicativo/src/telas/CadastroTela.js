@@ -1,8 +1,8 @@
-// Cadastro de paciente. Só paciente cria a própria conta; médico e recepção
-// são cadastrados pela clínica, no sistema web.
+// Cadastro do paciente titular (tabelas Usuarios + Pacientes, e Paciente_Clinica se houver código).
+// Só paciente cria a própria conta; médico e recepção são cadastrados pela clínica, no sistema web.
 
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Tela from '../componentes/Tela';
 import Texto from '../componentes/Texto';
@@ -10,26 +10,22 @@ import Botao from '../componentes/Botao';
 import CampoTexto from '../componentes/CampoTexto';
 import { useSessao } from '../contexto/SessaoContext';
 import { cadastrar } from '../servicos/autenticacao';
-import { brParaIso, mascararData } from '../utilitarios/datas';
+import { config } from '../servicos/config';
+import { HOJE, brParaIso, mascararData } from '../utilitarios/datas';
+import { normalizarCodigo, validarCadastro } from '../utilitarios/validacao';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 
-// Confere os campos e devolve { campo: 'mensagem' } com cada problema encontrado
-function validar(f) {
-  const erros = {};
-  if (!f.nome.trim()) erros.nome = 'Informe o seu nome completo.';
-  if (!/^\S+@\S+\.\S+$/.test(f.email.trim())) erros.email = 'Informe um e-mail válido, como nome@exemplo.com.';
-  if (f.senha.length < 6) erros.senha = 'A senha precisa ter pelo menos 6 caracteres.';
-  if (f.confirmar !== f.senha) erros.confirmar = 'As senhas não são iguais.';
-  if (f.nascimento && !brParaIso(f.nascimento)) erros.nascimento = 'Use o formato DD/MM/AAAA.';
-  if (!f.termos) erros.termos = 'Para criar a conta, aceite os termos.';
-  return erros;
+// Máscara simples do código: letras maiúsculas e o hífen depois da 3ª letra (IPE-4821)
+function mascararCodigo(texto) {
+  const limpo = normalizarCodigo(texto).replace(/[^A-Z0-9]/g, '').slice(0, 7);
+  return limpo.length > 3 ? `${limpo.slice(0, 3)}-${limpo.slice(3)}` : limpo;
 }
 
 export default function CadastroTela() {
   const { abrirSessao } = useSessao();
   const [form, setForm] = useState({
-    nome: '', email: '', senha: '', confirmar: '', telefone: '', nascimento: '', termos: false,
+    nome: '', email: '', telefone: '', senha: '', confirmar: '', nascimento: '', alergias: '', codigo: '', privacidade: false,
   });
   const [erros, setErros] = useState({});
   const [erroGeral, setErroGeral] = useState(null);
@@ -38,7 +34,7 @@ export default function CadastroTela() {
   const mudar = (campo) => (valor) => setForm({ ...form, [campo]: valor });
 
   async function criarConta() {
-    const encontrados = validar(form);
+    const encontrados = validarCadastro(form, HOJE);
     setErros(encontrados);
     setErroGeral(null);
     if (Object.keys(encontrados).length > 0) {
@@ -53,10 +49,13 @@ export default function CadastroTela() {
         senha: form.senha,
         telefone: form.telefone,
         nascimento: brParaIso(form.nascimento),
+        alergias: form.alergias,
+        codigo: form.codigo,
       });
-      await abrirSessao(usuario); // entra direto no app
+      await abrirSessao(usuario); // a navegação troca sozinha para as abas
     } catch (e) {
       if (e.message.includes('e-mail')) setErros({ email: e.message });
+      if (e.message.includes('código')) setErros({ codigo: e.message });
       setErroGeral(e.message);
       setEnviando(false);
     }
@@ -65,7 +64,7 @@ export default function CadastroTela() {
   return (
     <Tela titulo="Criar conta" subtitulo="Leva menos de 2 minutos" voltar>
       <View style={estilos.campos}>
-        <CampoTexto rotulo="Nome completo" value={form.nome} onChangeText={mudar('nome')} erro={erros.nome} autoComplete="name" />
+        <CampoTexto rotulo="Nome completo" value={form.nome} onChangeText={mudar('nome')} erro={erros.nome} autoComplete="name" textContentType="name" />
         <CampoTexto
           rotulo="E-mail"
           value={form.email}
@@ -74,16 +73,28 @@ export default function CadastroTela() {
           keyboardType="email-address"
           autoCapitalize="none"
           autoComplete="email"
+          textContentType="emailAddress"
+        />
+        <CampoTexto
+          rotulo="Telefone"
+          value={form.telefone}
+          onChangeText={mudar('telefone')}
+          erro={erros.telefone}
+          keyboardType="phone-pad"
+          autoComplete="tel"
+          textContentType="telephoneNumber"
+          placeholder="(11) 91234-5678"
         />
         <CampoTexto
           rotulo="Senha"
           value={form.senha}
           onChangeText={mudar('senha')}
           erro={erros.senha}
-          dica="Pelo menos 6 caracteres."
+          dica="Pelo menos 8 caracteres."
           segredo
           autoCapitalize="none"
           autoComplete="new-password"
+          textContentType="newPassword"
         />
         <CampoTexto
           rotulo="Confirmar senha"
@@ -92,42 +103,60 @@ export default function CadastroTela() {
           erro={erros.confirmar}
           segredo
           autoCapitalize="none"
+          textContentType="newPassword"
         />
         <CampoTexto
-          rotulo="Telefone (opcional)"
-          value={form.telefone}
-          onChangeText={mudar('telefone')}
-          keyboardType="phone-pad"
-          autoComplete="tel"
-          placeholder="(11) 91234-5678"
-        />
-        <CampoTexto
-          rotulo="Data de nascimento (opcional)"
+          rotulo="Data de nascimento"
           value={form.nascimento}
           onChangeText={(t) => mudar('nascimento')(mascararData(t))}
           erro={erros.nascimento}
           keyboardType="number-pad"
           placeholder="DD/MM/AAAA"
         />
+        <CampoTexto
+          rotulo="Alergias (opcional)"
+          value={form.alergias}
+          onChangeText={mudar('alergias')}
+          placeholder="Ex.: alergia a dipirona"
+        />
+        <CampoTexto
+          rotulo="Código da clínica (opcional)"
+          value={form.codigo}
+          onChangeText={(t) => mudar('codigo')(mascararCodigo(t))}
+          erro={erros.codigo}
+          dica="A recepção informa. Exemplo: IPE-4821."
+          autoCapitalize="characters"
+          autoCorrect={false}
+          placeholder="AAA-0000"
+        />
 
-        {/* Caixa de aceite: dado de saúde é dado sensível pela LGPD */}
-        <Pressable
-          onPress={() => mudar('termos')(!form.termos)}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: form.termos }}
-          accessibilityHint={erros.termos}
-          style={[estilos.aceite, erros.termos && estilos.aceiteErro]}
-        >
-          <View style={[estilos.caixa, form.termos && estilos.caixaMarcada]}>
-            {form.termos && <Feather name="check" size={20} color={cores.sobreNoite} />}
-          </View>
-          <Texto style={estilos.textoAceite}>
-            Li e aceito os <Texto variante="negrito">Termos de Uso</Texto> e a{' '}
-            <Texto variante="negrito">Política de Privacidade</Texto>. Entendo que meus dados de saúde são
-            dados sensíveis (LGPD) e só serão usados para o meu atendimento.
-          </Texto>
-        </Pressable>
-        {erros.termos && <Texto variante="meta" cor={cores.domingo}>{erros.termos}</Texto>}
+        {/* Aceite: dado de saúde é dado sensível pela LGPD */}
+        <View style={[estilos.aceite, erros.privacidade && estilos.aceiteErro]}>
+          <Pressable
+            onPress={() => mudar('privacidade')(!form.privacidade)}
+            accessibilityRole="checkbox"
+            accessibilityLabel="Li e aceito a política de privacidade"
+            accessibilityState={{ checked: form.privacidade }}
+            accessibilityHint={erros.privacidade}
+            style={estilos.aceiteLinha}
+          >
+            <View style={[estilos.caixa, form.privacidade && estilos.caixaMarcada]}>
+              {form.privacidade && <Feather name="check" size={20} color={cores.sobreNoite} />}
+            </View>
+            <Texto style={estilos.textoAceite}>Li e aceito a política de privacidade.</Texto>
+          </Pressable>
+          <Pressable
+            onPress={() => Linking.openURL(`${config.ENDERECO_WEB}/privacidade.html`)}
+            accessibilityRole="link"
+            accessibilityLabel="Abrir a política de privacidade"
+            style={estilos.link}
+          >
+            <Texto variante="negrito" cor={cores.mentaTinta}>
+              Ler a política de privacidade
+            </Texto>
+          </Pressable>
+        </View>
+        {erros.privacidade && <Texto variante="meta" cor={cores.domingo}>{erros.privacidade}</Texto>}
 
         {erroGeral && (
           <View style={estilos.erro} accessibilityRole="alert" accessibilityLiveRegion="polite">
@@ -135,7 +164,7 @@ export default function CadastroTela() {
           </View>
         )}
 
-        <Botao titulo="Criar conta" icone="user-plus" onPress={criarConta} carregando={enviando} />
+        <Botao titulo="Criar conta" icone="user-plus" onPress={criarConta} carregando={enviando} accessibilityLabel="Criar conta" />
       </View>
     </Tela>
   );
@@ -144,10 +173,7 @@ export default function CadastroTela() {
 const estilos = StyleSheet.create({
   campos: { gap: espaco.g },
   aceite: {
-    flexDirection: 'row',
-    gap: espaco.m,
-    alignItems: 'flex-start',
-    minHeight: TOQUE_MINIMO,
+    gap: espaco.p,
     padding: espaco.m,
     borderRadius: raios.folha,
     borderWidth: 1.5,
@@ -155,6 +181,7 @@ const estilos = StyleSheet.create({
     backgroundColor: cores.papel,
   },
   aceiteErro: { borderColor: cores.domingo },
+  aceiteLinha: { flexDirection: 'row', gap: espaco.m, alignItems: 'center', minHeight: TOQUE_MINIMO },
   caixa: {
     width: 28,
     height: 28,
@@ -166,5 +193,6 @@ const estilos = StyleSheet.create({
   },
   caixaMarcada: { backgroundColor: cores.noite },
   textoAceite: { flex: 1 },
+  link: { minHeight: TOQUE_MINIMO, justifyContent: 'center' },
   erro: { backgroundColor: cores.domingoClaro, borderRadius: raios.folha, padding: espaco.m },
 });
