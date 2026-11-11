@@ -10,7 +10,7 @@
   const API = window.API;
   const $ = (s) => document.querySelector(s);
 
-  API.garantirSessaoDemo("recepcao").then(iniciar);
+  API.pronto.then(iniciar);
   function iniciar() {
   const eu = API.usuarioAtual();
   const clinica = API.clinicaAtual();

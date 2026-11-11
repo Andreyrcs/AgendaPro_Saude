@@ -414,3 +414,148 @@ a.lateral__clinica:hover {
         display: none;
     }
 }
+
+/* celular e tablet: o menu vira uma faixa que rola para o lado, sem cortar os nomes */
+@media (max-width: 900px) {
+    .lateral,
+    .lateral nav {
+        min-width: 0;
+        max-width: 100%;
+    }
+    .lateral__menu li {
+        flex: none;
+    }
+}
+@media (max-width: 900px) {
+    .lateral > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+}
+
+/* ─── Menu do celular: botão de três barras no canto superior direito ─── */
+.lateral__hamburguer {
+    display: none;
+}
+@media (max-width: 900px) {
+    .lateral {
+        position: relative;
+        box-sizing: border-box;
+        left: auto;
+        padding-right: 68px;
+    }
+    .lateral__hamburguer {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        color: var(--noite);
+        cursor: pointer;
+    }
+    .lateral__hamburguer svg {
+        fill: currentColor;
+    }
+    .lateral__hamburguer:hover,
+    .lateral[data-menu='aberto'] .lateral__hamburguer {
+        background: var(--gelo-2);
+    }
+    .lateral__hamburguer:focus-visible {
+        outline: 2px solid var(--noite);
+        outline-offset: 2px;
+    }
+    /* fechado: só a marca (e a pessoa, na clínica); aberto: as seções em lista, uma embaixo da outra */
+    .lateral[data-menu='fechado'] nav {
+        display: none;
+    }
+    .lateral[data-menu='aberto'] > div {
+        flex-basis: 100%;
+    }
+    .lateral[data-menu='aberto'] nav {
+        display: block;
+        width: calc(100% + 52px);
+        margin-top: 10px;
+        overflow: visible;
+    }
+    .lateral[data-menu='aberto'] .lateral__menu {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .lateral[data-menu='aberto'] .lateral__menu a {
+        width: 100%;
+    }
+}
+
+/* ─── Animação do menu do celular ─── */
+@media (max-width: 900px) {
+    /* ícone: as três barras viram um X */
+    .lateral__hamburguer rect {
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: transform 260ms var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)), opacity 160ms ease;
+    }
+    .lateral[data-menu='aberto'] .lateral__hamburguer .h1 {
+        transform: translateY(5.7px) rotate(45deg);
+    }
+    .lateral[data-menu='aberto'] .lateral__hamburguer .h2 {
+        opacity: 0;
+        transform: scaleX(0.3);
+    }
+    .lateral[data-menu='aberto'] .lateral__hamburguer .h3 {
+        transform: translateY(-5.7px) rotate(-45deg);
+    }
+    /* abrir: o painel desce e os itens entram um após o outro */
+    .lateral[data-menu='aberto'] nav {
+        animation: menu-desce 240ms var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both;
+    }
+    .lateral[data-menu='aberto'] .lateral__menu li {
+        animation: menu-item 260ms var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both;
+        animation-delay: calc(40ms + var(--i, 0) * 35ms);
+    }
+    /* fechar: o painel sobe e some antes de ser escondido */
+    .lateral[data-menu='fechando'] nav {
+        display: block;
+        width: calc(100% + 52px);
+        margin-top: 10px;
+        animation: menu-sobe 200ms ease-in both;
+    }
+    .lateral[data-menu='fechando'] > div {
+        flex-basis: 100%;
+    }
+    .lateral[data-menu='fechando'] .lateral__menu {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+}
+@keyframes menu-desce {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes menu-item {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes menu-sobe {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: translateY(-8px); }
+}
+/* quem pediu menos movimento vê só o esmaecimento, rápido */
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+    .lateral__hamburguer rect { transition-duration: 1ms; }
+    .lateral[data-menu='aberto'] nav,
+    .lateral[data-menu='fechando'] nav { animation-duration: 120ms; transform: none; }
+    .lateral[data-menu='aberto'] .lateral__menu li { animation: none; }
+}
+@media (max-width: 900px) {
+    html[data-movimento='reduzido'] .lateral__hamburguer rect { transition-duration: 1ms; }
+    html[data-movimento='reduzido'] .lateral[data-menu='aberto'] nav,
+    html[data-movimento='reduzido'] .lateral[data-menu='fechando'] nav { animation-duration: 120ms; }
+    html[data-movimento='reduzido'] .lateral[data-menu='aberto'] .lateral__menu li { animation: none; }
+}

@@ -293,11 +293,11 @@
     background: var(--menta);
     opacity: 1;
 }
-.cal-dia--vaga {
+.cal-dia--oferecido {
     background: var(--menta-2);
     box-shadow: inset 0 0 0 2px var(--menta-tinta);
 }
-.cal-dia--vaga .cal-dia__faixa {
+.cal-dia--oferecido .cal-dia__faixa {
     background: var(--menta-tinta);
     opacity: 1;
 }
@@ -450,14 +450,14 @@
 .cda-item .item__seta {
     align-self: center;
 }
-.cda-item--vaga {
+.cda-item--oferecido {
     margin: 4px -14px 0;
     padding: 14px;
     border-top: 0;
     border-radius: 16px;
     background: var(--menta-2);
 }
-.cda-item--vaga .botao {
+.cda-item--oferecido .botao {
     margin-top: 10px;
 }
 .cda-vazio {
@@ -508,12 +508,13 @@
     transform: none;
     border-radius: 999px;
 }
-.selo-tipo--realizada {
+.selo-tipo--atendida,
+.selo-tipo--cancelada {
     color: var(--tinta-2);
     transform: none;
     border-radius: 999px;
 }
-.selo-tipo--vaga {
+.selo-tipo--oferecido {
     color: var(--noite);
     background: var(--menta);
     box-shadow: none;
@@ -571,10 +572,10 @@
 .giro__frente--hoje .giro__frente-faixa {
     background: var(--menta);
 }
-.giro__frente--vaga {
+.giro__frente--oferecido {
     background: var(--menta-2);
 }
-.giro__frente--vaga .giro__frente-faixa {
+.giro__frente--oferecido .giro__frente-faixa {
     background: var(--menta-tinta);
 }
 .giro__frente-num {

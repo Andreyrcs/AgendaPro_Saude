@@ -11,7 +11,8 @@
   }
 
   function hoje() {
-    return data((window.DADOS && window.DADOS.hoje) || "2026-10-20");
+    var d = new Date();
+    return window.DADOS && window.DADOS.hoje ? data(window.DADOS.hoje) : new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
 
   function diasAte(iso) {
@@ -79,11 +80,12 @@
     );
   }
 
-  /* Ilustração de pessoa (SVG próprio, desenhado para o protótipo) */
+  /* Ilustração de pessoa (SVG próprio). Quem foi cadastrado sem ilustração recebe a padrão. */
   var contadorAvatar = 0;
+  var AVATAR_PADRAO = { pele: "#b5703f", cabelo: "cacheado", corCabelo: "#2b1b12", roupa: "#2f6f9f" };
   function avatar(p, tamanho, rotulo) {
     contadorAvatar += 1;
-    var a = p.avatar;
+    var a = p.avatar || AVATAR_PADRAO;
     var id = "av" + contadorAvatar;
     var pele = a.pele, cab = a.corCabelo;
     var tras = "", frente = "";
@@ -148,10 +150,6 @@
     );
   }
 
-  function reais(v) {
-    return "R$ " + Number(v).toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  }
-
   /* Selo no menu lateral: em qual clínica a pessoa está e com qual função.
      Fica logo acima das seções; com o menu recolhido, vira só o ícone (o nome aparece na dica). */
   var FUNCOES = { dono: "Responsável", recepcao: "Recepção", medico: "Médico", paciente: "Paciente" };
@@ -184,10 +182,58 @@
     MESES: MESES, MESES_LONGOS: MESES_LONGOS, SEMANA: SEMANA, SEMANA_CURTA: SEMANA_CURTA,
     data: data, hoje: hoje, diasAte: diasAte, relativo: relativo, extenso: extenso, curto: curto,
     esc: esc, icone: icone, folha: folha, folhaMes: folhaMes, avatar: avatar,
-    avatarMedico: avatarMedico, iniciais: iniciais, marca: marca, ordinal: ordinal, reais: reais, seloClinica: seloClinica,
+    avatarMedico: avatarMedico, iniciais: iniciais, marca: marca, ordinal: ordinal, seloClinica: seloClinica,
     movimentoReduzido: function () {
       return document.documentElement.dataset.movimento === "reduzido" ||
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     },
   };
+})();
+
+/* Menu do celular: em telas até 900px a barra lateral vira um topo com o botão de três barras
+   no canto superior direito, que abre e fecha a lista de seções (vale para clínica, médico e paciente). */
+(function () {
+  function montar() {
+    var lateral = document.querySelector(".lateral");
+    var nav = lateral && lateral.querySelector("nav");
+    if (!nav || lateral.querySelector(".lateral__hamburguer")) return;
+    if (!nav.id) nav.id = "menu-secoes";
+    var botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "lateral__hamburguer";
+    botao.setAttribute("aria-controls", nav.id);
+    botao.innerHTML =
+      '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+      '<rect class="h1" x="3" y="5" width="18" height="2.6" rx="1.3"/><rect class="h2" x="3" y="10.7" width="18" height="2.6" rx="1.3"/><rect class="h3" x="3" y="16.4" width="18" height="2.6" rx="1.3"/></svg>';
+    lateral.appendChild(botao);
+
+    /* fechar: o painel sobe e some (lateral.css, estado "fechando") e só depois é escondido */
+    var tempoFechar = null;
+    function abrir(sim) {
+      clearTimeout(tempoFechar);
+      var estava = lateral.dataset.menu;
+      if (!sim && estava === "aberto") {
+        lateral.dataset.menu = "fechando";
+        tempoFechar = setTimeout(function () { lateral.dataset.menu = "fechado"; }, 200);
+      } else if (sim || estava !== "fechando") {
+        lateral.dataset.menu = sim ? "aberto" : "fechado";
+      }
+      /* cada item entra um pouco depois do anterior */
+      if (sim) nav.querySelectorAll("li").forEach(function (li, i) { li.style.setProperty("--i", i); });
+      botao.setAttribute("aria-expanded", String(sim));
+      botao.setAttribute("aria-label", sim ? "Fechar o menu" : "Abrir o menu");
+    }
+    abrir(false);
+    botao.addEventListener("click", function () { abrir(lateral.dataset.menu !== "aberto"); });
+    /* escolheu uma seção, apertou Esc ou tocou fora: fecha */
+    nav.addEventListener("click", function (ev) { if (ev.target.closest("a")) abrir(false); });
+    document.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape" && lateral.dataset.menu === "aberto") { abrir(false); botao.focus(); }
+    });
+    document.addEventListener("click", function (ev) {
+      if (lateral.dataset.menu === "aberto" && !lateral.contains(ev.target)) abrir(false);
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", montar);
+  else montar();
 })();

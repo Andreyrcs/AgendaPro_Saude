@@ -1,4 +1,4 @@
-// Janela de confirmação que sobe da parte de baixo da tela (a "gaveta" do protótipo).
+// Janela de confirmação que sobe da parte de baixo da tela (a "gaveta" da versão web).
 // Usada antes de ações que não dá para desfazer: cancelar consulta, sair da fila, sair da conta.
 
 import { Modal, Pressable, StyleSheet, View } from 'react-native';

@@ -10,7 +10,7 @@ Médico e recepção não usam este app: eles trabalham no sistema web da clíni
 
 Desenho e plano: [`../specs/2026-11-09-aplicativo-mobile-design.md`](../specs/2026-11-09-aplicativo-mobile-design.md)
 e [`../specs/2026-11-09-aplicativo-mobile-plano.md`](../specs/2026-11-09-aplicativo-mobile-plano.md).
-O que já usa a API e o que ainda é simulado: [`docs/aplicativo-integracao-api.md`](docs/aplicativo-integracao-api.md).
+O que já usa a API e o que ainda roda no banco em memória do app: [`docs/aplicativo-integracao-api.md`](docs/aplicativo-integracao-api.md).
 
 ---
 
@@ -50,25 +50,25 @@ Se aparecer o aviso de que não conseguiu deixar a porta pública, faça à mão
 VS Code › botão direito na **8081** › Visibilidade da porta › **Pública**.
 
 > Porta pública quer dizer que quem tiver o link consegue baixar o app enquanto o Codespace estiver
-> ligado. Só há dados fictícios, mas vale saber.
+> ligado. Vale saber.
 
-## Conta de demonstração
+## Conta da carga inicial (acesso rápido)
 
 | E-mail | Senha |
 |---|---|
 | `juliana.santos@email.com` | `paciente123` |
 
-Na tela de login, o botão **"Entrar como paciente (demonstração)"** preenche e entra com ela.
+Na tela de login, o botão de **Acesso rápido** ("Juliana Santos · paciente") preenche e entra com ela.
 A Juliana tem a família completa (Davi, Marina, Dona Cida e Seu Kenji), consultas marcadas,
 lugar numa lista de espera e lembretes de prevenção. Uma conta criada pelo "Criar conta"
 começa vazia, só com o próprio titular, e isso serve para mostrar os estados vazios.
 
-"Hoje", no app, é sempre **terça, 20 de outubro de 2026**, como no protótipo web, para os dados
-fictícios fazerem sentido.
+"Hoje", no app, é a **data do aparelho**. As datas da carga inicial são contadas a partir dela
+(consultas daqui a 3, 8, 15 dias...), então a agenda sempre começa em volta do dia atual.
 
 ## Ligar a API real (backend em ASP.NET)
 
-Por padrão o app roda em **modo demonstração**, com dados simulados, e funciona sem backend.
+Por padrão o app usa o banco em memória (`src/dados/`) e funciona sem backend.
 Para que login e cadastro usem a API de verdade:
 
 1. Suba o backend escutando na rede (não só no `localhost`):
@@ -88,26 +88,29 @@ Para que login e cadastro usem a API de verdade:
      -H "Content-Type: application/json" \
      -d '{"nome":"Juliana Santos","email":"juliana.santos@email.com","senha":"paciente123"}'
    ```
-5. Feche e abra o app. A tela de Perfil mostra **"Conectado à API"**.
+5. Feche e abra o app e entre com a conta da Juliana.
 
 Se a API não responder em 8 segundos, o app avisa: *"Não foi possível falar com o servidor.
 Confira o endereço da API."* Se isso acontecer durante a apresentação, volte `USAR_API_REAL`
-para `false` e a demonstração continua com os dados simulados.
+para `false` e o app continua com o banco em memória.
 
 > Por que o IP e não `localhost`? No celular, `localhost` é o próprio celular, e não o computador.
 
 ## Roteiro para a apresentação
 
-1. **Login:** toque em "Entrar como paciente (demonstração)". Mostre também o "Criar conta" e o
+1. **Login:** toque no Acesso rápido "Juliana Santos · paciente". Mostre também o "Criar conta" e o
    aceite da LGPD.
 2. **Assistente:** no Início, toque em "Conte o que você está sentindo".
    - "Dor no peito e falta de ar" → aparece só o alerta do **SAMU 192**, sem nenhum agendamento.
    - "Meu filho está com dor de ouvido" → sugere Pediatria **para o Davi**.
-3. **Agendar:** escolha a Dra. Fernanda em **26/10 às 13:00**. O app avisa que o horário acabou de
-   ser ocupado (é de propósito). Escolha outro horário e confirme.
-4. **Lista de espera:** no Início, toque no cartão verde da fila. Use "Simular cancelamento" duas
-   vezes, depois "Simular nova vaga": abre a vaga com contagem de 30 minutos. Aceite.
-5. **Agenda:** veja a vista Lista e a vista Mês, abra uma consulta e cancele.
+3. **Agendar:** escolha um médico, um horário e confirme. Se outra pessoa tiver marcado o mesmo
+   horário antes, o app avisa e pede outro.
+4. **Lista de espera:** no Início, toque no cartão verde da fila. A vaga aparece quando uma consulta
+   da Dra. Camila é cancelada e a Juliana é a 1ª da fila (na web, a recepção cancela na agenda;
+   com a API ligada, o app recebe a vaga ao tocar em "Atualizar a fila"). Há 30 minutos para aceitar.
+5. **Agenda e presença:** a consulta do Davi fica para daqui a 3 dias; na véspera, o Início mostra
+   "Confirme sua consulta de amanhã" com Vou e Não vou. Avisar até o fim da véspera não tem consequência;
+   cancelar no dia depois de dizer Vou conta como falta. O Perfil mostra as faltas registradas e a regra.
 6. **Família e Prevenção:** adicione um familiar; na Prevenção, filtre pela Dona Cida e marque a
    mamografia como "Já fiz".
 7. **Perfil:** ligue "Reduzir movimento" e mostre que as telas param de deslizar.
@@ -123,8 +126,8 @@ aplicativo/
     navegacao/        Navegacao.js (login × app) e Abas.js (as 5 abas e suas pilhas)
     contexto/         SessaoContext (quem está logado) e PreferenciasContext (reduzir movimento)
     servicos/         uma função por operação da API; config.js liga/desliga a API real
-    dados/            dados fictícios (cópia do protótipo web) e o "banco" simulado em memória
-    estilos/          cores, fontes e espaçamentos (os mesmos tokens do protótipo)
+    dados/            carga inicial (a mesma da web) e o banco em memória
+    estilos/          cores, fontes e espaçamentos (os mesmos tokens da web)
     utilitarios/      funções de data e de texto
   docs/               resumo da integração com a API
 ```
@@ -136,7 +139,7 @@ Toda tela segue o mesmo caminho:
 ```
 AgendaTela ──useDadosDaTela──► listarConsultas(usuario)   (src/servicos/consultas.js)
                                    ├─ endpoint já existe? → fetch na API
-                                   └─ ainda não existe    → banco simulado (src/dados/)
+                                   └─ ainda não existe    → banco em memória (src/dados/)
 ```
 
 `useDadosDaTela` busca de novo **toda vez que a tela aparece**. Essa é a sincronização: se a
@@ -159,13 +162,13 @@ endpoints, só o miolo das funções em `src/servicos/` muda, e as telas ficam i
 - O app segue o **tamanho de texto do celular**.
 - **Reduzir movimento:** vale a opção do sistema (`AccessibilityInfo.isReduceMotionEnabled`) ou o
   interruptor do Perfil. Desliga as transições entre telas e a gaveta deslizante.
-- Paleta do protótipo, com contraste de pelo menos 4,5:1 nos textos.
+- Paleta da web, com contraste de pelo menos 4,5:1 nos textos.
 
-## Diferenças em relação ao protótipo web
+## Diferenças em relação à versão web
 
 - **Avatares:** círculo com as iniciais na cor de cada familiar, em vez do desenho em SVG.
 - **Fonte dos números:** Archivo na largura normal. O pacote `@expo-google-fonts/archivo` não traz
-  a versão condensada que o protótipo usa com `font-stretch`.
+  a versão condensada que a web usa com `font-stretch`.
 - **Fora do app:** a tela de notificações (o sino), o "Reagendar" (para remarcar, cancele e
   marque de novo) e a escolha de clínica (fixa na Clínica Ipê).
 - **Tamanho do texto:** o app segue o ajuste do celular, em vez do seletor próprio de 3 tamanhos.

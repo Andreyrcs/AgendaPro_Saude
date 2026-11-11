@@ -7,7 +7,7 @@
         <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='26' rx='7' fill='%2312263f'/%3E%3Cpath d='M2 12v-1a7 7 0 0 1 7-7h14a7 7 0 0 1 7 7v1z' fill='%23a8e6cf'/%3E%3Crect x='14.2' y='14.5' width='3.6' height='11.5' rx='1.2' fill='%23fff'/%3E%3Crect x='10.25' y='18.45' width='11.5' height='3.6' rx='1.2' fill='%23fff'/%3E%3C/svg%3E" />
         <meta
             name="description"
-            content="Protótipo navegável do app do paciente do AgendaPro Saúde, com dados fictícios."
+            content="Área do paciente do AgendaPro Saúde, versão para celular."
         />
         <meta name="theme-color" content="#12263f" />
         <link
@@ -30,15 +30,15 @@
     </head>
     <body class="pagina-app">
         <div class="palco">
-            <aside class="palco__lado" aria-label="Sobre este protótipo">
+            <aside class="palco__lado" aria-label="Sobre a versão para celular">
                 <a class="palco__marca" href="index.html">
                     <span data-marca="30"></span>
                     <span>AgendaPro <b>Saúde</b></span>
                 </a>
                 <h1 class="palco__titulo">App do paciente</h1>
                 <p class="palco__texto">
-                    Protótipo navegável. Toque nos cartões e no menu do celular.
-                    Todos os nomes, médicos e horários são fictícios.
+                    A área do paciente na versão para celular. Num celular, ela ocupa a
+                    tela inteira; no computador, aparece aqui dentro do aparelho.
                 </p>
 
                 <h2 class="palco__subtitulo">Ir direto para</h2>
@@ -53,26 +53,9 @@
                     <li><a href="#perfil">Perfil e acessibilidade</a></li>
                 </ul>
 
-                <h2 class="palco__subtitulo">Experimente</h2>
-                <ul class="palco__dicas">
-                    <li>
-                        No assistente, toque em <b>“Dor no peito”</b> para ver o
-                        alerta de emergência.
-                    </li>
-                    <li>
-                        Na lista de espera, use <b>“Simular cancelamento”</b> e
-                        veja sua posição mudar.
-                    </li>
-                    <li>Em Perfil, aumente o <b>tamanho do texto</b>.</li>
-                </ul>
-
                 <p class="palco__links">
                     <a href="index.html">Voltar à página inicial</a>
-                    <a href="clinica.html">Área da clínica</a>
-                    <a href="medico.html">Área do médico</a>
-                    <a href="paciente-desktop.html">Área do paciente</a>
-                    <a href="login.html">Login</a>
-                    <a href="cadastro.html">Cadastro</a>
+                    <a href="paciente-desktop.html">Abrir a versão para computador</a>
                 </p>
             </aside>
 
@@ -198,7 +181,7 @@
 
         <noscript>
             <p class="sem-js">
-                Este protótipo precisa de JavaScript ativado para navegar entre
+                O AgendaPro Saúde precisa de JavaScript ativado para navegar entre
                 as telas.
             </p>
         </noscript>
@@ -209,6 +192,8 @@
         <script src="assets/js/triagem.js"></script>
         <script src="assets/js/comum.js"></script>
         <script src="assets/js/movimento.js"></script>
+        <script src="assets/js/clinica-dados.js"></script>
+        <script src="assets/js/paciente-servicos.js"></script>
         <script src="assets/js/calendario-paciente.js"></script>
         <script src="assets/js/app.js"></script>
     </body>

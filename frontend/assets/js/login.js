@@ -1,3 +1,5 @@
+/* AgendaPro Saúde — tela de login: confere os campos, entra pelo api.js e leva cada papel à sua área.
+   "Acesso rápido" entra com as contas da carga inicial (as mesmas do api.js). */
  (function () {
                 'use strict';
 
@@ -10,23 +12,12 @@
                         el.innerHTML = A.marca(Number(el.dataset.marca));
                     });
 
-                /* ─── Contas de demonstração ─── */
+                /* ─── Acesso rápido: contas da carga inicial ─── */
                 var CONTAS = {
-                    paciente: {
-                        email: 'juliana.santos@email.com',
-                        senha: 'paciente123',
-                        destino: 'paciente-desktop.html',
-                    },
-                    medico: {
-                        email: 'paulo.menezes@clinicaipe.com.br',
-                        senha: 'medico123',
-                        destino: 'medico.html',
-                    },
-                    recepcao: {
-                        email: 'recepcao@clinicaipe.com.br',
-                        senha: 'recepcao123',
-                        destino: 'clinica.html',
-                    },
+                    paciente: { email: 'juliana.santos@email.com', senha: 'paciente123' },
+                    medico: { email: 'paulo.menezes@clinicaipe.com.br', senha: 'medico123' },
+                    recepcao: { email: 'recepcao@clinicaipe.com.br', senha: 'recepcao123' },
+                    recepcaoJacaranda: { email: 'recepcao@clinicajacaranda.com.br', senha: 'recepcao123' },
                 };
 
                 var emailEl = document.getElementById('email');
@@ -56,15 +47,6 @@
                         toastEl.classList.remove('toast-acesso--visivel');
                     }, 3000);
                 }
-
-                /* ─── Fora do escopo ─── */
-                document.querySelectorAll('[data-fora]').forEach(function (el) {
-                    el.addEventListener('click', function (ev) {
-                        ev.preventDefault();
-                        toast('Fora do escopo deste protótipo');
-                        anunciar('Fora do escopo deste protótipo');
-                    });
-                });
 
                 /* ─── Mostrar/ocultar senha ─── */
                 var btnVer = document.getElementById('btn-ver-senha');
@@ -134,20 +116,6 @@
                     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor);
                 }
 
-                /* ─── Encontrar conta ─── */
-                function encontrarConta(email) {
-                    var chaves = Object.keys(CONTAS);
-                    for (var i = 0; i < chaves.length; i++) {
-                        if (
-                            CONTAS[chaves[i]].email ===
-                            email.toLowerCase().trim()
-                        ) {
-                            return CONTAS[chaves[i]];
-                        }
-                    }
-                    return null;
-                }
-
                 /* ─── Submit ─── */
                 formEl.addEventListener('submit', function (ev) {
                     ev.preventDefault();
@@ -178,11 +146,11 @@
                         return;
                     }
 
-                    simularLogin({ email: email, senha: senha });
+                    fazerLogin({ email: email, senha: senha });
                 });
 
-                /* ─── Simular login (com feedback visual) ─── */
-                function simularLogin(conta) {
+                /* ─── Login (com retorno visual enquanto confere) ─── */
+                function fazerLogin(conta) {
                     btnEntrar.classList.add('btn--carregando');
                     btnEntrar.textContent = 'Entrando...';
                     anunciar('Verificando credenciais...');
@@ -198,7 +166,7 @@
                         });
                 }
 
-                /* ─── Demos ─── */
+                /* ─── Acesso rápido ─── */
                 document
                     .querySelectorAll('[data-demo]')
                     .forEach(function (btn) {
@@ -210,14 +178,10 @@
                             limparErros();
                             emailEl.value = conta.email;
                             senhaEl.value = conta.senha;
-                            anunciar(
-                                'Credenciais preenchidas para ' +
-                                    perfil +
-                                    '. Entrando...',
-                            );
+                            anunciar('Entrando...');
 
                             setTimeout(function () {
-                                simularLogin(conta);
+                                fazerLogin(conta);
                             }, 300);
                         });
                     });

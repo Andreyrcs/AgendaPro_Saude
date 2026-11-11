@@ -1,5 +1,5 @@
-/* AgendaPro Saúde v2 — Pacientes da clínica (protótipo, dados FICTÍCIOS)
-   Quem tem consulta no período do protótipo ou está na lista de espera. A busca é o trabalho
+/* AgendaPro Saúde — Pacientes da clínica
+   Quem tem consulta na agenda da clínica ou está na lista de espera. A busca é o trabalho
    principal: achar a pessoa, ver as próximas consultas e o histórico, e marcar outra. */
 (function () {
   "use strict";
@@ -11,8 +11,8 @@
   const $ = (s) => document.querySelector(s);
 
   const POR_PAGINA = 20;
-  const ROTULO = { atendida: "Atendida", em: "Em atendimento", chegou: "Na recepção", confirmada: "Confirmada", faltou: "Faltou", oferecida: "Vaga oferecida" };
-  const FUTURO = ["confirmada", "chegou", "em", "oferecida"];
+  const ROTULO = D.STATUS_CONSULTA;
+  const FUTURO = ["confirmada", "na_recepcao", "em_atendimento"];
   const ordemK = (a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : a.ini - b.ini);
 
   /* ─── Junta consultas e filas por nome ─── */
@@ -21,8 +21,9 @@
     if (!mapa.has(nome)) mapa.set(nome, { nome, consultas: [], filas: [], app: false });
     return mapa.get(nome);
   };
-  C.consultas.forEach((k) => { if (k.paciente && k.status !== "vaga" && k.status !== "cancelada") pegar(k.paciente).consultas.push(k); });
-  Object.keys(D.filas).forEach((m) => D.filas[m].forEach((p, i) => {
+  /* consultas canceladas entram também: ficam no histórico do paciente */
+  C.consultas.forEach((k) => { if (k.paciente && C.ehConsulta(k)) pegar(k.paciente).consultas.push(k); });
+  C.MEDICOS.forEach((m) => (D.filas[m] || []).forEach((p, i) => {
     const r = pegar(p.nome);
     r.filas.push({ m, pos: i + 1, desde: p.desde });
     if (p.app) r.app = true;
@@ -30,9 +31,9 @@
   const pacientes = Array.from(mapa.values()).map((p) => {
     p.consultas.sort(ordemK);
     p.proxima = p.consultas.find((k) => FUTURO.includes(k.status) && k.data >= D.hoje) || null;
-    p.passadas = p.consultas.filter((k) => k.status === "atendida" || k.status === "faltou");
+    p.passadas = p.consultas.filter((k) => k.status === "atendida" || k.status === "faltou" || k.status === "cancelada");
     p.ultima = p.passadas[p.passadas.length - 1] || null;
-    p.faltas = p.consultas.filter((k) => k.status === "faltou").length;
+    p.faltas = C.faltasDe(p.nome).length;
     p.hoje = p.consultas.some((k) => k.data === D.hoje);
     p.chave = K.semAcento(p.nome);
     return p;
@@ -134,13 +135,13 @@
     const futuras = p.consultas.filter((k) => FUTURO.includes(k.status) && k.data >= D.hoje);
     const historico = p.passadas.slice(-6).reverse();
     const linhaK = (k) => '<li><span class="historico__quando">' + quando(k) + '</span><span class="historico__quem">' + K.medico(k.medico).nome + " · " + K.esp(K.medico(k.medico).esp).nome + "</span>" +
-      '<span class="selo selo--' + k.status + '">' + ROTULO[k.status] + "</span>" + (k.status === "faltou" ? ' <span class="multa">Multa ' + A.reais(D.politica.multa) + "</span>" : "") + "</li>";
+      '<span class="selo selo--' + k.status + '">' + ROTULO[k.status] + "</span>" + (k.presencaConfirmada && k.status === "confirmada" ? ' <span class="tabela__sub">presença confirmada</span>' : "") + "</li>";
     ficha.innerHTML =
       '<div class="ficha__cab"><div><h2 id="t-ficha">' + A.esc(p.nome) + "</h2>" +
       (p.app ? '<p class="painel__titulo-sub">Usa o app AgendaPro: os avisos chegam por lá</p>' : "") + "</div></div>" +
       '<dl class="ficha__numeros"><div><dt>Consultas</dt><dd class="num">' + p.consultas.length + '</dd></div><div><dt>Faltas</dt><dd class="num">' + p.faltas +
       '</dd></div><div><dt>Na fila</dt><dd class="num">' + p.filas.length + "</dd></div></dl>" +
-      (p.faltas ? '<p class="multa multa--total">Multas em aberto: <b class="num">' + A.reais(p.faltas * D.politica.multa) + "</b> (" + p.faltas + (p.faltas === 1 ? " falta" : " faltas") + " × " + A.reais(D.politica.multa) + ")</p>" : "") +
+      faltasHTML(p) +
       (p.filas.length
         ? '<p class="ficha__secao">Lista de espera</p><ul class="historico">' + p.filas.map((f) =>
             '<li><span class="historico__quando">' + f.pos + 'ª posição</span><span class="historico__quem">' + K.medico(f.m).nome + " · desde " + A.extenso(f.desde, false) + "</span>" +
@@ -151,6 +152,22 @@
       '<p class="ficha__secao">Histórico</p>' +
       (historico.length ? '<ul class="historico">' + historico.map(linhaK).join("") + "</ul>" : '<p class="tabela__traco" style="margin-top:6px">Ainda sem consultas atendidas.</p>') +
       '<div class="ficha__acoes"><a class="botao botao--secundario botao--pequeno" href="nova-consulta.html?paciente=' + encodeURIComponent(p.nome) + '">Marcar consulta</a></div>';
+  }
+
+  /* Faltas registradas e a restrição atual. A recepção retira a falta justificada (ela deixa de contar). */
+  function faltasHTML(p) {
+    const faltas = C.faltasDe(p.nome);
+    const r = C.restricaoDe(p.nome);
+    const aviso = r.tipo === "so_fila" ? "Só pode marcar pela lista de espera até " + A.extenso(r.ate, false) + "."
+      : r.tipo === "so_recepcao" ? "Só agenda com a recepção até " + A.extenso(r.ate, false) + "." : "";
+    if (!faltas.length) return "";
+    return '<p class="ficha__secao">Faltas registradas</p>' +
+      (aviso ? '<p class="ficha__restricao">' + aviso + "</p>" : "") +
+      '<ul class="historico">' + faltas.map((f) =>
+        '<li><span class="historico__quando">' + K.curtoData(f.data) + " · " + f.hora + '</span><span class="historico__quem">' + A.esc(f.motivo) +
+        (f.confirmou ? " · tinha confirmado presença" : " · sem confirmação (não conta)") + "</span>" +
+        '<button type="button" class="link-acao" data-retirar="' + f.id + '" style="grid-row:1/span 2;grid-column:2;align-self:center">Retirar (justificada)</button></li>'
+      ).join("") + "</ul>";
   }
 
   function escolher(nome, focar) {
@@ -174,6 +191,16 @@
     desenharFiltros();
     desenharLista();
     $('#filtros [data-filtro="' + est.filtro + '"]').focus();
+  });
+  /* retirar falta justificada: deixa de contar para a restrição */
+  $("#ficha").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-retirar]");
+    if (!b || !est.escolhido) return;
+    C.retirarFalta(b.dataset.retirar, K.conta.nome);
+    est.escolhido.faltas = C.faltasDe(est.escolhido.nome).length;
+    desenharFicha();
+    desenharLista();
+    K.toast({ titulo: "Falta retirada", texto: "Ela não conta mais para " + est.escolhido.nome + ".", icone: "check" });
   });
   $("#linhas").addEventListener("click", (ev) => {
     const tr = ev.target.closest("tr[data-nome]");

@@ -1,7 +1,7 @@
 // Configuração da conexão com a API (backend em ASP.NET).
 //
 // USAR_API_REAL
-//   false → o app usa os dados simulados (modo demonstração, funciona sem backend)
+//   false → o app usa o banco em memória (src/dados/bancoSimulado.js) e funciona sem backend
 //   true  → login e cadastro chamam a API de verdade
 //
 // ENDERECO_API

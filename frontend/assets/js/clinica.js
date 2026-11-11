@@ -1,6 +1,5 @@
-/* AgendaPro Saúde v2 — área da clínica (protótipo, dados FICTÍCIOS)
-   "Agora" começa às 10:40 de terça, 20 de outubro de 2026, e anda no relógio real:
-   a linha do agora se move de verdade, e os estados de hoje continuam coerentes. */
+/* AgendaPro Saúde — agenda da recepção (dia, semana e mês), próximos pacientes e lista de espera.
+   "Agora" é o relógio do computador: a linha do agora anda e as faltas são marcadas na hora certa. */
 (function () {
   "use strict";
 
@@ -8,38 +7,43 @@
   const C = window.CLIDADOS;
   const A = window.AP;
   const M = window.MOV;
+  const K = window.CASCA;
   const I = A.icone;
 
   const PX = 1.5;
   const INICIO = C.INICIO;
-  const AGORA0 = 10 * 60 + 40;
-  const T0 = Date.now();
-  const agora = () => Math.min(C.FIM, AGORA0 + (Date.now() - T0) / 60000);
+  const agora = () => C.minutoAgora();
 
+  /* Selos da agenda: os status da CONSULTA e, para horário sem consulta, o estado do HORÁRIO.
+     Os nomes vêm de DADOS.STATUS_CONSULTA e DADOS.ESTADO_HORARIO (os mesmos do app e do banco). */
+  const SC = D.STATUS_CONSULTA, EH = D.ESTADO_HORARIO;
   const ESTADOS = {
-    atendida: { rotulo: "Atendida", icone: "check" },
-    em: { rotulo: "Em atendimento", icone: "stethoscope" },
-    chegou: { rotulo: "Na recepção", icone: "user-check" },
-    confirmada: { rotulo: "Confirmada", icone: null },
-    faltou: { rotulo: "Faltou", icone: "x" },
-    vaga: { rotulo: "Vaga aberta", icone: "plus" },
-    oferecida: { rotulo: "Oferecida à fila", icone: "bell-ring" },
+    confirmada: { rotulo: SC.confirmada, icone: null },
+    na_recepcao: { rotulo: SC.na_recepcao, icone: "user-check" },
+    em_atendimento: { rotulo: SC.em_atendimento, icone: "stethoscope" },
+    atendida: { rotulo: SC.atendida, icone: "check" },
+    faltou: { rotulo: SC.faltou, icone: "x" },
+    livre: { rotulo: "Horário " + EH.livre.toLowerCase(), icone: "plus" },
+    oferecido: { rotulo: EH.oferecido, icone: "bell-ring" },
   };
-  const MOVEIS = ["confirmada", "chegou"];
+  /* chave do selo: o estado do horário, quando não há consulta; senão o status da consulta */
+  const chave = (k) => k.horario || k.status;
+  const MOVEIS = ["confirmada", "na_recepcao"];
 
   const medico = (id) => D.medicos.find((m) => m.id === id);
   const esp = (id) => D.especialidades[id];
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const curtoData = (dia) => { const d = C.data(dia); return A.SEMANA_CURTA[d.getDay()] + ", " + d.getDate() + "/" + String(d.getMonth() + 1).padStart(2, "0"); };
   const segunda = (dia) => { const d = C.data(dia); const dow = d.getDay() || 7; return C.somaDias(dia, 1 - dow); };
-  const relogio = () => { const t = agora(); const s = Math.floor((Date.now() - T0) / 1000) % 60; return C.txt(Math.floor(t)) + ":" + String(s).padStart(2, "0"); };
+  const relogio = () => new Date().toLocaleTimeString("pt-BR");
 
   const PXH = 2.6; /* px por minuto na disposição em linhas (igual a --pxh no CSS) */
   const LARG = C.FIM - INICIO;
   let layoutSalvo = null;
   try { layoutSalvo = localStorage.getItem("agendapro.layout"); } catch (e) { /* sem armazenamento */ }
 
-  const est = { vista: "dia", layout: layoutSalvo === "linha" ? "linha" : "coluna", dia: D.hoje, semana: segunda(D.hoje), filaMedico: "camila", sessao: null, filtro: new Set() };
+  const primeiroComFila = C.MEDICOS.find((m) => (D.filas[m] || []).length) || C.MEDICOS[0] || null;
+  const est = { vista: "dia", layout: layoutSalvo === "linha" ? "linha" : "coluna", dia: D.hoje, semana: segunda(D.hoje), filaMedico: primeiroComFila, sessao: null, filtro: new Set() };
   const emLinha = () => est.layout === "linha" && est.vista !== "mes";
 
   const $ = (s) => document.querySelector(s);
@@ -48,18 +52,18 @@
   function anunciar(t) { anunciador.textContent = ""; setTimeout(() => { anunciador.textContent = t; }, 30); }
 
   /* ─── Consultas ─── */
-  const ativas = (k) => k.status !== "cancelada";
+  const ativas = C.ativa;
   const doDia = (dia) => C.consultas.filter((k) => k.data === dia && ativas(k));
-  const ocupa = (k) => ["atendida", "em", "chegou", "confirmada", "faltou", "oferecida"].includes(k.status);
+  const ocupa = (k) => C.horarioDe(k) === "ocupado" || C.horarioDe(k) === "oferecido";
   const filaDe = (m) => D.filas[m] || [];
   const totalFila = () => C.MEDICOS.reduce((s, m) => s + filaDe(m).length, 0);
 
   function rotuloConsulta(k) {
     const m = medico(k.medico);
-    const e = ESTADOS[k.status];
-    const quem = k.status === "vaga" ? "Horário livre" : k.paciente;
+    const e = ESTADOS[chave(k)];
+    const quem = k.horario === "livre" ? "Horário livre" : k.paciente;
     return quem + ", " + C.txt(k.ini) + " às " + C.txt(k.ini + k.dur) + ", " + curtoData(k.data) + ", " + m.nome + ". " + e.rotulo + "." +
-      (k.status === "faltou" ? " Multa de " + A.reais(D.politica.multa) + "." : "") +
+      (k.presencaConfirmada && k.status === "confirmada" ? " Presença confirmada pelo paciente." : "") +
       (MOVEIS.includes(k.status) ? " Enter abre as opções." : "");
   }
 
@@ -74,11 +78,11 @@
 
   /* ─── Blocos ─── */
   function blocoHTML(k, c) {
-    const e = ESTADOS[k.status];
-    const nome = k.status === "vaga" ? "Vaga aberta" : k.status === "oferecida" ? k.paciente : k.paciente;
-    const sub = k.status === "oferecida" ? C.txt(k.ini) + " · aguarda" : k.status === "faltou" ? C.txt(k.ini) + " · multa " + A.reais(D.politica.multa) : C.txt(k.ini);
+    const e = ESTADOS[chave(k)];
+    const nome = k.horario === "livre" ? "Horário livre" : k.paciente;
+    const sub = k.horario === "oferecido" ? C.txt(k.ini) + " · aguarda" : k.presencaConfirmada && k.status === "confirmada" ? C.txt(k.ini) + " · vai vir" : C.txt(k.ini);
     return (
-      '<button type="button" class="cbloco cbloco--' + k.status + '" data-id="' + k.id + '" style="--c:' + c + ";--ini:" + k.ini + ";--dur:" + k.dur + '"' +
+      '<button type="button" class="cbloco cbloco--' + chave(k) + '" data-id="' + k.id + '" style="--c:' + c + ";--ini:" + k.ini + ";--dur:" + k.dur + '"' +
       ' aria-label="' + A.esc(rotuloConsulta(k)) + '" aria-haspopup="menu">' +
       (e.icone ? I(e.icone) : "") +
       '<span class="cbloco__texto"><span class="cbloco__nome">' + A.esc(nome) + '</span><span class="cbloco__hora">' + sub + "</span></span></button>"
@@ -250,7 +254,10 @@
   /* ─── Visão Mês em 3D: semanas empilhadas como folhas de cbloco ─── */
   function semanasDoMes() {
     const lista = [];
-    for (let s = "2026-09-28"; s <= "2026-10-26"; s = C.somaDias(s, 7)) {
+    /* as semanas que tocam o mês de hoje */
+    const mesHoje = D.hoje.slice(0, 7);
+    const ultimo = C.iso(new Date(C.data(D.hoje).getFullYear(), C.data(D.hoje).getMonth() + 1, 0));
+    for (let s = segunda(mesHoje + "-01"); s <= ultimo; s = C.somaDias(s, 7)) {
       const dias = [0, 1, 2, 3, 4, 5].map((i) => {
         const dia = C.somaDias(s, i);
         const cap = capacidadeDia(dia);
@@ -261,7 +268,7 @@
       lista.push({
         s, dias,
         consultas: ks.filter(ocupa).length,
-        vagas: ks.filter((k) => k.status === "vaga" || k.status === "oferecida").length,
+        vagas: ks.filter((k) => k.horario).length,
         media: Math.round((dias.filter((d) => !d.fechado).reduce((t, d) => t + d.o, 0) / Math.max(1, dias.filter((d) => !d.fechado).length)) * 100),
         atual: s === segunda(D.hoje),
       });
@@ -283,7 +290,7 @@
         '<span class="camada__total">' + w.consultas + " consultas · " + w.vagas + " vagas · " + w.media + "% ocupado</span></button>"
       ).join("") +
       "</div></div>" +
-      '<ul class="semanas" aria-label="Semanas de outubro">' +
+      '<ul class="semanas" aria-label="Semanas de ' + A.MESES_LONGOS[C.data(D.hoje).getMonth()] + '">' +
       semanas.map((w) =>
         '<li><button type="button" data-semana="' + w.s + '"><span class="semanas__nome">Semana de ' + nomeSemana(w.s) + (w.atual ? " (esta semana)" : "") + "</span>" +
         '<span class="semanas__n num">' + w.media + "%</span>" +
@@ -326,7 +333,7 @@
     const t = $("#t-agenda");
     if (est.vista === "dia") t.textContent = cap(A.extenso(est.dia)) + (est.dia === D.hoje ? " · hoje" : "");
     else if (est.vista === "semana") t.textContent = "Semana de " + nomeSemana(est.semana);
-    else t.textContent = "Outubro de 2026, semana a semana";
+    else t.textContent = cap(A.MESES_LONGOS[C.data(D.hoje).getMonth()]) + " de " + D.hoje.slice(0, 4) + ", semana a semana";
     $("#dica").textContent = est.vista === "mes"
       ? "Passe o mouse sobre as folhas para abrir a pilha. Clique numa semana para ver os horários."
       : "Arraste uma consulta para remarcar, ou clique nela para ver as opções. Pelo teclado: Tab até a consulta e Enter.";
@@ -340,6 +347,11 @@
     $(".legenda").hidden = est.vista === "mes";
     $("#disposicao").hidden = est.vista === "mes";
     document.querySelectorAll("#disposicao [data-layout]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.layout === est.layout)));
+    if (!C.MEDICOS.length) {
+      vistaEl.innerHTML = '<div class="vazio-agenda"><p><b>A agenda ainda está vazia.</b></p><p>Cadastre os médicos da clínica para abrir os horários.</p>' +
+        '<a class="botao botao--principal" href="medicos.html">' + I("stethoscope", "ic-sm") + "Cadastrar médicos</a></div>";
+      return;
+    }
     if (est.vista === "mes") vistaMes(); else vistaGrade();
   }
 
@@ -384,7 +396,7 @@
     doDia(dia).forEach((k) => {
       const sob = Math.max(0, Math.min(k.ini + k.dur, fim) - Math.max(k.ini, ini));
       if (!sob) return;
-      if (ocupa(k)) { ocup += sob; total += 1; } else if (k.status === "vaga") livres += 1;
+      if (ocupa(k)) { ocup += sob; total += 1; } else if (k.horario === "livre") livres += 1;
     });
     return { cap, o: cap ? Math.min(1, ocup / cap) : null, total, livres };
   }
@@ -448,22 +460,22 @@
     const c = ev.target.closest("[data-dica]");
     if (c) { mostrarDica(c, c.dataset.dica); return; }
     const b = ev.target.closest(".grade--semana .cbloco");
-    if (b) { const k = C.consultas.find((x) => x.id === b.dataset.id); mostrarDica(b, "<b>" + A.esc(k.status === "vaga" ? "Vaga aberta" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + curtoData(k.data) + " · " + medico(k.medico).nome + "<br>" + ESTADOS[k.status].rotulo + (k.status === "faltou" ? " · multa " + A.reais(D.politica.multa) : "")); return; }
+    if (b) { const k = C.consultas.find((x) => x.id === b.dataset.id); mostrarDica(b, "<b>" + A.esc(k.horario === "livre" ? "Horário livre" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + curtoData(k.data) + " · " + medico(k.medico).nome + "<br>" + ESTADOS[chave(k)].rotulo + (k.presencaConfirmada && k.status === "confirmada" ? " · presença confirmada" : "")); return; }
     dica.hidden = true;
   });
   document.addEventListener("focusin", (ev) => {
     const b = ev.target.closest(".grade--semana .cbloco");
-    if (b) { const k = C.consultas.find((x) => x.id === b.dataset.id); mostrarDica(b, "<b>" + A.esc(k.status === "vaga" ? "Vaga aberta" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + medico(k.medico).nome); }
+    if (b) { const k = C.consultas.find((x) => x.id === b.dataset.id); mostrarDica(b, "<b>" + A.esc(k.horario === "livre" ? "Horário livre" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + medico(k.medico).nome); }
     else dica.hidden = true;
   });
 
   /* ─── Contadores do topo ─── */
   function desenharResumo(animar) {
     const hoje = doDia(D.hoje);
-    const consultas = hoje.filter((k) => !["vaga", "oferecida"].includes(k.status)).length;
+    const consultas = hoje.filter(C.ehConsulta).length;
     const atendidas = hoje.filter((k) => k.status === "atendida").length;
-    const vagas = hoje.filter((k) => k.status === "vaga" || k.status === "oferecida").length;
-    const oferecidas = hoje.filter((k) => k.status === "oferecida").length;
+    const vagas = hoje.filter((k) => k.horario).length;
+    const oferecidas = hoje.filter((k) => k.horario === "oferecido").length;
     const fila = totalFila();
     const medicosComFila = C.MEDICOS.filter((m) => filaDe(m).length).length;
     const set = (id, v) => { const el = $(id); if (animar) M.contador(el, v); else { el.textContent = v; el.dataset.valor = v; } };
@@ -480,6 +492,12 @@
   /* ─── Lista de espera ─── */
   function desenharFila() {
     const m = est.filaMedico;
+    if (!m) {
+      $("#fila-medicos").innerHTML = "";
+      $("#fila-meta").textContent = "";
+      $("#fila-lista").innerHTML = '<li class="fila__vazia">Cadastre os médicos da clínica para abrir a lista de espera.</li>';
+      return;
+    }
     $("#fila-medicos").innerHTML = '<label for="fila-sel">Médico</label><select id="fila-sel">' + C.MEDICOS.map((x) =>
       '<option value="' + x + '"' + (x === m ? " selected" : "") + ">" + medico(x).nome + " · " + filaDe(x).length + " na fila</option>"
     ).join("") + "</select>";
@@ -513,27 +531,28 @@
   function restantesHoje() {
     const t = agora();
     return doDia(D.hoje)
-      .filter((k) => ["chegou", "confirmada"].includes(k.status) && k.ini + k.dur > t)
-      .sort((a, b) => a.ini - b.ini || (a.status === "chegou" ? -1 : 1));
+      .filter((k) => ["na_recepcao", "confirmada"].includes(k.status) && k.ini + k.dur > t)
+      .sort((a, b) => a.ini - b.ini || (a.status === "na_recepcao" ? -1 : 1));
   }
 
   function situacaoProximo(k) {
     const t = agora();
-    if (k.status === "em") return '<span class="selo selo--em">Em atendimento</span>';
-    if (k.status === "chegou") {
+    if (k.status === "em_atendimento") return '<span class="selo selo--em_atendimento">' + SC.em_atendimento + "</span>";
+    if (k.status === "na_recepcao") {
       return k.chamado
         ? '<span class="selo selo--chamado">Chamado às ' + k.chamado + "</span>"
-        : '<span class="selo selo--chegou">Na recepção</span>';
+        : '<span class="selo selo--na_recepcao">' + SC.na_recepcao + "</span>";
     }
     if (k.status === "confirmada") {
       const falta = Math.round(k.ini - t);
-      if (falta < 0) return '<span class="selo selo--atraso">' + -falta + " min de atraso</span>" + (-falta >= D.politica.toleranciaMin - 15 ? ' <span class="multa multa--aviso">falta em ' + Math.max(0, D.politica.toleranciaMin + falta) + " min</span>" : "");
+      /* atraso não é falta: só o médico ou a recepção marcam "faltou" */
+      if (falta < 0) return '<span class="selo selo--atraso">' + -falta + " min de atraso</span>";
       if (falta === 0) return '<span style="white-space:nowrap">horário agora</span>';
       if (falta <= 45) return '<span style="white-space:nowrap">chega em ' + falta + " min</span>";
       return "";
     }
-    if (k.status === "atendida") return '<span class="selo selo--atendida">Atendida</span>';
-    if (k.status === "faltou") return '<span class="selo selo--faltou">Faltou</span> <span class="multa">Multa ' + A.reais(D.politica.multa) + "</span>";
+    if (k.status === "atendida") return '<span class="selo selo--atendida">' + SC.atendida + "</span>";
+    if (k.status === "faltou") return '<span class="selo selo--faltou">' + SC.faltou + "</span>";
     return "";
   }
 
@@ -541,7 +560,7 @@
     if (k.status === "confirmada") {
       return '<button type="button" class="botao botao--secundario" data-chegou="' + k.id + '" aria-label="Marcar chegada de ' + A.esc(k.paciente) + '">Chegou</button>';
     }
-    if (k.status === "chegou") {
+    if (k.status === "na_recepcao") {
       return '<button type="button" class="botao botao--menta" data-chamar="' + k.id + '" aria-label="Chamar ' + A.esc(k.paciente) + ' no painel">Chamar</button>';
     }
     return "";
@@ -554,7 +573,7 @@
     let mostrados;
     if (termo) {
       mostrados = doDia(D.hoje)
-        .filter((k) => k.paciente && !["vaga", "oferecida"].includes(k.status) && semAcento(k.paciente).includes(termo))
+        .filter((k) => k.paciente && C.ehConsulta(k) && semAcento(k.paciente).includes(termo))
         .sort((a, b) => a.ini - b.ini);
       $("#proximos-meta").textContent = mostrados.length + (mostrados.length === 1 ? " encontrado hoje" : " encontrados hoje");
     } else {
@@ -605,7 +624,8 @@
   }
 
   function marcarChegada(k) {
-    k.status = "chegou";
+    k.status = "na_recepcao";
+    C.salvar();
     const el = blocoEl(k.id);
     if (el) atualizarBloco(el, k);
     desenharProximos();
@@ -613,7 +633,7 @@
       titulo: k.paciente + " está na recepção",
       texto: medico(k.medico).nome + ", " + C.txt(k.ini),
       icone: "user-check",
-      acao: { rotulo: "Desfazer", fazer: () => { k.status = "confirmada"; delete k.chamado; const e2 = blocoEl(k.id); if (e2) atualizarBloco(e2, k); desenharProximos(); } },
+      acao: { rotulo: "Desfazer", fazer: () => { k.status = "confirmada"; delete k.chamado; C.salvar(); const e2 = blocoEl(k.id); if (e2) atualizarBloco(e2, k); desenharProximos(); } },
     });
   }
 
@@ -632,6 +652,7 @@
     if (b.dataset.chegou) { marcarChegada(k); devolverFoco(k.id, "[data-chamar]"); return; }
     if (b.dataset.chamar) {
       k.chamado = C.txt(Math.floor(agora()));
+      C.salvar();
       desenharProximos();
       devolverFoco(k.id, "[data-chamar]");
       toast({ titulo: "Chamamos " + k.paciente, texto: "No painel da recepção, para " + medico(k.medico).nome + ".", icone: "bell-ring", duracao: 3600 });
@@ -642,21 +663,20 @@
     est.proximosTodos = !est.proximosTodos;
     desenharProximos();
   });
-  /* depois de 60 min de atraso, a consulta vira falta sozinha */
-  function verificarFaltas() {
-    const mudou = C.aplicarFaltas(agora());
-    mudou.forEach((k) => { const el = blocoEl(k.id); if (el) atualizarBloco(el, k); });
-    if (!mudou.length) return;
+  /* Falta: só a recepção (aqui, no menu da consulta) ou o médico marcam. Atraso não é falta. */
+  function marcarFalta(k) {
+    k.status = "faltou";
+    C.registrarFalta(k, "Não compareceu", K.conta.nome);
+    const el = blocoEl(k.id);
+    if (el) atualizarBloco(el, k);
     desenharProximos();
     desenharResumo(false);
     toast({
-      titulo: mudou.length === 1 ? mudou[0].paciente + " não compareceu" : mudou.length + " pacientes não compareceram",
-      texto: "Passou de " + D.politica.toleranciaMin + " min de atraso: marcada como falta, multa de " + A.reais(D.politica.multa) + ".",
+      titulo: "Falta registrada: " + k.paciente,
+      texto: k.presencaConfirmada ? "Tinha confirmado presença: conta como falta sem aviso. Dá para retirar na ficha do paciente, se for justificada." : "Não tinha confirmado presença: fica registrada, mas não conta para restrição.",
       icone: "x", duracao: 6000,
     });
-    anunciar(mudou.length + (mudou.length === 1 ? " consulta marcada como falta." : " consultas marcadas como falta."));
   }
-  setInterval(verificarFaltas, 5000);
 
   /* o relógio anda: atrasos e quem já saiu da lista se atualizam, sem roubar o foco de quem está usando */
   setInterval(() => {
@@ -712,7 +732,7 @@
     if (!e || ini < e[0] || ini + k.dur > e[1]) return "Fora do expediente";
     if (ini < 780 && ini + k.dur > 720) return "Horário de almoço";
     if (alvo.data < D.hoje || (alvo.data === D.hoje && ini < agora())) return "Esse horário já passou";
-    const choque = C.consultas.find((x) => x !== k && ativas(x) && x.status !== "vaga" && x.medico === alvo.medico && x.data === alvo.data && x.ini < ini + k.dur && ini < x.ini + x.dur);
+    const choque = C.consultas.find((x) => x !== k && ativas(x) && x.horario !== "livre" && x.medico === alvo.medico && x.data === alvo.data && x.ini < ini + k.dur && ini < x.ini + x.dur);
     if (choque) return "Ocupado: " + (choque.paciente || "vaga oferecida");
     return null;
   }
@@ -780,15 +800,17 @@
   function remarcar(k, el, col, ini, de) {
     const antes = { medico: k.medico, data: k.data, ini: k.ini };
     const alvo = colunas()[col];
-    /* um horário livre ("vaga") que estava ali deixa de existir */
-    C.consultas.forEach((x) => {
-      if (x.status === "vaga" && x.medico === alvo.medico && x.data === alvo.data && x.ini < ini + k.dur && ini < x.ini + x.dur) {
-        x.status = "cancelada";
+    /* um horário livre que estava ali deixa de existir: a consulta passa a ocupá-lo */
+    for (let i = C.consultas.length - 1; i >= 0; i--) {
+      const x = C.consultas[i];
+      if (x.horario === "livre" && x.medico === alvo.medico && x.data === alvo.data && x.ini < ini + k.dur && ini < x.ini + x.dur) {
+        C.consultas.splice(i, 1);
         const v = blocoEl(x.id);
         if (v) v.remove();
       }
-    });
+    }
     k.medico = alvo.medico; k.data = alvo.data; k.ini = ini;
+    C.salvar();
     assentar(el, k, de);
     desenharCalor();
     desenharResumo(true);
@@ -802,6 +824,7 @@
           const e2 = blocoEl(k.id);
           const r = e2 ? e2.getBoundingClientRect() : null;
           Object.assign(k, antes);
+          C.salvar();
           if (e2 && indiceColuna(k) >= 0) assentar(e2, k, r); else desenharVista();
           desenharCalor();
           desenharProximos();
@@ -953,20 +976,26 @@
     const itens = [];
     if (MOVEIS.includes(k.status)) {
       itens.push(["mover", "move", "Remarcar (mover)"]);
-      if (k.status === "confirmada" && hojeFuturo) itens.push(["chegou", "user-check", "Marcar chegada"]);
+      if (k.status === "confirmada" && hojeFuturo) itens.push(["chegada", "user-check", "Marcar chegada"]);
+      if (k.status === "confirmada" && (k.data < D.hoje || (k.data === D.hoje && k.ini <= agora()))) itens.push(["falta", "x", "Marcar falta"]);
       itens.push(["cancelar", "calendar-x", "Cancelar consulta", true]);
-    } else if (k.status === "vaga" && filaDe(k.medico).length && (k.data > D.hoje || k.ini >= agora())) {
+    } else if (k.horario === "livre" && filaDe(k.medico).length && (k.data > D.hoje || k.ini >= agora())) {
       itens.push(["oferecer", "bell-ring", "Oferecer à lista de espera"]);
     }
+    const semAcao = k.horario === "oferecido" ? "Aguardando a resposta da pessoa (até 30 minutos)."
+      : k.horario === "livre" ? "Horário livre. Para marcar, use “Nova consulta”."
+      : k.status === "faltou" ? "O paciente não compareceu: não há o que mudar."
+      : k.status === "em_atendimento" ? "O paciente está com o médico agora."
+      : "Consulta já atendida: não há o que mudar.";
     menuCamada.innerHTML =
       '<div class="menu" role="dialog" aria-label="Opções da consulta">' +
-      '<div class="menu__cab"><p class="menu__nome">' + A.esc(k.status === "vaga" ? "Vaga aberta" : k.paciente) + "</p>" +
-      '<p class="menu__sub">' + curtoData(k.data) + ", " + C.txt(k.ini) + " às " + C.txt(k.ini + k.dur) + "<br>" + m.nome + " · " + ESTADOS[k.status].rotulo + "</p>" +
-      (k.status === "faltou" ? '<p class="multa">' + I("circle-check", "ic-sm") + "Multa de " + A.reais(D.politica.multa) + (k.faltaAuto ? " · passou de " + D.politica.toleranciaMin + " min de atraso" : " · falta registrada") + "</p>" : "") + "</div>" +
+      '<div class="menu__cab"><p class="menu__nome">' + A.esc(k.horario === "livre" ? "Horário livre" : k.paciente) + "</p>" +
+      '<p class="menu__sub">' + curtoData(k.data) + ", " + C.txt(k.ini) + " às " + C.txt(k.ini + k.dur) + "<br>" + m.nome + " · " + ESTADOS[chave(k)].rotulo + "</p>" +
+      (k.presencaConfirmada && MOVEIS.includes(k.status) ? '<p class="menu__sub">' + I("circle-check", "ic-sm") + " Presença confirmada pelo paciente</p>" : "") + "</div>" +
       '<div class="menu__itens" role="menu">' +
       (itens.length
         ? itens.map(([acao, ic, t, perigo]) => '<button type="button" role="menuitem" data-acao="' + acao + '"' + (perigo ? ' class="menu__perigo"' : "") + ">" + I(ic, "ic-sm") + t + "</button>").join("")
-        : '<p class="menu__sub" style="padding:6px 4px">' + (k.status === "oferecida" ? "Aguardando a resposta da pessoa (até 30 minutos)." : k.status === "faltou" ? "O paciente não compareceu: não há o que mudar." : "Consulta já atendida: não há o que mudar.") + "</p>") +
+        : '<p class="menu__sub" style="padding:6px 4px">' + semAcao + "</p>") +
       '<button type="button" role="menuitem" data-acao="fechar">' + I("x", "ic-sm") + "Fechar</button></div></div>";
     menuCamada.hidden = false;
     const menu = menuCamada.querySelector(".menu");
@@ -986,7 +1015,8 @@
       const acao = b.dataset.acao;
       if (acao === "fechar") return fecharMenu(true);
       if (acao === "mover") { fecharMenu(false); moverPeloTeclado(k, el); return; }
-      if (acao === "chegou") {
+      if (acao === "falta") { fecharMenu(true); marcarFalta(k); return; }
+      if (acao === "chegada") {
         fecharMenu(true);
         marcarChegada(k);
         el.animate([{ transform: "scale(0.96)" }, { transform: "none" }], { duration: 200, easing: M.EASE_OUT });
@@ -1029,7 +1059,9 @@
     }
   });
 
-  /* ─── Cancelamento: a lista de espera age (trigger trg_vaga_liberada) ─── */
+  /* ─── Cancelamento ───
+     A consulta fica "cancelada" (continua no histórico do paciente) e o horário dela volta como "livre".
+     Se houver lista de espera para o médico, o horário vira "oferecido" à 1ª pessoa da fila. */
   let ocupado = false;
 
   async function cancelar(k) {
@@ -1038,7 +1070,7 @@
     const el = blocoEl(k.id);
     const nome = k.paciente;
     anunciar("Consulta de " + nome + " cancelada.");
-    /* 1. a consulta se desfaz e vira vaga aberta */
+    /* 1. o bloco da consulta some */
     if (el) {
       if (!M.reduzido()) {
         await el.animate([{ opacity: 1, transform: "none", filter: "blur(0)" }, { opacity: 0, transform: "scale(0.9)", filter: "blur(3px)" }], { duration: 280, easing: M.EASE_OUT }).finished;
@@ -1046,17 +1078,19 @@
         await el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140 }).finished;
       }
     }
-    k.status = "vaga";
-    k.paciente = null;
-    if (el) { atualizarBloco(el, k); el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 }); }
+    /* 2. consulta → cancelada; no mesmo lugar nasce um horário livre */
+    const h = C.cancelarConsulta(k, "Cancelada pela recepção");
+    if (el) {
+      el.dataset.id = h.id;
+      atualizarBloco(el, h);
+      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
+    }
     desenharResumo(true);
     desenharCalor();
-    /* 2. o banco registra e o trigger dispara */
     acender("c1");
-    await registrar("<b>UPDATE</b> consultas SET status = 'CANCELADA' WHERE id = " + k.id.slice(1) + " (" + A.esc(nome) + ")");
-    acender("c2");
-    await registrar("<b>trg_vaga_liberada</b> disparado: a consulta virou CANCELADA");
-    await oferecerVaga(k, true);
+    await registrar("Consulta de " + A.esc(nome) + ": status <b>cancelada</b> · horário " + C.txt(h.ini) + " <b>livre</b>");
+    /* 3. se houver fila, o horário livre é oferecido */
+    await oferecerVaga(h, true);
     ocupado = false;
   }
 
@@ -1065,14 +1099,14 @@
     const m = medico(k.medico);
     if (!viaTrigger) { acender("c3"); }
     if (!lista.length) {
-      await registrar("<b>sp_oferecer_vaga</b>: ninguém na fila de " + m.nome);
+      await registrar("Ninguém na fila de " + m.nome + ": o horário fica <b>livre</b>");
       acender(null);
-      toast({ titulo: "Horário livre", texto: "Ninguém está esperando vaga com " + m.nome + ".", icone: "info" });
+      toast({ titulo: "Consulta cancelada · horário livre", texto: "Ninguém está esperando vaga com " + m.nome + ".", icone: "info" });
       return;
     }
     acender("c3");
     const p = lista[0];
-    await registrar("<b>CALL sp_oferecer_vaga</b>(" + m.nome.replace(/^Dra?\. /, "") + ", " + C.txt(k.ini) + ") → 1ª da fila: " + A.esc(p.nome));
+    await registrar("Horário " + C.txt(k.ini) + " com " + m.nome + " <b>oferecido</b> à 1ª da fila: " + A.esc(p.nome));
     /* 3. a 1ª pessoa da fila desliza até o horário livre */
     if (est.filaMedico !== k.medico) { est.filaMedico = k.medico; desenharFila(); }
     const card = $("#fila-lista .fila__item");
@@ -1100,8 +1134,8 @@
       voo.remove();
     }
     lista.shift();
-    k.status = "oferecida";
-    k.paciente = p.nome;
+    K.guardar.saiuDaFila(k.medico, p.nome);
+    C.oferecerHorario(k, p.nome);
     if (el) {
       atualizarBloco(el, k);
       if (!M.reduzido()) el.animate([{ transform: "scale(1.08)" }, { transform: "none" }], { duration: 320, easing: M.EASE_OUT });
@@ -1120,16 +1154,20 @@
     desenharResumo(true);
     desenharCalor();
     acender(null);
-    await registrar("<b>INSERT</b> notificacoes → push para " + A.esc(p.nome));
+    await registrar("Aviso enviado para " + A.esc(p.nome));
     /* 4. o aviso */
-    toast({ titulo: "Notificação enviada para " + p.nome, texto: "Vaga de " + curtoData(k.data) + ", " + C.txt(k.ini) + " com " + m.nome + ". Ela tem 30 minutos para confirmar.", icone: "bell-ring", duracao: 6000 });
-    /* 5. o app do paciente fica sabendo (página inicial ou outra aba) */
-    const posApp = lista.findIndex((x) => x.app) + 1;
-    M.canal.enviar({
-      tipo: "fila-andou", medico: k.medico, notificado: p.nome, paraApp: !!p.app,
-      posicao: p.app ? 1 : posApp, data: k.data, hora: C.txt(k.ini),
-    });
+    toast({ titulo: "Consulta cancelada · vaga oferecida a " + p.nome, texto: "Vaga de " + curtoData(k.data) + ", " + C.txt(k.ini) + " com " + m.nome + ". A pessoa tem 30 minutos para confirmar.", icone: "bell-ring", duracao: 6000 });
+    /* 5. quem usa o app vê a vaga na área do paciente: a fila e a agenda ficam gravadas (clinica-dados.js) */
   }
+
+  /* outra aba mudou a agenda ou a fila (o paciente aceitou ou recusou a vaga): redesenha */
+  C.aoMudar(() => {
+    if (est.sessao) return;
+    desenharVista();
+    desenharCalor();
+    desenharFila();
+    desenharResumo(false);
+  });
 
 
  
@@ -1160,10 +1198,6 @@
     const b = ev.target.closest("[data-semana]");
     if (b) abrirSemana(b.dataset.semana, b);
   });
-  document.querySelectorAll("[data-fora]").forEach((b) => b.addEventListener("click", (ev) => {
-    ev.preventDefault();
-    toast({ titulo: "Fora do escopo deste protótipo", texto: "Esta parte não foi desenhada na v2.", icone: "info", duracao: 3000 });
-  }));
 
   /* ─── Legenda que filtra: mostra só as situações escolhidas ─── */
   function desenharLegenda() {
@@ -1183,7 +1217,7 @@
     let visiveis = 0;
     blocos.forEach((b) => {
       const k = porId.get(b.dataset.id);
-      const fora = est.filtro.size > 0 && (!k || !est.filtro.has(k.status));
+      const fora = est.filtro.size > 0 && (!k || !est.filtro.has(chave(k)));
       b.classList.toggle("cbloco--fora", fora);
       if (fora) { b.tabIndex = -1; b.setAttribute("aria-hidden", "true"); }
       else { b.removeAttribute("tabindex"); b.removeAttribute("aria-hidden"); visiveis += 1; }
@@ -1219,7 +1253,9 @@
   /* ─── Cabeçalho e primeira pintura ─── */
   desenharLegenda();
   $("#folha-hoje").innerHTML = A.folha(D.hoje, { menta: true });
-  $("#subtitulo").textContent = cap(A.extenso(D.hoje)) + " · " + D.clinica.nome + ", " + D.clinica.unidade + " · 6 médicos atendendo";
+  const nMed = C.MEDICOS.length;
+  $("#subtitulo").textContent = cap(A.extenso(D.hoje)) + " · " + D.clinica.nome + ", " + D.clinica.unidade + " · " +
+    (nMed ? nMed + (nMed === 1 ? " médico atendendo" : " médicos atendendo") : "nenhum médico cadastrado ainda");
   document.querySelectorAll("[data-marca]").forEach((el) => { el.outerHTML = A.marca(Number(el.dataset.marca)); });
 
   desenharVista();

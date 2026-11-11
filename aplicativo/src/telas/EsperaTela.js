@@ -1,5 +1,5 @@
-// Lista de espera: posição na fila, simulação de cancelamento (demonstração)
-// e a oferta de vaga com 30 minutos para aceitar.
+// Lista de espera: posição na fila e a vaga oferecida (com 30 minutos para aceitar),
+// que aparece quando a recepção cancela uma consulta deste médico e chega a sua vez.
 
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, View } from 'react-native';
@@ -15,7 +15,7 @@ import SucessoConsulta from '../componentes/SucessoConsulta';
 import { Carregando, EstadoVazio, MensagemErro } from '../componentes/Estados';
 import useDadosDaTela from '../componentes/useDadosDaTela';
 import { useSessao } from '../contexto/SessaoContext';
-import { buscarMinhaFila, responderVaga, sairDaFila, simularCancelamento } from '../servicos/espera';
+import { buscarMinhaFila, responderVaga, sairDaFila } from '../servicos/espera';
 import { cores } from '../estilos/cores';
 import { fontes } from '../estilos/tipografia';
 import { espaco, raios } from '../estilos/espacos';
@@ -31,7 +31,7 @@ function relogio(ms) {
 export default function EsperaTela({ navigation }) {
   const { usuario } = useSessao();
   const { dados: fila, carregando, erro, recarregar } = useDadosDaTela(() => buscarMinhaFila(usuario));
-  const [simulando, setSimulando] = useState(false);
+  const [atualizando, setAtualizando] = useState(false);
   const [perguntandoSaida, setPerguntandoSaida] = useState(false);
   const [saindo, setSaindo] = useState(false);
   const [vagaFechada, setVagaFechada] = useState(false); // fechou a janela sem responder
@@ -84,19 +84,16 @@ export default function EsperaTela({ navigation }) {
 
   const frase = fraseDaFila(fila.pessoa, fila.posicao);
 
-  async function simular() {
-    setSimulando(true);
+  // Busca de novo a fila: se a recepção ofereceu uma vaga, ela aparece agora
+  async function atualizar() {
+    setAtualizando(true);
     setAviso(null);
     setVagaFechada(false);
     try {
-      const nova = await simularCancelamento(usuario);
-      const texto = nova.vagaOferecida
-        ? 'Abriu uma vaga para você!'
-        : `Alguém cancelou. ${fraseDaFila(nova.pessoa, nova.posicao)}.`;
-      AccessibilityInfo.announceForAccessibility(texto);
-      await recarregar();
+      const nova = await recarregar();
+      if (nova && nova.vagaOferecida) AccessibilityInfo.announceForAccessibility('Abriu uma vaga para você!');
     } finally {
-      setSimulando(false);
+      setAtualizando(false);
     }
   }
 
@@ -173,7 +170,7 @@ export default function EsperaTela({ navigation }) {
       <CabecalhoSecao titulo="Como funciona" />
       <Cartao style={estilos.passos}>
         {[
-          'Se alguém cancelar, a vaga vai para a primeira pessoa da fila.',
+          'Quando a recepção cancela uma consulta deste médico, a vaga vai para a primeira pessoa da fila.',
           'Você recebe um aviso e tem 30 minutos para confirmar.',
           'Se não confirmar a tempo, a vaga passa para a próxima pessoa.',
         ].map((passo, i) => (
@@ -186,18 +183,15 @@ export default function EsperaTela({ navigation }) {
         ))}
       </Cartao>
 
-      {/* Bloco só para a apresentação do PIM */}
-      <View style={estilos.demo}>
-        <Texto variante="meta">Demonstração para a apresentação: simula alguém da fila cancelando a consulta.</Texto>
-        <Botao
-          titulo={fila.posicao > 1 ? 'Simular cancelamento' : 'Simular nova vaga'}
-          variante="secundario"
-          icone="repeat"
-          onPress={simular}
-          carregando={simulando}
-          desativado={!!vaga}
-        />
-      </View>
+      <Botao
+        titulo="Atualizar a fila"
+        variante="secundario"
+        icone="refresh-cw"
+        onPress={atualizar}
+        carregando={atualizando}
+        desativado={!!vaga}
+        style={estilos.espacoTopo}
+      />
 
       <Botao titulo="Sair da fila" variante="textoPerigo" onPress={() => setPerguntandoSaida(true)} style={estilos.espacoTopo} />
       <Texto variante="meta" style={estilos.centro}>
@@ -278,16 +272,7 @@ const estilos = StyleSheet.create({
     backgroundColor: cores.menta2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  demo: {
-    marginTop: espaco.xg,
-    padding: espaco.g,
-    gap: espaco.m,
-    borderRadius: raios.cartao,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: cores.tinta3,
-  },
+  },
   vaga: { flexDirection: 'row', alignItems: 'center', gap: espaco.g },
   contagem: { flexDirection: 'row', alignItems: 'center', gap: espaco.p, backgroundColor: cores.menta2, borderRadius: raios.folha, padding: espaco.m },
   relogio: { fontFamily: fontes.numeroForte },

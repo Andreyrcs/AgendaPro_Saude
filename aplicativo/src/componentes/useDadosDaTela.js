@@ -22,7 +22,9 @@ export default function useDadosDaTela(carregar) {
     setCarregando(true);
     setErro(null);
     try {
-      setDados(await carregarRef.current());
+      const novos = await carregarRef.current();
+      setDados(novos);
+      return novos;
     } catch (e) {
       setErro(e.message);
     } finally {

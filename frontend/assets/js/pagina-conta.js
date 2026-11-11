@@ -1,4 +1,4 @@
-/* AgendaPro Saúde v2 — Minha conta, da recepção (protótipo, dados FICTÍCIOS)
+/* AgendaPro Saúde — Minha conta, da recepção
    Dados pessoais e senha salvam com o botão de cada bloco; as preferências mudam na hora.
    A senha não é guardada em lugar nenhum: no sistema real, isso é trabalho da API. */
 (function () {
@@ -80,9 +80,11 @@
     if (nova.length < 8 || !/[a-zA-Z]/.test(nova) || !/\d/.test(nova)) return erro("#c-nova", fs.nova, "Pelo menos 8 caracteres, com letras e números.");
     if (nova === fs.atual.value) return erro("#c-nova", fs.nova, "A nova senha precisa ser diferente da atual.");
     if (fs.repete.value !== nova) return erro("#c-repete", fs.repete, "As duas senhas não estão iguais.");
-    fs.reset();
-    carimbo("#salvo-senha", "Senha trocada");
-    K.toast({ titulo: "Senha trocada", texto: "No protótipo a senha não fica guardada em lugar nenhum.", icone: "check" });
+    window.API.trocarSenha(fs.atual.value, nova).then(() => {
+      fs.reset();
+      carimbo("#salvo-senha", "Senha trocada");
+      K.toast({ titulo: "Senha trocada", texto: "Use a nova senha no próximo login.", icone: "check" });
+    }).catch((e) => erro("#c-atual", fs.atual, e.message));
   });
 
   /* ─── Preferências ─── */
@@ -117,18 +119,16 @@
     "<div><dt>Médicos na agenda</dt><dd>" + C.MEDICOS.length + "</dd></div>";
   $("#permissoes").innerHTML = PERMISSOES.map((p) => "<li>" + A.icone("check", "ic-sm") + "<span>" + p + "</span></li>").join("");
 
-  /* ─── Dados do protótipo ─── */
+  /* ─── Dados guardados neste computador (até a API: depois, ficam no banco) ─── */
   function desenharRestaurar() {
     const caixa = $("#restaurar-caixa");
-    caixa.innerHTML = K.guardar.temAlteracoes()
-      ? '<p>Há cadastros e edições guardados neste navegador.</p><div class="ajuste__acoes ajuste__acoes--inicio">' +
-        '<button type="button" class="botao botao--secundario botao--pequeno" id="restaurar">Voltar aos dados de exemplo</button></div>'
-      : '<p class="tabela__traco">Nada guardado: o protótipo está com os dados de exemplo.</p>';
+    caixa.innerHTML = '<p>A agenda, os médicos, os horários e a lista de espera desta clínica estão guardados neste navegador.</p><div class="ajuste__acoes ajuste__acoes--inicio">' +
+        '<button type="button" class="botao botao--secundario botao--pequeno" id="restaurar">Voltar à carga inicial</button></div>';
     const b = $("#restaurar");
     if (b) b.addEventListener("click", () => {
-      caixa.innerHTML = '<p><b>Apagar os médicos, especialidades e edições feitos aqui?</b> Isso não pode ser desfeito.</p>' +
+      caixa.innerHTML = '<p><b>Apagar as consultas, médicos, horários e mudanças na fila feitos aqui?</b> Isso não pode ser desfeito.</p>' +
         '<div class="ajuste__acoes ajuste__acoes--inicio"><button type="button" class="botao botao--secundario botao--pequeno" id="manter">Manter</button>' +
-        '<button type="button" class="botao botao--perigo botao--pequeno" id="apagar">Sim, voltar aos dados de exemplo</button></div>';
+        '<button type="button" class="botao botao--perigo botao--pequeno" id="apagar">Sim, voltar à carga inicial</button></div>';
       $("#manter").focus();
       $("#manter").addEventListener("click", () => { desenharRestaurar(); $("#restaurar").focus(); });
       $("#apagar").addEventListener("click", () => {

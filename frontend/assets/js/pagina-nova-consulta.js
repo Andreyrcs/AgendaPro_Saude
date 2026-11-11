@@ -1,4 +1,4 @@
-/* AgendaPro Saúde v2 — Nova consulta (protótipo, dados FICTÍCIOS)
+/* AgendaPro Saúde — Nova consulta
    Paciente → especialidade e médico → dia (calendário até onde a agenda abre) → horário livre.
    Os horários seguem a mesma regra da agenda: expediente, almoço, o que já passou e o que já está ocupado.
    Regras da lista de espera:
@@ -161,7 +161,7 @@
     }
     const lista = K.livres(est.medico, est.dia);
     const daFila = lista.some(ehDaFila);
-    const oferecidos = C.consultas.filter((k) => k.medico === est.medico && k.data === est.dia && k.status === "oferecida").length;
+    const oferecidos = C.consultas.filter((k) => k.medico === est.medico && k.data === est.dia && k.horario === "oferecido").length;
     $("#hora-sub").textContent = K.cap(A.extenso(est.dia)) + " · consultas de " + (C.DURACAO[est.medico] || 30) + " minutos." +
       (daFila ? " Com cadeado, horários liberados por cancelamento: são da lista de espera." : "") +
       (oferecidos ? " " + oferecidos + (oferecidos === 1 ? " horário já foi oferecido" : " horários já foram oferecidos") + " à fila e aguarda resposta, por isso não aparece." : "");
@@ -371,11 +371,13 @@
     const x = horarioEscolhido();
     const fora = ehDaFila(x) && est.furar;
     const lista = filaDe(est.medico);
-    /* o horário liberado por cancelamento deixa de ser vaga */
-    C.consultas.forEach((k) => {
-      if (k.status === "vaga" && k.medico === est.medico && k.data === est.dia && k.ini < ini + dur && ini < k.ini + k.dur) k.status = "cancelada";
-    });
-    C.consultas.push({ id: "k" + Date.now(), medico: est.medico, data: est.dia, ini, dur, paciente: nome, status: "confirmada" });
+    /* o horário livre que estava ali passa a ser desta consulta */
+    for (let i = C.consultas.length - 1; i >= 0; i--) {
+      const k = C.consultas[i];
+      if (k.horario === "livre" && k.medico === est.medico && k.data === est.dia && k.ini < ini + dur && ini < k.ini + k.dur) C.consultas.splice(i, 1);
+    }
+    C.consultas.push({ id: C.novoId(), medico: est.medico, data: est.dia, ini, dur, paciente: nome, status: "confirmada" });
+    C.salvar();
     if (fora) {
       K.guardar.foraDaFila({
         medico: est.medico, dia: est.dia, hora: est.hora, paciente: nome, motivo: est.furar.motivo,
@@ -388,7 +390,7 @@
       '<h2 id="t-feito">Consulta marcada</h2>' +
       "<p><b>" + A.esc(nome) + "</b> com " + md.nome + " (" + D.especialidades[md.esp].nome + "), " + A.extenso(est.dia) + ", às " + est.hora + ". " +
       (fora ? "Registrado como marcação fora da fila: " + A.esc(est.furar.motivo).toLowerCase() + ". " : "") +
-      "No protótipo a consulta não fica salva: ao recarregar, a agenda volta ao original.</p>" +
+      "Ela já aparece na agenda da recepção e na do médico.</p>" +
       '<div class="feito__acoes"><a class="botao botao--principal" href="clinica.html">Ver a agenda</a>' +
       '<button type="button" class="botao botao--secundario" id="outra">Marcar outra consulta</button></div>'
     );

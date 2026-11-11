@@ -1,3 +1,5 @@
+/* AgendaPro Saúde — painel do médico: a agenda do médico que entrou, o detalhe de cada consulta
+   (iniciar e finalizar atendimento, ausência, retorno) e o histórico. Tudo grava em clinica-dados.js. */
 (function () {
     'use strict';
 
@@ -6,12 +8,21 @@
     const A = window.AP;
     const I = A.icone;
 
-    const MEDICO_ID = 'paulo';
+    /* o médico da sessão (login): a conta de médico guarda qual médico da clínica ela é */
+    const SESSAO = (window.API && window.API.sessao()) || {};
+    const MEDICO_ID =
+        SESSAO.medicoId ||
+        (D.medicos.find((m) => m.nome === SESSAO.nome) || {}).id ||
+        null;
+    if (!MEDICO_ID || !D.medicos.some((m) => m.id === MEDICO_ID)) {
+        const main = document.querySelector('main') || document.body;
+        main.innerHTML =
+            '<p class="painel" style="margin:32px">Esta conta de médico ainda não está ligada a um médico da clínica. Peça à recepção para conferir o cadastro em Médicos.</p>';
+        return;
+    }
     const PX = 1.5;
     const INICIO = C.INICIO;
-    const AGORA0 = 10 * 60 + 40;
-    const T0 = Date.now();
-    const agora = () => Math.min(C.FIM, AGORA0 + (Date.now() - T0) / 60000);
+    const agora = () => C.minutoAgora();
 
     const est = { vista: 'dia', dia: D.hoje, semana: segunda(D.hoje), mesInicio: D.hoje.slice(0, 7) };
     const $ = (s) => document.querySelector(s);
@@ -182,12 +193,12 @@
             (k) =>
                 k.medico === MEDICO_ID &&
                 k.data === dia &&
-                k.status !== 'cancelada',
+                C.ativa(k),
         );
     }
 
     function todasMinhasConsultas() {
-        return C.consultas.filter((k) => k.medico === MEDICO_ID);
+        return C.consultas.filter((k) => k.medico === MEDICO_ID && C.ehConsulta(k));
     }
 
     function colunas() {
@@ -198,23 +209,20 @@
         return cols;
     }
 
-    const ESTADOS = {
-        atendida: 'Atendida',
-        em: 'Em atendimento',
-        chegou: 'Na recepção',
-        confirmada: 'Confirmada',
-        faltou: 'Faltou',
-        vaga: 'Vaga aberta',
-        oferecida: 'Oferecida à fila',
-    };
+    /* os mesmos nomes da recepção, do app e do banco (dados.js) */
+    const ESTADOS = Object.assign({}, D.STATUS_CONSULTA, {
+        livre: 'Horário livre',
+        oferecido: D.ESTADO_HORARIO.oferecido,
+    });
+    const chave = (k) => k.horario || k.status;
 
     function chaveConsulta(k) {
         return k.data + '|' + k.ini;
     }
 
     function rotuloBloco(k) {
-        const status = ESTADOS[k.status] || k.status;
-        const quem = k.status === 'vaga' ? 'Horário livre' : k.paciente;
+        const status = ESTADOS[chave(k)] || chave(k);
+        const quem = k.horario === 'livre' ? 'Horário livre' : k.paciente;
         return (
             quem +
             ', ' +
@@ -228,11 +236,11 @@
     }
 
     function blocoHTML(k, c) {
-        const nome = k.status === 'vaga' ? 'Vaga aberta' : k.paciente;
-        const clicavel = k.status !== 'vaga' && k.status !== 'oferecida';
+        const nome = k.horario === 'livre' ? 'Horário livre' : k.paciente;
+        const clicavel = !k.horario;
         return (
             '<div class="cbloco cbloco--' +
-            k.status +
+            chave(k) +
             (clicavel ? ' cbloco--clicavel' : '') +
             '" style="--c:' +
             c +
@@ -418,20 +426,6 @@
 
     setInterval(() => posicionarAgora(false), 1000);
 
-    /* depois de 60 min de atraso, a consulta vira falta sozinha */
-    setInterval(() => {
-        const todas = C.aplicarFaltas(agora());
-        const mudou = todas.filter((k) => k.medico === MEDICO_ID);
-        if (!mudou.length) return;
-        redesenhar();
-        toast(
-            mudou.length === 1
-                ? mudou[0].paciente + ' não compareceu'
-                : mudou.length + ' pacientes não compareceram',
-            'Passou de ' + D.politica.toleranciaMin + ' min de atraso: falta com multa de ' + A.reais(D.politica.multa),
-            'user-x',
-        );
-    }, 5000);
 
     /* ─── Vista mensal (calendário de 2 meses) ─── */
     function gerarMesHTML(ano, mes) {
@@ -462,9 +456,9 @@
             var isHoje = iso === D.hoje;
             var feriado = (D.feriados || []).find(function(f) { return f.data === iso; });
             var consultas = minhasConsultas(iso);
-            var livres = consultas.filter(function(k) { return k.status === 'vaga' || k.status === 'oferecida'; }).length;
+            var livres = consultas.filter(function(k) { return !!k.horario; }).length;
             var total = consultas.length;
-            var temFila = consultas.some(function(k) { return k.status === 'oferecida'; });
+            var temFila = consultas.some(function(k) { return k.horario === 'oferecido'; });
 
             var classes = 'cal__dia';
             if (isHoje) classes += ' cal__dia--hoje';
@@ -535,7 +529,7 @@
         var el = $('#med-cal-detalhe');
         if (!el) return;
         var consultas = minhasConsultas(dia).sort(function(a, b) { return a.ini - b.ini; });
-        var pacientes = consultas.filter(function(k) { return k.status !== 'vaga' && k.status !== 'oferecida'; });
+        var pacientes = consultas.filter(function(k) { return !k.horario; });
 
         var tituloData = A.extenso(dia, true);
 
@@ -549,7 +543,7 @@
             '<span class="painel__meta">' + pacientes.length + ' paciente' + (pacientes.length !== 1 ? 's' : '') + '</span></div>' +
             '<ol class="hist-lista">' +
             pacientes.map(function(k) {
-                var emAtendimento = k.status === 'em';
+                var emAtendimento = k.status === 'em_atendimento';
                 return '<li class="hist-item' + (emAtendimento ? ' hist-item--destaque' : '') + '" data-chave="' + chaveConsulta(k) + '" role="button" tabindex="0">' +
                     '<div class="hist-item__principal">' +
                     '<span class="hist-item__nome">' + A.esc(k.paciente) + '</span>' +
@@ -564,10 +558,10 @@
     function atualizarContadores() {
         const consultas = minhasConsultas(D.hoje);
         const atendidas = consultas.filter(
-            (k) => k.status === 'atendida' || k.status === 'em',
+            (k) => k.status === 'atendida' || k.status === 'em_atendimento',
         ).length;
         const restantes = consultas.filter(
-            (k) => k.status === 'confirmada' || k.status === 'chegou',
+            (k) => k.status === 'confirmada' || k.status === 'na_recepcao',
         ).length;
         const set = (id, v) => {
             const el = $(id);
@@ -589,7 +583,7 @@
             (a, b) => a.ini - b.ini,
         );
         const pacientes = consultas.filter(
-            (k) => k.status !== 'vaga' && k.status !== 'oferecida',
+            (k) => !k.horario,
         );
 
         if (meta)
@@ -606,7 +600,7 @@
 
         lista.innerHTML = pacientes
             .map((k) => {
-                const emAtendimento = k.status === 'em';
+                const emAtendimento = k.status === 'em_atendimento';
                 return (
                     '<li class="hist-item' +
                     (emAtendimento ? ' hist-item--destaque' : '') +
@@ -686,10 +680,11 @@
     function seloStatus(status) {
         const cores = {
             atendida: 'menta',
-            em: 'noite',
-            chegou: 'ambar',
+            em_atendimento: 'noite',
+            na_recepcao: 'ambar',
             confirmada: 'neutro',
             faltou: 'perigo',
+            cancelada: 'perigo',
         };
         const cor = cores[status] || 'neutro';
         return (
@@ -761,9 +756,17 @@
 
         // Ações disponíveis por status
         acoes.innerHTML = '';
+        if (k.data === D.hoje && (k.status === 'na_recepcao' || k.status === 'confirmada')) {
+            const btnIniciar = document.createElement('button');
+            btnIniciar.type = 'button';
+            btnIniciar.className = 'botao botao--principal';
+            btnIniciar.innerHTML = I('stethoscope', 'ic-sm') + 'Iniciar atendimento';
+            btnIniciar.addEventListener('click', () => iniciarConsulta(k));
+            acoes.appendChild(btnIniciar);
+        }
         if (
-            k.status === 'em' ||
-            k.status === 'chegou' ||
+            k.status === 'em_atendimento' ||
+            k.status === 'na_recepcao' ||
             k.status === 'confirmada'
         ) {
             const btnFinalizar = document.createElement('button');
@@ -775,7 +778,7 @@
             acoes.appendChild(btnFinalizar);
         }
 
-        if (k.status === 'atendida' || k.status === 'em') {
+        if (k.status === 'atendida' || k.status === 'em_atendimento') {
             const btnRetorno = document.createElement('button');
             btnRetorno.type = 'button';
             btnRetorno.className = 'botao botao--secundario';
@@ -788,7 +791,7 @@
             acoes.appendChild(btnRetorno);
         }
 
-        if (k.status === 'confirmada' || k.status === 'chegou') {
+        if (k.status === 'confirmada' || k.status === 'na_recepcao') {
             const btnFaltou = document.createElement('button');
             btnFaltou.type = 'button';
             btnFaltou.className = 'botao botao--texto';
@@ -800,8 +803,17 @@
         abrirDlg(document.getElementById('dlg-consulta'));
     }
 
+    function iniciarConsulta(k) {
+        k.status = 'em_atendimento';
+        C.salvar();
+        fecharDlg(document.getElementById('dlg-consulta'));
+        redesenhar();
+        toast('Atendimento iniciado', k.paciente + ' · ' + C.txt(k.ini), 'stethoscope');
+    }
+
     function finalizarConsulta(k) {
         k.status = 'atendida';
+        C.salvar();
         // Notificar recepção via localStorage
         try {
             const notifs = JSON.parse(
@@ -826,13 +838,15 @@
         );
     }
 
+    /* só o médico ou a recepção marcam falta; atraso não é falta */
     function registrarFaltou(k) {
         k.status = 'faltou';
+        C.registrarFalta(k, 'Não compareceu', D.medicos.find((m) => m.id === MEDICO_ID).nome);
         fecharDlg(document.getElementById('dlg-consulta'));
         redesenhar();
         toast(
             'Ausência registrada',
-            k.paciente + ' · multa de ' + A.reais(D.politica.multa),
+            k.paciente + (k.presencaConfirmada ? ' · tinha confirmado presença' : ''),
             'user-x',
         );
     }
@@ -1445,4 +1459,6 @@
     redesenhar();
     irPara(location.hash.slice(1));
     A.seloClinica(document.querySelector('.lateral'), 'medico');
+    /* a recepção marcou chegada ou cancelou em outra aba: a agenda do médico acompanha */
+    C.aoMudar(() => redesenhar());
 })();

@@ -1,4 +1,4 @@
-/* AgendaPro Saúde v2 — Médicos da clínica (protótipo, dados FICTÍCIOS)
+/* AgendaPro Saúde — Médicos da clínica
    Quem atende nesta unidade e como está a agenda de cada um: expediente de hoje, consultas,
    ocupação da semana, fila e o próximo horário livre. Todos os números vêm das consultas. */
 (function () {
@@ -12,7 +12,7 @@
   const I = A.icone;
   const $ = (s) => document.querySelector(s);
 
-  const ocupa = (k) => ["atendida", "em", "chegou", "confirmada", "faltou", "oferecida"].includes(k.status);
+  const ocupa = (k) => C.horarioDe(k) === "ocupado" || C.horarioDe(k) === "oferecido";
   const segunda = (dia) => { const d = C.data(dia); return C.somaDias(dia, 1 - (d.getDay() || 7)); };
   const SEG = segunda(D.hoje);
   const SEMANA = [0, 1, 2, 3, 4, 5].map((i) => C.somaDias(SEG, i));
@@ -26,8 +26,8 @@
   }
 
   function numeros(m) {
-    const hoje = C.consultas.filter((k) => k.medico === m && k.data === D.hoje && k.status !== "cancelada");
-    const consultas = hoje.filter((k) => !["vaga", "oferecida"].includes(k.status));
+    const hoje = C.consultas.filter((k) => k.medico === m && k.data === D.hoje && C.ativa(k));
+    const consultas = hoje.filter(C.ehConsulta);
     const cap = SEMANA.reduce((t, d) => t + capacidade(m, d), 0);
     const ocup = C.consultas.filter((k) => k.medico === m && SEMANA.includes(k.data) && ocupa(k)).reduce((t, k) => t + k.dur, 0);
     let livre = null;
@@ -162,7 +162,7 @@
       if (linha && !M.reduzido()) linha.closest("tr").animate([{ backgroundColor: "#d4f3e6" }, { backgroundColor: "transparent" }], { duration: 900, easing: "ease" });
       K.toast({
         titulo: "Dados de " + md.nome + " atualizados",
-        texto: "Ficam guardados neste navegador.",
+        texto: "Já valem em todas as telas da clínica.",
         icone: "stethoscope",
         acao: { rotulo: "Desfazer", fazer: () => { Object.assign(md, antes); K.guardar.edicaoMedico(md.id, antes); desenhar(); } },
       });
@@ -180,7 +180,7 @@
       linha.scrollIntoView({ block: "nearest", behavior: M.reduzido() ? "auto" : "smooth" });
       if (!M.reduzido()) linha.animate([{ backgroundColor: "#d4f3e6" }, { backgroundColor: "transparent" }], { duration: 1200, easing: "ease" });
     }
-    K.toast({ titulo: nome + " cadastrado", texto: "Agora defina o expediente em Horários. Fica guardado neste navegador.", icone: "stethoscope" });
+    K.toast({ titulo: nome + " cadastrado", texto: "Agora defina o expediente em Horários para abrir a agenda.", icone: "stethoscope" });
   });
 
   desenhar();

@@ -3,11 +3,12 @@
 
 import { config } from './config';
 import { chamarApi } from './api';
-import { esperar, usuariosSimulados } from '../dados/bancoSimulado';
+import { esperar, usuariosLocais } from '../dados/bancoSimulado';
 import { normalizarEmail } from '../utilitarios/texto';
 
 const ERRO_LOGIN = 'E-mail ou senha incorretos.';
 
+// Senha: vai como o paciente digitou, por HTTPS; o servidor faz o hash com BCrypt (o app não faz hash).
 // Devolve o usuário logado: { idUsuario, nome, email, token? }
 export async function entrar(email, senha) {
   const emailLimpo = normalizarEmail(email);
@@ -29,7 +30,7 @@ export async function entrar(email, senha) {
   }
 
   await esperar();
-  const usuario = usuariosSimulados.find((u) => u.email === emailLimpo);
+  const usuario = usuariosLocais.find((u) => u.email === emailLimpo);
   if (!usuario || usuario.senha !== senha) throw new Error(ERRO_LOGIN);
   return { idUsuario: usuario.idUsuario, nome: usuario.nome, email: usuario.email, token: null };
 }
@@ -52,10 +53,10 @@ export async function cadastrar(dados) {
   }
 
   await esperar();
-  if (usuariosSimulados.some((u) => u.email === email)) {
+  if (usuariosLocais.some((u) => u.email === email)) {
     throw new Error('Este e-mail já tem uma conta. Entre com ele ou use outro.');
   }
-  const novo = { idUsuario: usuariosSimulados.length + 1, nome, email, senha: dados.senha };
-  usuariosSimulados.push(novo);
+  const novo = { idUsuario: usuariosLocais.length + 1, nome, email, senha: dados.senha };
+  usuariosLocais.push(novo);
   return { idUsuario: novo.idUsuario, nome, email, token: null };
 }

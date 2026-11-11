@@ -321,7 +321,7 @@ body {
     background: var(--linha);
 }
 
-/* ─── Botões de demonstração ─── */
+/* ─── Botões de acesso rápido ─── */
 
 .demos {
     display: grid;
@@ -691,4 +691,33 @@ body {
     .toast-acesso {
         transition: opacity 0.1s ease;
     }
+}
+
+/* ─── Termos de Uso e Política de Privacidade ─── */
+.cartao-acesso--texto {
+    box-sizing: border-box;
+    max-width: 720px;
+    width: 100%;
+}
+.texto-legal h2 {
+    margin: 24px 0 6px;
+    font-size: 1.0625rem;
+    color: var(--noite);
+}
+.texto-legal p,
+.texto-legal li {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--tinta-2);
+}
+.texto-legal ul {
+    display: grid;
+    gap: 6px;
+    margin: 6px 0 0;
+    padding-left: 20px;
+}
+.texto-legal__data {
+    margin-top: 24px;
+    font-size: 0.8125rem !important;
+    color: var(--tinta-3) !important;
 }

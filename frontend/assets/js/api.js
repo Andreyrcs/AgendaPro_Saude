@@ -2,12 +2,12 @@
    Hoje grava neste navegador (localStorage). Quando a API em C# estiver pronta, troca-se só o
    miolo de cada função por uma chamada fetch ao endpoint indicado ao lado dela; as telas
    continuam iguais, porque já esperam Promises e os mesmos campos.
-   Senhas: aqui viram SHA-256 só para não ficarem legíveis no navegador. No backend, BCrypt. */
+   A lista completa função × endpoint está em docs/relatorio-integracao.md. */
 (function () {
   "use strict";
 
   const D = window.DADOS;
-  const CHAVE = "agendapro.api.v1";
+  const CHAVE = "agendapro.api.v2";
   const CHAVE_SESSAO = "agendapro.sessao";
   const PAPEIS = { dono: "Responsável pela clínica", recepcao: "Recepção", medico: "Médico", paciente: "Paciente" };
 
@@ -44,7 +44,16 @@
     return "(" + t.slice(0, 2) + ") " + t.slice(2, -4) + "-" + t.slice(-4);
   }
 
-  /* ─── Senha ─── */
+  /* ─── Senha ───
+     ┌─ PONTO DE TROCA PARA A API ────────────────────────────────────────────────┐
+     │ Enquanto as contas ficam neste navegador, a senha vira um resumo SHA-256    │
+     │ só para não ficar legível no localStorage.                                  │
+     │ Com a API: apagar resumo() e mandar a senha como o usuário digitou, por     │
+     │ HTTPS, em POST /api/auth/login e nos cadastros. Quem faz o hash é o         │
+     │ servidor, com BCrypt (BCrypt.HashPassword no cadastro, BCrypt.Verify no     │
+     │ login — já é assim em backend/Controllers/UsuariosController.cs e           │
+     │ AuthController.cs). Hash no navegador NÃO substitui o hash no servidor.     │
+     └─────────────────────────────────────────────────────────────────────────────┘ */
   async function resumo(senha) {
     try {
       const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("agendapro:" + senha));
@@ -69,24 +78,26 @@
     try { localStorage.setItem(CHAVE, JSON.stringify(banco)); } catch (e) { /* sem armazenamento: vale só nesta visita */ }
   }
 
-  /* Dados de demonstração: a Clínica Ipê dos outros protótipos, mais duas clínicas FICTÍCIAS para a busca */
+  /* Carga inicial: três clínicas e uma conta de cada papel (as do "Acesso rápido" do login) */
   async function semear() {
     const b = ler();
     if (b.semente) return;
-    const ipe = D && D.clinica ? D.clinica : { nome: "Clínica Ipê", unidade: "Unidade Centro", endereco: "Rua das Palmeiras, 410 — Centro", telefone: "(11) 2345-0000" };
+    const ipe = D.clinica;
     b.clinicas.push(
-      { id: "ipe", nome: ipe.nome, unidade: ipe.unidade, cnpj: cnpjDe("123456780001"), telefone: ipe.telefone, endereco: ipe.endereco, cidade: "São Paulo", uf: "SP", codigo: "IPE-4821", publica: true, demo: true },
-      { id: "jacaranda", nome: "Clínica Jacarandá", unidade: "Unidade Cambuí", cnpj: cnpjDe("234567810001"), telefone: "(19) 3311-0000", endereco: "Rua dos Ipês, 88 — Cambuí", cidade: "Campinas", uf: "SP", codigo: "JAC-2093", publica: true, demo: true },
-      { id: "aroeira", nome: "Centro Médico Aroeira", unidade: "Unidade Tatuapé", cnpj: cnpjDe("345678120001"), telefone: "(11) 2200-0000", endereco: "Av. das Aroeiras, 1500 — Tatuapé", cidade: "São Paulo", uf: "SP", codigo: "ARO-7716", publica: true, demo: true },
+      { id: "ipe", nome: ipe.nome, unidade: ipe.unidade, cnpj: cnpjDe("123456780001"), telefone: ipe.telefone, endereco: ipe.endereco, cidade: "São Paulo", uf: "SP", codigo: "IPE-4821", publica: true },
+      { id: "jacaranda", nome: "Clínica Jacarandá", unidade: "Unidade Cambuí", cnpj: cnpjDe("234567810001"), telefone: "(19) 3311-0000", endereco: "Rua dos Ipês, 88 — Cambuí", cidade: "Campinas", uf: "SP", codigo: "JAC-2093", publica: true },
+      { id: "aroeira", nome: "Centro Médico Aroeira", unidade: "Unidade Tatuapé", cnpj: cnpjDe("345678120001"), telefone: "(11) 2200-0000", endereco: "Av. das Aroeiras, 1500 — Tatuapé", cidade: "São Paulo", uf: "SP", codigo: "ARO-7716", publica: true },
     );
     const contas = [
       { nome: "Renata Albuquerque", email: "dono@clinicaipe.com.br", senha: "dono1234", papel: "dono", clinicaId: "ipe" },
       { nome: "Carla Mendes", email: "recepcao@clinicaipe.com.br", senha: "recepcao123", papel: "recepcao", clinicaId: "ipe" },
       { nome: "Dr. Paulo Menezes", email: "paulo.menezes@clinicaipe.com.br", senha: "medico123", papel: "medico", clinicaId: "ipe", medicoId: "paulo" },
       { nome: "Juliana Santos", email: "juliana.santos@email.com", senha: "paciente123", papel: "paciente", clinicaId: null },
+      { nome: "Marta Ferraz", email: "recepcao@clinicajacaranda.com.br", senha: "recepcao123", papel: "recepcao", clinicaId: "jacaranda" },
+      { nome: "Dr. Marcos Vieira", email: "marcos.vieira@clinicajacaranda.com.br", senha: "medico123", papel: "medico", clinicaId: "jacaranda", medicoId: "marcos" },
     ];
     for (const c of contas) {
-      b.usuarios.push({ id: novoId("u"), nome: c.nome, email: c.email, senha: await resumo(c.senha), papel: c.papel, clinicaId: c.clinicaId, medicoId: c.medicoId || null, demo: true });
+      b.usuarios.push({ id: novoId("u"), nome: c.nome, email: c.email, senha: await resumo(c.senha), papel: c.papel, clinicaId: c.clinicaId, medicoId: c.medicoId || null });
     }
     const juliana = b.usuarios.find((u) => u.papel === "paciente");
     b.vinculos.push({ pacienteId: juliana.id, clinicaId: "ipe" });
@@ -100,7 +111,7 @@
     try { return JSON.parse(localStorage.getItem(CHAVE_SESSAO)) || null; } catch (e) { return null; }
   }
   function abrirSessao(u, clinicaId) {
-    const s = { usuarioId: u.id, papel: u.papel, nome: u.nome, clinicaId: clinicaId !== undefined ? clinicaId : u.clinicaId };
+    const s = { usuarioId: u.id, papel: u.papel, nome: u.nome, clinicaId: clinicaId !== undefined ? clinicaId : u.clinicaId, medicoId: u.medicoId || null };
     try { localStorage.setItem(CHAVE_SESSAO, JSON.stringify(s)); } catch (e) { /* sem armazenamento */ }
     return s;
   }
@@ -118,16 +129,28 @@
     return u;
   }
 
-  /* Abriu uma página interna sem passar pelo login: entra com a conta de demonstração daquele papel,
-     a mesma que o menu já mostra. Some quando houver backend e login obrigatório. */
-  async function garantirSessaoDemo(papel) {
-    await pronto;
-    if (usuarioAtual()) return usuarioAtual();
-    const u = ler().usuarios.find((x) => x.demo && x.papel === papel);
-    if (!u) return null;
-    abrirSessao(u, u.clinicaId);
-    aplicarClinicaNasTelas();
-    return u;
+  /* ─── Páginas que pedem login ───
+     Sem sessão (ou com o papel errado), a página manda para o login antes de mostrar qualquer coisa. */
+  const EQUIPE = ["dono", "recepcao"];
+  const PROTEGIDAS = {
+    "clinica.html": EQUIPE, "conta.html": EQUIPE, "equipe.html": EQUIPE, "especialidades.html": EQUIPE,
+    "horarios.html": EQUIPE, "lista-espera.html": EQUIPE, "medicos.html": EQUIPE, "nova-consulta.html": EQUIPE,
+    "pacientes.html": EQUIPE, "medico.html": ["medico"],
+    "paciente-desktop.html": ["paciente"], "paciente-mobile.html": ["paciente"], "escolher-clinica.html": ["paciente"],
+  };
+  function protegerPagina() {
+    const pagina = location.pathname.split("/").pop() || "index.html";
+    const papeis = PROTEGIDAS[pagina];
+    if (!papeis) return true;
+    const s = sessao();
+    const u = s && usuarioAtual();
+    let destino = null;
+    if (!s || !u || !papeis.includes(s.papel)) destino = "login.html";
+    else if (s.papel === "paciente" && !s.clinicaId && pagina !== "escolher-clinica.html") destino = "escolher-clinica.html";
+    if (!destino) return true;
+    document.documentElement.style.visibility = "hidden";
+    location.replace(destino);
+    return false;
   }
 
   function vinculosDe(pacienteId) {
@@ -144,7 +167,7 @@
 
   /* ─── Funções que as telas usam ─── */
 
-  /* POST /api/auth/login */
+  /* POST /api/auth/login   corpo { email, senha }  (com a API: senha sem resumo(), ver PONTO DE TROCA) */
   async function entrar(email, senha) {
     await pronto;
     const u = ler().usuarios.find((x) => x.email === email.toLowerCase().trim());
@@ -155,6 +178,17 @@
       clinicaId = vs.length ? vs[0].clinicaId : null;
     }
     return { usuario: u, sessao: abrirSessao(u, clinicaId), destino: destinoDe(u) };
+  }
+
+  /* PUT /api/usuarios/{id}/senha   corpo { senhaAtual, novaSenha }  (com a API: sem resumo()) */
+  async function trocarSenha(atual, nova) {
+    await pronto;
+    const u = usuarioAtual();
+    if (!u) throw new Error("Entre de novo para trocar a senha.");
+    if (u.senha !== (await resumo(atual))) throw new Error("A senha atual não confere.");
+    u.senha = await resumo(nova);
+    delete u.provisoria;
+    gravar();
   }
 
   /* POST /api/auth/logout */
@@ -301,22 +335,26 @@
     return ler().clinicas.filter((c) => ids.includes(c.id));
   }
 
-  /* O nome e os contatos da clínica aberta passam a valer em todas as telas do protótipo */
+  /* O nome, os contatos e os médicos da clínica aberta passam a valer em todas as telas */
   function aplicarClinicaNasTelas() {
     const c = clinicaAtual();
     if (!c || !D || !D.clinica) return;
+    D.clinica.id = c.id;
     D.clinica.nome = c.nome;
     D.clinica.unidade = c.unidade;
     D.clinica.endereco = c.endereco;
     D.clinica.telefone = c.telefone;
     D.clinica.telefoneLink = "+55" + so(c.telefone);
+    D.medicos.length = 0;
+    D.todosMedicos.filter((m) => m.clinica === c.id).forEach((m) => D.medicos.push(m));
   }
   aplicarClinicaNasTelas();
+  const liberada = protegerPagina();
 
   window.API = {
-    pronto, PAPEIS,
-    sessao, usuarioAtual, clinicaAtual, destinoDe, garantirSessaoDemo,
-    entrar, sair,
+    pronto, PAPEIS, liberada,
+    sessao, usuarioAtual, clinicaAtual, destinoDe,
+    entrar, sair, trocarSenha,
     cadastrarClinica, atualizarClinica,
     listarEquipe, cadastrarRecepcionista, removerDaEquipe,
     cadastrarPaciente, buscarClinicas, clinicaPorCodigo, vincularClinica, clinicasDoPaciente,

@@ -10,12 +10,11 @@ import CampoTexto from '../componentes/CampoTexto';
 import Marca from '../componentes/Marca';
 import { useSessao } from '../contexto/SessaoContext';
 import { entrar } from '../servicos/autenticacao';
-import { config } from '../servicos/config';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 
-// Conta fictícia da demonstração (a mesma do protótipo web)
-const DEMONSTRACAO = { email: 'juliana.santos@email.com', senha: 'paciente123' };
+// Acesso rápido: a conta da carga inicial (a mesma da web)
+const ACESSO_RAPIDO = { email: 'juliana.santos@email.com', senha: 'paciente123' };
 
 export default function LoginTela({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -41,10 +40,10 @@ export default function LoginTela({ navigation }) {
     }
   }
 
-  function entrarComDemonstracao() {
-    setEmail(DEMONSTRACAO.email);
-    setSenha(DEMONSTRACAO.senha);
-    fazerLogin(DEMONSTRACAO.email, DEMONSTRACAO.senha);
+  function entrarRapido() {
+    setEmail(ACESSO_RAPIDO.email);
+    setSenha(ACESSO_RAPIDO.senha);
+    fazerLogin(ACESSO_RAPIDO.email, ACESSO_RAPIDO.senha);
   }
 
   return (
@@ -107,19 +106,17 @@ export default function LoginTela({ navigation }) {
 
           <View style={estilos.separador} />
 
+          <Texto variante="meta" style={estilos.centro}>
+            Acesso rápido
+          </Texto>
           <Botao
-            titulo="Entrar como paciente (demonstração)"
+            titulo="Juliana Santos · paciente"
             variante="secundario"
             icone="user-check"
-            onPress={entrarComDemonstracao}
+            onPress={entrarRapido}
             desativado={enviando}
-            accessibilityHint="Entra com a conta fictícia da Juliana Santos"
+            accessibilityHint="Entra com a conta da Juliana Santos"
           />
-          <Texto variante="meta" style={estilos.centro}>
-            {config.USAR_API_REAL
-              ? 'Conectado à API do AgendaPro.'
-              : 'Modo demonstração: os dados são fictícios e ficam só neste celular.'}
-          </Texto>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

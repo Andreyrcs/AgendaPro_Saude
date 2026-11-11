@@ -1,6 +1,6 @@
-/* AgendaPro Saúde v2 — casca comum das páginas da clínica (protótipo, dados FICTÍCIOS)
+/* AgendaPro Saúde — casca comum das páginas da clínica.
    Monta o menu lateral com a página atual marcada, a folha de hoje no cabeçalho,
-   os avisos que sobem do rodapé e o relógio do protótipo ("agora" começa às 10:40). */
+   os avisos que sobem do rodapé e o relógio ("agora" é a hora do computador). */
 (function () {
   "use strict";
 
@@ -20,77 +20,17 @@
     { id: "equipe", href: "equipe.html", icone: "building", rotulo: "Clínica e equipe" },
   ];
 
-  const AGORA0 = 10 * 60 + 40;
-  const T0 = Date.now();
-  const agora = () => Math.min(C.FIM, AGORA0 + (Date.now() - T0) / 60000);
+  const agora = () => C.minutoAgora();
 
   const medico = (id) => D.medicos.find((m) => m.id === id);
   const esp = (id) => D.especialidades[id];
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  const totalFila = () => Object.values(D.filas).reduce((s, l) => s + l.length, 0);
+  const totalFila = () => D.medicos.reduce((s, m) => s + (D.filas[m.id] || []).length, 0);
   const curtoData = (dia) => { const d = C.data(dia); return A.SEMANA_CURTA[d.getDay()] + ", " + d.getDate() + "/" + String(d.getMonth() + 1).padStart(2, "0"); };
   const semAcento = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-  /* ─── O que a recepção cadastra fica guardado neste navegador ───
-     Médicos novos, edições (nome, especialidade, telefone, sala) e especialidades novas.
-     A conta da recepção tem o botão que volta tudo aos dados de exemplo. */
-  const CHAVE_LOJA = "agendapro.clinica.v1";
-  const loja = { medicos: [], edicoes: {}, especialidades: {}, fila: [], saiuDaFila: [], foraDaFila: [] };
-  try { Object.assign(loja, JSON.parse(localStorage.getItem(CHAVE_LOJA)) || {}); } catch (e) { /* sem armazenamento */ }
-  const gravarLoja = () => { try { localStorage.setItem(CHAVE_LOJA, JSON.stringify(loja)); } catch (e) { /* sem armazenamento */ } };
-
-  /* a sala de cada médico vem das consultas que já têm sala marcada */
-  D.medicos.forEach((md) => {
-    const k = (D.consultas || []).concat(D.passadas || []).find((x) => x.medico === md.id && x.sala);
-    if (!md.sala && k) md.sala = k.sala;
-  });
-  Object.assign(D.especialidades, loja.especialidades);
-  loja.medicos.forEach((md) => { if (!D.medicos.some((x) => x.id === md.id)) D.medicos.push(md); });
-  Object.keys(loja.edicoes).forEach((id) => { const md = D.medicos.find((x) => x.id === id); if (md) Object.assign(md, loja.edicoes[id]); });
-  /* fila: quem entrou por aqui vai para o fim; quem saiu não volta ao recarregar */
-  loja.fila.forEach((p) => {
-    const lista = D.filas[p.medico] || (D.filas[p.medico] = []);
-    if (!lista.some((x) => x.nome === p.nome)) lista.push(Object.assign({}, p));
-  });
-  loja.saiuDaFila.forEach((s) => {
-    const lista = D.filas[s.medico] || [];
-    const i = lista.findIndex((x) => x.nome === s.nome);
-    if (i >= 0) lista.splice(i, 1);
-  });
-
-  const guardar = {
-    entrouNaFila(medico, p) {
-      loja.saiuDaFila = loja.saiuDaFila.filter((s) => !(s.medico === medico && s.nome === p.nome));
-      loja.fila.push(Object.assign({ medico }, p));
-      gravarLoja();
-    },
-    saiuDaFila(medico, nome) {
-      const antes = loja.fila.length;
-      loja.fila = loja.fila.filter((p) => !(p.medico === medico && p.nome === nome));
-      if (loja.fila.length === antes) loja.saiuDaFila.push({ medico, nome });
-      gravarLoja();
-    },
-    voltouParaFila(medico, p) {
-      const i = loja.saiuDaFila.findIndex((s) => s.medico === medico && s.nome === p.nome);
-      if (i >= 0) loja.saiuDaFila.splice(i, 1); else loja.fila.push(Object.assign({ medico }, p));
-      gravarLoja();
-    },
-    /* quem marcou fora da fila, quando e por quê */
-    foraDaFila(r) { loja.foraDaFila.push(r); gravarLoja(); },
-    registrosForaDaFila(medico) { return loja.foraDaFila.filter((r) => !medico || r.medico === medico); },
-    medicoNovo(md) { loja.medicos.push(md); gravarLoja(); },
-    edicaoMedico(id, campos) {
-      const novo = loja.medicos.find((x) => x.id === id);
-      if (novo) Object.assign(novo, campos); else loja.edicoes[id] = Object.assign(loja.edicoes[id] || {}, campos);
-      gravarLoja();
-    },
-    especialidade(id, e) { loja.especialidades[id] = e; gravarLoja(); },
-    tudoDeVolta() { try { localStorage.removeItem(CHAVE_LOJA); } catch (e) { /* sem armazenamento */ } },
-    temAlteracoes() {
-      return loja.medicos.length + Object.keys(loja.edicoes).length + Object.keys(loja.especialidades).length +
-        loja.fila.length + loja.saiuDaFila.length + loja.foraDaFila.length > 0;
-    },
-  };
+  /* médicos, especialidades e lista de espera ficam guardados por clinica-dados.js */
+  const guardar = C.guardar;
 
   /* ─── Preferências da conta (texto, movimento, menu recolhido) ─── */
   const CHAVE_PREF = "agendapro.recepcao.pref";
@@ -110,8 +50,7 @@
   }
   aplicarPref();
 
-  /* ─── A conta de quem está na recepção (dados FICTÍCIOS) ─── */
-  /* quem entrou pelo login (api.js) aparece aqui; sem login, fica a recepcionista de exemplo */
+  /* ─── A conta de quem está na recepção: quem entrou pelo login (api.js) ─── */
   const logado = window.API ? window.API.usuarioAtual() : null;
   const CHAVE_CONTA = "agendapro.recepcao.conta" + (logado ? "." + logado.id : "");
   const conta = logado
@@ -264,13 +203,13 @@
     const e = C.expediente(m, dia);
     if (!e || dia < D.hoje) return [];
     const dur = C.DURACAO[m] || 30;
-    const ks = C.consultas.filter((k) => k.medico === m && k.data === dia && k.status !== "cancelada");
+    const ks = C.consultas.filter((k) => k.medico === m && k.data === dia && C.ativa(k));
     const lista = [];
     for (let t = e[0]; t + dur <= e[1]; t += dur) {
       if (t < 780 && t + dur > 720) continue; /* almoço */
       if (dia === D.hoje && t < agora()) continue;
       const k = ks.find((x) => x.ini < t + dur && t < x.ini + x.dur);
-      if (k && k.status !== "vaga") continue;
+      if (k && C.horarioDe(k) !== "livre") continue;
       lista.push({ ini: t, dur, vaga: k || null });
     }
     return lista;

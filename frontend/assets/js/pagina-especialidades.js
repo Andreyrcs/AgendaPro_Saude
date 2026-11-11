@@ -1,4 +1,4 @@
-/* AgendaPro Saúde v2 — Especialidades da clínica (protótipo, dados FICTÍCIOS)
+/* AgendaPro Saúde — Especialidades da clínica
    O que a clínica oferece, com quem, e onde falta horário: horários livres até sábado contra
    quantas pessoas esperam na fila. Os números vêm das consultas e das filas. */
 (function () {
@@ -112,7 +112,7 @@
       linha.scrollIntoView({ block: "nearest", behavior: M.reduzido() ? "auto" : "smooth" });
       if (!M.reduzido()) linha.animate([{ backgroundColor: "#d4f3e6" }, { backgroundColor: "transparent" }], { duration: 1200, easing: "ease" });
     }
-    K.toast({ titulo: D.especialidades[id].nome + " criada", texto: "Cadastre um médico para abrir a agenda. Fica guardada neste navegador.", icone: "heart-pulse" });
+    K.toast({ titulo: D.especialidades[id].nome + " criada", texto: "Cadastre um médico para abrir a agenda.", icone: "heart-pulse" });
   });
 
   desenhar();

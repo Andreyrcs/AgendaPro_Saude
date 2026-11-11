@@ -1,4 +1,4 @@
-// Detalhe de uma consulta, com a opção de cancelar.
+// Detalhe de uma consulta, com a opção de cancelar (avisando se, por ser no dia, conta como falta).
 
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -14,11 +14,12 @@ import { AvatarFamiliar, AvatarMedico } from '../componentes/Avatar';
 import { Carregando, MensagemErro } from '../componentes/Estados';
 import useDadosDaTela from '../componentes/useDadosDaTela';
 import { useSessao } from '../contexto/SessaoContext';
-import { buscarConsulta, cancelarConsulta } from '../servicos/consultas';
+import { buscarConsulta, cancelarConsulta, cancelarContaFalta } from '../servicos/consultas';
 import { clinica } from '../dados/dadosFicticios';
 import { cores } from '../estilos/cores';
 import { espaco } from '../estilos/espacos';
 import { extenso, relativo } from '../utilitarios/datas';
+import { STATUS_CONSULTA, STATUS_FUTUROS } from '../utilitarios/status';
 
 function Linha({ icone, titulo, texto }) {
   return (
@@ -48,7 +49,11 @@ export default function ConsultaTela({ route, navigation }) {
   }
 
   const titulo = c.titulo || c.especialidade.nome;
-  const futura = c.status === 'confirmada';
+  const futura = STATUS_FUTUROS.includes(c.status);
+  const contaFalta = futura && cancelarContaFalta(c);
+  const avisoCancelar = contaFalta
+    ? ' Hoje é o dia da consulta e você confirmou presença: cancelar agora conta como falta sem aviso.'
+    : ' Sem nenhuma consequência: o horário volta para quem precisa.';
 
   async function cancelar() {
     setCancelando(true);
@@ -68,7 +73,7 @@ export default function ConsultaTela({ route, navigation }) {
       <Cartao style={estilos.topo}>
         <FolhaDia data={c.data} />
         <View style={estilos.flex}>
-          <Selo texto={futura ? `Confirmada · ${relativo(c.data)}` : 'Realizada'} tom={futura ? 'menta' : 'neutro'} />
+          <Selo texto={futura ? `${STATUS_CONSULTA[c.status]} · ${relativo(c.data)}` : STATUS_CONSULTA[c.status] || c.status} tom={futura ? 'menta' : 'neutro'} />
           <Texto variante="titulo" style={estilos.hora}>
             {c.hora}
           </Texto>
@@ -110,7 +115,7 @@ export default function ConsultaTela({ route, navigation }) {
       <Confirmacao
         visivel={perguntando}
         titulo="Cancelar esta consulta?"
-        texto={`${titulo} para ${c.pessoa.titular ? 'você' : c.pessoa.curto}, ${extenso(c.data)} às ${c.hora}. O horário volta a ficar livre para outra pessoa.`}
+        texto={`${titulo} para ${c.pessoa.titular ? 'você' : c.pessoa.curto}, ${extenso(c.data)} às ${c.hora}.${avisoCancelar}`}
         rotuloConfirmar="Cancelar consulta"
         rotuloCancelar="Manter consulta"
         perigo

@@ -1,4 +1,4 @@
-// Perfil: dados da conta, acessibilidade e sair.
+// Perfil: dados da conta, clínica, faltas registradas e a regra de presença, acessibilidade e sair.
 
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,8 +12,11 @@ import CabecalhoSecao from '../componentes/CabecalhoSecao';
 import { AvatarFamiliar } from '../componentes/Avatar';
 import { useSessao } from '../contexto/SessaoContext';
 import { usePreferencias } from '../contexto/PreferenciasContext';
-import { config } from '../servicos/config';
+import useDadosDaTela from '../componentes/useDadosDaTela';
+import { buscarSituacao } from '../servicos/consultas';
+import { AvisoRestricao } from '../componentes/Presenca';
 import { clinica } from '../dados/dadosFicticios';
+import { TEXTO_DA_REGRA, textoDasFaltas } from '../utilitarios/status';
 import { cores } from '../estilos/cores';
 import { espaco, raios } from '../estilos/espacos';
 
@@ -22,6 +25,7 @@ export default function PerfilTela() {
   const { reduzirMovimento, sistemaPede, pacientePediu, definirReduzirMovimento } = usePreferencias();
 
   const [perguntandoSaida, setPerguntandoSaida] = useState(false);
+  const { dados: situacao } = useDadosDaTela(() => buscarSituacao(usuario));
 
   return (
     <Tela titulo="Perfil">
@@ -60,17 +64,14 @@ export default function PerfilTela() {
         </Texto>
       </Cartao>
 
-      <CabecalhoSecao titulo="Conexão" />
-      <View style={[estilos.selo, config.USAR_API_REAL ? estilos.seloReal : estilos.seloDemo]}>
-        <Texto variante="negrito">
-          {config.USAR_API_REAL ? 'Conectado à API' : 'Modo demonstração (dados simulados)'}
+      <CabecalhoSecao titulo="Presença e faltas" />
+      <AvisoRestricao situacao={situacao} />
+      <Cartao>
+        <Texto variante="negrito">{situacao ? textoDasFaltas(situacao.faltas) : ' '}</Texto>
+        <Texto variante="meta" style={estilos.dica}>
+          {TEXTO_DA_REGRA}
         </Texto>
-        <Texto variante="meta">
-          {config.USAR_API_REAL
-            ? `Login e cadastro usam o servidor em ${config.ENDERECO_API}.`
-            : 'Para usar a API real, mude USAR_API_REAL em src/servicos/config.js.'}
-        </Texto>
-      </View>
+      </Cartao>
 
       <Botao
         titulo="Sair da conta"
@@ -98,8 +99,5 @@ const estilos = StyleSheet.create({
   conta: { flexDirection: 'row', alignItems: 'center', gap: espaco.g },
   flex: { flex: 1 },
   dica: { marginTop: espaco.p },
-  selo: { borderRadius: raios.folha, padding: espaco.m, gap: 2 },
-  seloReal: { backgroundColor: cores.menta2 },
-  seloDemo: { backgroundColor: cores.gelo2 },
   sair: { marginTop: espaco.xg },
 });

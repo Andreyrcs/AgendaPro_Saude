@@ -1,6 +1,8 @@
 // Lista de espera inteligente.
 // Quando não há horário com o médico escolhido, o paciente entra na fila.
-// Se alguém cancela, a vaga é oferecida ao 1º da fila, que tem 30 minutos para aceitar.
+// Quando uma consulta desse médico é cancelada (pela recepção ou por outro paciente),
+// o horário é oferecido ao 1º da fila, que tem 30 minutos para aceitar
+// (regra em horarioCanceladoDoMedico, em dados/bancoSimulado.js; com a API, quem faz é o servidor).
 // Regra simples deste app: cada conta fica em uma fila por vez.
 
 import {
@@ -8,9 +10,8 @@ import {
 } from '../dados/bancoSimulado';
 import { pessoasNaFila } from '../dados/dadosFicticios';
 import { montarConsulta } from './consultas';
-import { HOJE, somarDias } from '../utilitarios/datas';
-
-const TRINTA_MINUTOS = 30 * 60 * 1000;
+import { HOJE } from '../utilitarios/datas';
+import { restricaoDe } from '../utilitarios/status';
 
 // Formato:
 // { id, pessoa: {familiar}, medico: {médico}, especialidade, posicao, naFila, desde,
@@ -31,11 +32,15 @@ function acharFila(conta, idFila) {
   return conta.fila;
 }
 
+// A tela chama de novo ao abrir e ao tocar em "Atualizar": é assim que a vaga oferecida aparece.
+// Vaga não respondida em 30 minutos expira e volta para a clínica oferecer à próxima pessoa.
 // TODO: troca pra chamada real quando o endpoint GET /api/pacientes/{id}/lista-espera existir
 export async function buscarMinhaFila(usuario) {
   await esperar();
   const conta = contaDe(usuario);
-  return conta.fila ? montarFila(conta, conta.fila) : null;
+  const f = conta.fila;
+  if (f && f.vagaOferecida && f.vagaOferecida.expiraEm < Date.now()) f.vagaOferecida = null;
+  return f ? montarFila(conta, f) : null;
 }
 
 // dados = { pessoa: idFamiliar, medico: idMedico }
@@ -50,32 +55,13 @@ export async function entrarNaFila(usuario, dados) {
   const posicao = (pessoasNaFila[dados.medico] || 0) + 1; // entra no fim da fila
   conta.fila = {
     id: novoId('f'), pessoa: dados.pessoa, medico: dados.medico,
-    posicao, naFila: posicao, desde: HOJE, vaga: null, vagaOferecida: null,
+    posicao, naFila: posicao, desde: HOJE, vagaOferecida: null,
   };
   return montarFila(conta, conta.fila);
 }
 
-// SÓ PARA A DEMONSTRAÇÃO: finge que alguém da frente cancelou.
-// Sobe uma posição; se já está em 1º, oferece uma vaga com prazo de 30 minutos.
-// No sistema real isso acontece quando a recepção cancela uma consulta.
-export async function simularCancelamento(usuario) {
-  await esperar(150);
-  const conta = contaDe(usuario);
-  const fila = conta.fila;
-  if (!fila) throw new Error('Você não está em nenhuma fila agora.');
-
-  if (fila.posicao > 1) {
-    fila.posicao -= 1;
-    fila.naFila -= 1;
-  } else if (!fila.vagaOferecida) {
-    const vaga = fila.vaga || { data: somarDias(HOJE, 3), hora: '09:00' };
-    fila.vagaOferecida = { ...vaga, expiraEm: Date.now() + TRINTA_MINUTOS };
-  }
-  return montarFila(conta, fila);
-}
-
 // aceitar = true → vira consulta e o paciente sai da fila
-// aceitar = false → a vaga passa para o próximo; o paciente continua em 1º
+// aceitar = false → a vaga volta para a clínica oferecer ao próximo; o paciente continua em 1º
 // TODO: troca pra chamada real quando o endpoint PUT /api/lista-espera/{id}/vaga existir
 export async function responderVaga(usuario, idFila, aceitar) {
   await esperar();

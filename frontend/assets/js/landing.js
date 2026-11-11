@@ -72,19 +72,27 @@
     }, { passive: true });
   })();
 
-  /* Mês de outubro no celular da abertura */
+  /* Mês atual no celular da abertura (hoje destacado, domingos e feriados em vermelho) */
   (function montarMes() {
     const alvo = $("#dias-mes");
     if (!alvo) return;
-    const marcados = { 2: 1, 23: 1, 28: 1 };
-    const feriados = { 12: 1 };
+    const agora = new Date();
+    const ano = agora.getFullYear(), mes = agora.getMonth();
+    const rotulo = document.getElementById("mes-cel");
+    if (rotulo) rotulo.innerHTML = window.AP.MESES_LONGOS[mes].replace(/^./, (l) => l.toUpperCase()) + ' <small class="num">' + ano + "</small>";
+    const anoMes = ano + "-" + String(mes + 1).padStart(2, "0");
+    const marcados = {};
+    (window.DADOS.consultas || []).forEach((c) => { if (c.data.slice(0, 7) === anoMes) marcados[Number(c.data.slice(8))] = 1; });
+    const feriados = {};
+    (window.DADOS.feriados || []).forEach((f) => { if (f.data.slice(0, 7) === anoMes) feriados[Number(f.data.slice(8))] = 1; });
+    const ultimo = new Date(ano, mes + 1, 0).getDate();
     let html = "";
-    for (let i = 0; i < new Date(2026, 9, 1).getDay(); i++) html += "<span></span>";
-    for (let dia = 1; dia <= 31; dia++) {
-      const domingo = new Date(2026, 9, dia).getDay() === 0;
+    for (let i = 0; i < new Date(ano, mes, 1).getDay(); i++) html += "<span></span>";
+    for (let dia = 1; dia <= ultimo; dia++) {
+      const domingo = new Date(ano, mes, dia).getDay() === 0;
       const classes = [];
       if (domingo || feriados[dia]) classes.push("vermelho");
-      if (dia === 20) classes.push("hoje");
+      if (dia === agora.getDate()) classes.push("hoje");
       if (marcados[dia]) classes.push("marcado");
       html += '<span class="' + classes.join(" ") + '">' + dia + "</span>";
     }

@@ -1,4 +1,4 @@
-// Logotipo do AgendaPro Saúde, igual ao ícone do protótipo:
+// Logotipo do AgendaPro Saúde, igual ao ícone da web:
 // uma folha de calendário azul-noite, faixa menta em cima e uma cruz branca.
 // Feito só com Views, sem imagem.
 

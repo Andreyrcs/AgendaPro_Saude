@@ -1,4 +1,4 @@
-// Botão do app, com as variantes de cor do protótipo.
+// Botão do app, com as variantes de cor da web.
 // Enquanto "carregando" for true, o botão fica desativado: assim um toque duplo
 // não marca nem cancela a mesma consulta duas vezes.
 

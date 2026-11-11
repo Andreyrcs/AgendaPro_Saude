@@ -111,3 +111,26 @@
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+/* ─── Telas largas: o conteúdo para de esticar em 1600px e fica centralizado ─── */
+.conteudo {
+    width: 100%;
+    max-width: 1600px;
+    justify-self: center;
+}
+/* filhos de grade/flex não podem crescer além da coluna: tabela larga rola dentro da própria caixa */
+.conteudo > *,
+.pagina > *,
+.painel,
+.tabela-caixa {
+    min-width: 0;
+    max-width: 100%;
+}
+/* o que é posicionado dentro da tabela (texto só para leitor de tela) fica preso na caixa que rola */
+.tabela-caixa {
+    position: relative;
+}
+/* linhas de texto longas ficam legíveis mesmo com a tela larga */
+.conteudo p {
+    max-width: 80ch;
+}

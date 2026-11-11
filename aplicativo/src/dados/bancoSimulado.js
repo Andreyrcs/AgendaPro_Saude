@@ -1,16 +1,16 @@
-// "Banco de dados" de mentira, em memória, usado enquanto a API não tem os endpoints.
-// Ele vale até o app ser fechado: reabriu, voltou ao estado inicial.
+// Banco em memória, usado enquanto a API não tem os endpoints (config.USAR_API_REAL = false).
+// Ele vale até o app ser fechado: reabriu, voltou à carga inicial.
 //
 // Os dados ficam separados por conta (idUsuario), como ficariam no MySQL:
-// - a conta da Juliana (demonstração) começa com a família e as consultas fictícias;
+// - a conta da Juliana (carga inicial) começa com a família e as consultas dela;
 // - qualquer outra conta começa só com o próprio titular, sem consultas nem fila.
 
 import * as ficticios from './dadosFicticios';
 import { primeiroNome } from '../utilitarios/texto';
 
-export const EMAIL_DEMONSTRACAO = 'juliana.santos@email.com';
+export const EMAIL_CARGA_INICIAL = 'juliana.santos@email.com';
 
-// Simula a demora da rede, para os indicadores de "carregando" aparecerem.
+// Pequena pausa, como a de uma chamada de rede, para os indicadores de "carregando" aparecerem.
 export function esperar(ms = 300) {
   return new Promise((resolver) => setTimeout(resolver, ms));
 }
@@ -26,11 +26,11 @@ export function novoId(prefixo) {
   return `${prefixo}${ultimoId}`;
 }
 
-// Contas que existem no modo simulado.
-// A senha fica em texto aqui só porque é memória de demonstração.
-// No backend real ela é guardada com hash BCrypt.
-export const usuariosSimulados = [
-  { idUsuario: 1, nome: 'Juliana Santos', email: EMAIL_DEMONSTRACAO, senha: 'paciente123' },
+// Contas que existem enquanto o app não fala com a API.
+// A senha fica em texto aqui porque é só memória do aparelho e some ao fechar o app.
+// Com a API, a senha vai por HTTPS e o servidor guarda só o hash BCrypt.
+export const usuariosLocais = [
+  { idUsuario: 1, nome: 'Juliana Santos', email: EMAIL_CARGA_INICIAL, senha: 'paciente123' },
 ];
 
 // Horários livres da clínica. São de todos os pacientes, não de uma conta só.
@@ -42,18 +42,19 @@ const contas = {}; // idUsuario → dados daquela conta
 export function contaDe(usuario) {
   if (!contas[usuario.idUsuario]) {
     contas[usuario.idUsuario] =
-      usuario.email === EMAIL_DEMONSTRACAO ? contaDeDemonstracao() : contaNova(usuario);
+      usuario.email === EMAIL_CARGA_INICIAL ? contaDaCargaInicial() : contaNova(usuario);
   }
   return contas[usuario.idUsuario];
 }
 
-function contaDeDemonstracao() {
+function contaDaCargaInicial() {
   return {
     familia: copiar(ficticios.pessoas),
     consultas: copiar(ficticios.consultas),
     fila: copiar(ficticios.fila),
     acompanhamento: copiar(ficticios.acompanhamento),
     prevencao: copiar(ficticios.prevencao),
+    faltas: [], // { id, consulta, data, confirmou, motivo, retirada }
   };
 }
 
@@ -70,7 +71,25 @@ function contaNova(usuario) {
     fila: null,
     acompanhamento: { retornos: [], exames: [] },
     prevencao: [],
+    faltas: [], // { id, consulta, data, confirmou, motivo, retirada }
   };
+}
+
+// O que o servidor faz quando uma consulta de um médico é cancelada:
+// o horário é oferecido à 1ª pessoa da fila desse médico (que tem 30 minutos para aceitar)
+// e quem está atrás sobe uma posição. Devolve true se a vaga ficou com alguém da fila.
+const TRINTA_MINUTOS = 30 * 60 * 1000;
+export function horarioCanceladoDoMedico(idMedico, data, hora) {
+  const naFila = ficticios.pessoasNaFila;
+  if (!naFila[idMedico]) return false; // ninguém esperando: o horário só fica livre
+  Object.values(contas).forEach((conta) => {
+    const f = conta.fila;
+    if (!f || f.medico !== idMedico || f.vagaOferecida) return;
+    if (f.posicao === 1) f.vagaOferecida = { data, hora, expiraEm: Date.now() + TRINTA_MINUTOS };
+    else { f.posicao -= 1; f.naFila = Math.max(f.posicao, f.naFila - 1); }
+  });
+  naFila[idMedico] -= 1; // a 1ª pessoa saiu da fila com a vaga
+  return true;
 }
 
 // Regra de negócio: o paciente só mexe na própria família.

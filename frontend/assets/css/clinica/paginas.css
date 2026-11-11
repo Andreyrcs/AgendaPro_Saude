@@ -3,6 +3,7 @@
    menta para o que é da lista de espera, âmbar para o que pede atenção, folhinha para as datas. */
 
 .pagina {
+    grid-template-columns: minmax(0, 1fr);
     display: grid;
     gap: 16px;
     margin-top: 22px;
@@ -351,7 +352,7 @@ a.botao {
     font-size: 0.9375rem;
     color: var(--tinta-2);
 }
-.vaga-caixa--oferecida {
+.vaga-caixa--oferecido {
     background: var(--menta-2);
 }
 
@@ -1187,7 +1188,7 @@ a.botao {
 }
 
 .tabela-caixa--solta {
-    overflow: visible;
+    overflow-x: auto;
 }
 
 /* ─── Minha conta: cada bloco é uma linha (o que é, à esquerda; o que muda, à direita) ─── */
@@ -1824,4 +1825,15 @@ a.botao {
         grid-column: 2;
         justify-self: start;
     }
+}
+
+/* restrição atual do paciente (faltas sem aviso), na ficha */
+.ficha__restricao {
+    margin: 6px 0 4px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: var(--ambar);
+    color: var(--ambar-tinta);
+    font-size: 0.875rem;
+    font-weight: 600;
 }

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Política de Privacidade - AgendaPro Saúde</title>
+        <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='26' rx='7' fill='%2312263f'/%3E%3Cpath d='M2 12v-1a7 7 0 0 1 7-7h14a7 7 0 0 1 7 7v1z' fill='%23a8e6cf'/%3E%3Crect x='14.2' y='14.5' width='3.6' height='11.5' rx='1.2' fill='%23fff'/%3E%3Crect x='10.25' y='18.45' width='11.5' height='3.6' rx='1.2' fill='%23fff'/%3E%3C/svg%3E" />
+        <meta name="theme-color" content="#12263f" />
+        <link rel="stylesheet" href="assets/css/tokens.css" />
+        <link rel="stylesheet" href="assets/css/acesso.css" />
+    </head>
+    <body>
+        <div class="acesso">
+            <header class="acesso__topo">
+                <a href="index.html" class="acesso__marca" aria-label="AgendaPro Saúde - página inicial">
+                    <span data-marca="28"></span>
+                    <span class="acesso__marca-nome">AgendaPro Saúde</span>
+                </a>
+            </header>
+
+            <main class="acesso__corpo">
+                <article class="cartao-acesso cartao-acesso--texto texto-legal">
+                    <h1 class="cartao-acesso__titulo">Política de Privacidade</h1>
+                    <p class="cartao-acesso__sub">Como o AgendaPro Saúde trata os seus dados, de acordo com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018).</p>
+
+                    <h2>1. Quem é responsável pelos dados</h2>
+                    <p>A <b>clínica</b> em que você é atendido é a controladora dos seus dados de saúde e de agendamento. O AgendaPro Saúde é o sistema que a clínica usa para guardar e organizar esses dados, seguindo as instruções dela.</p>
+
+                    <h2>2. Que dados guardamos</h2>
+                    <ul>
+                        <li><b>Cadastro:</b> nome, e-mail, telefone, CPF ou documento, data de nascimento e a senha (guardada só como resumo criptográfico, nunca em texto).</li>
+                        <li><b>Família:</b> nome, parentesco, idade, alergias informadas e cartão do SUS das pessoas que você cadastra.</li>
+                        <li><b>Agendamentos:</b> consultas marcadas, situação de cada uma (confirmada, na recepção, em atendimento, atendida, faltou, cancelada), lista de espera e lembretes de prevenção.</li>
+                        <li><b>Presença e faltas:</b> se você confirmou presença, as faltas registradas (e as retiradas pela recepção) e a restrição de agendamento, quando houver. Não guardamos dados de cartão nem de conta bancária.</li>
+                    </ul>
+
+                    <h2>3. Para que usamos</h2>
+                    <ul>
+                        <li>Marcar, lembrar, remarcar e cancelar consultas.</li>
+                        <li>Oferecer horários da lista de espera.</li>
+                        <li>Mostrar ao médico e à recepção só o que eles precisam para atender você.</li>
+                    </ul>
+                    <p>Dados de saúde são <b>dados sensíveis</b> (art. 11 da LGPD) e são usados apenas para a sua assistência à saúde.</p>
+
+                    <h2>4. Quem vê os seus dados</h2>
+                    <ul>
+                        <li><b>Recepção da clínica:</b> nome, contato, consultas, fila, confirmações de presença e faltas.</li>
+                        <li><b>Médico:</b> as consultas marcadas com ele e as observações do atendimento.</li>
+                        <li><b>Outras clínicas:</b> não veem nada. Cada clínica só enxerga os próprios pacientes.</li>
+                    </ul>
+                    <p>Não vendemos nem compartilhamos dados com anunciantes.</p>
+
+                    <h2>5. Por quanto tempo</h2>
+                    <p>Enquanto a sua conta existir. O histórico de atendimentos é guardado pelo prazo que a legislação de saúde exige da clínica.</p>
+
+                    <h2>6. Seus direitos</h2>
+                    <p>Você pode pedir para ver, corrigir, levar para outro serviço ou apagar os seus dados, e saber com quem foram compartilhados (art. 18 da LGPD). Faça o pedido à recepção da sua clínica.</p>
+
+                    <h2>7. Segurança</h2>
+                    <p>O acesso é feito com e-mail e senha, e cada pessoa só vê o que o seu papel permite (paciente, recepção, médico ou responsável). A senha nunca fica guardada em texto aberto: só um resumo criptográfico dela (no servidor, com BCrypt).</p>
+
+                    <p class="texto-legal__data">Versão de novembro de 2026.</p>
+                    <p class="cartao-acesso__rodape"><a class="acesso-link" href="termos.html">Termos de Uso</a> · <a class="acesso-link" href="javascript:history.back()">Voltar</a></p>
+                </article>
+            </main>
+        </div>
+        <script src="assets/js/comum.js"></script>
+        <script>
+            document.querySelectorAll('[data-marca]').forEach(function (el) {
+                el.innerHTML = window.AP.marca(Number(el.dataset.marca));
+            });
+        </script>
+    </body>
+</html>

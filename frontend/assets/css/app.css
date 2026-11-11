@@ -2263,3 +2263,35 @@ html[data-movimento='reduzido'] .digitando span {
     flex: none;
     margin-top: 1px;
 }
+
+
+
+/* ─── Presença e faltas ─── */
+/* aviso em destaque na gaveta e no agendamento: regra de falta, restrição atual */
+.aviso-regra {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--gelo-2, #eef3f2);
+  color: var(--tinta, #12263f);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+.aviso-regra .ic { flex: none; margin-top: 2px; }
+.aviso-regra--forte { background: var(--ambar, #fff4d6); color: var(--ambar-tinta, #5c3b00); }
+.aviso-regra b { display: block; margin-bottom: 2px; }
+/* cartão "Confirme sua consulta de amanhã" no Início */
+.confirmar-presenca {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: var(--menta, #a8e6cf);
+  color: var(--noite, #12263f);
+}
+.confirmar-presenca__acoes { display: flex; gap: 10px; flex-wrap: wrap; }
+.confirmar-presenca__acoes .botao { flex: 1 1 120px; justify-content: center; }

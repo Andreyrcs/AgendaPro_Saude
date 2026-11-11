@@ -21,7 +21,9 @@ import useDadosDaTela from '../componentes/useDadosDaTela';
 import { useSessao } from '../contexto/SessaoContext';
 import { buscarEspecialidade, listarEspecialidades, listarHorariosLivres, primeiroHorario } from '../servicos/medicos';
 import { listarFamiliares } from '../servicos/familia';
-import { marcarConsulta } from '../servicos/consultas';
+import { marcarConsulta, buscarSituacao } from '../servicos/consultas';
+import { AvisoRestricao } from '../componentes/Presenca';
+import { TEXTO_DA_REGRA, textoDasFaltas } from '../utilitarios/status';
 import { buscarMinhaFila, entrarNaFila } from '../servicos/espera';
 import { marcarItemPrevencao } from '../servicos/prevencao';
 import { clinica } from '../dados/dadosFicticios';
@@ -87,14 +89,15 @@ function EscolherHorario({ navigation, params }) {
   const [marcada, setMarcada] = useState(null); // consulta criada → tela de sucesso
 
   const { dados, erro, recarregar } = useDadosDaTela(async () => {
-    const [esp, familia, horarios, primeiro, fila] = await Promise.all([
+    const [esp, familia, horarios, primeiro, fila, situacao] = await Promise.all([
       buscarEspecialidade(params.especialidade),
       listarFamiliares(usuario),
       listarHorariosLivres(params.especialidade),
       primeiroHorario(params.especialidade),
       buscarMinhaFila(usuario),
+      buscarSituacao(usuario),
     ]);
-    return { esp, familia, horarios, primeiro, fila };
+    return { esp, familia, horarios, primeiro, fila, situacao };
   });
 
   if (!dados) {
@@ -105,7 +108,12 @@ function EscolherHorario({ navigation, params }) {
     );
   }
 
-  const { esp, familia, horarios, primeiro, fila } = dados;
+  const { esp, familia, fila, situacao } = dados;
+  // faltas sem aviso podem limitar o agendamento direto (o assistente e o 192 nunca são bloqueados)
+  const restrito = situacao.tipo !== 'normal';
+  const soRecepcao = situacao.tipo === 'so_recepcao';
+  const primeiro = restrito ? null : dados.primeiro;
+  const horarios = soRecepcao ? [] : restrito ? dados.horarios.map((h) => ({ ...h, dias: [] })) : dados.horarios;
 
   // Regra: pediatria só atende menores de 18 anos
   const elegivel = (p) => esp.id !== 'pediatria' || (p.idade !== null && p.idade < 18);
@@ -167,6 +175,7 @@ function EscolherHorario({ navigation, params }) {
               <Texto cor={cores.domingo}>{erroEnvio}</Texto>
             </View>
           )}
+          <Texto variante="meta">{textoDasFaltas(situacao.faltas)} {TEXTO_DA_REGRA}</Texto>
           <Texto variante="meta" accessibilityLiveRegion="polite">
             {resumo}
           </Texto>
@@ -175,7 +184,7 @@ function EscolherHorario({ navigation, params }) {
             icone="check"
             onPress={confirmar}
             carregando={enviando}
-            desativado={!escolha || !quem}
+            desativado={!escolha || !quem || restrito}
           />
         </>
       }
@@ -218,6 +227,7 @@ function EscolherHorario({ navigation, params }) {
       )}
 
       <CabecalhoSecao titulo="Escolha o horário" />
+      <AvisoRestricao situacao={situacao} />
       {primeiro && (
         <Cartao
           onPress={() => setEscolha({ medico: primeiro.medico, data: primeiro.data, hora: primeiro.hora })}
@@ -251,8 +261,8 @@ function EscolherHorario({ navigation, params }) {
             {dias.length === 0 ? (
               <View style={estilos.semHorario}>
                 <Texto>
-                  <Texto variante="negrito">Sem horários nas próximas 4 semanas.</Texto> Entre na lista de espera e
-                  avisamos quando abrir uma vaga.
+                  <Texto variante="negrito">{restrito ? 'Agendamento direto indisponível por enquanto.' : 'Sem horários livres agora.'}</Texto> Entre na lista de
+                  espera e avisamos quando abrir uma vaga.
                 </Texto>
                 {fila && fila.medico.id === medico.id ? (
                   <>

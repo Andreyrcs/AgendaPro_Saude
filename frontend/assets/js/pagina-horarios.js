@@ -1,6 +1,6 @@
-/* AgendaPro Saúde v2 — Horários da clínica (protótipo, dados FICTÍCIOS)
+/* AgendaPro Saúde — Horários da clínica
    O expediente de cada médico desenhado num eixo das 7h às 19h, o almoço hachurado e a linha
-   do agora na faixa de segunda a sexta. Editar muda só esta tela: no protótipo nada é salvo. */
+   do agora na faixa de segunda a sexta. O que se salva aqui abre (ou muda) a agenda do médico. */
 (function () {
   "use strict";
 
@@ -12,8 +12,6 @@
   const I = A.icone;
   const $ = (s) => document.querySelector(s);
 
-  const SEG = "2026-10-19";
-  const SAB = "2026-10-24";
   const JANELA = C.FIM - C.INICIO;
   const HOJE_SEMANA = C.data(D.hoje).getDay() >= 1 && C.data(D.hoje).getDay() <= 5;
 
@@ -21,9 +19,11 @@
   const exp = {};
   D.medicos.forEach((md) => {
     const naAgenda = C.MEDICOS.includes(md.id);
+    const e = C.EXPEDIENTE[md.id] || {};
+    const min = (x) => (x ? [C.hm(x[0]), C.hm(x[1])] : null);
     exp[md.id] = {
-      semana: naAgenda ? C.expediente(md.id, SEG) : null,
-      sabado: naAgenda ? C.expediente(md.id, SAB) : null,
+      semana: naAgenda ? min(e.semana) : null,
+      sabado: naAgenda ? min(e.sabado) : null,
       dur: C.DURACAO[md.id] || 30,
     };
   });
@@ -148,6 +148,7 @@
     const md = K.medico(editando);
     const antes = Object.assign({}, exp[editando]);
     exp[editando] = { semana: s, sabado: b, dur };
+    K.guardar.expediente(editando, exp[editando]);
     K.fecharDialogo(dlg);
     desenhar();
     const linha = document.querySelector('#linhas tr[data-id="' + editando + '"]');
@@ -155,9 +156,9 @@
     const id = editando;
     K.toast({
       titulo: "Expediente de " + md.nome + " salvo",
-      texto: "No protótipo, a agenda não muda e nada fica salvo.",
+      texto: "A agenda passa a usar este horário.",
       icone: "clock",
-      acao: { rotulo: "Desfazer", fazer: () => { exp[id] = antes; desenhar(); } },
+      acao: { rotulo: "Desfazer", fazer: () => { exp[id] = antes; K.guardar.expediente(id, antes); desenhar(); } },
     });
   });
 

@@ -64,3 +64,18 @@
   background: var(--noite);
   color: #fff;
 }
+
+/* celular: as ações do cabeçalho (Dia/Semana/Mês e Nova consulta) quebram linha em vez de sair da tela */
+.titulo-linha__acoes {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+@media (max-width: 640px) {
+  .titulo-linha__acoes {
+    width: 100%;
+  }
+  .titulo-linha__acoes > .botao {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}

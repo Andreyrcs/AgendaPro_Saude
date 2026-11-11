@@ -252,6 +252,7 @@ a {
     white-space: nowrap;
     display: inline-flex;
     align-items: center;
+    justify-content: space-between;             
     gap: 22px;
     min-height: 64px;
     padding: 7px 7px 7px 30px;

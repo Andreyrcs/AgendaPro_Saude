@@ -1,6 +1,6 @@
-/* AgendaPro Saúde v2 — Lista de espera da clínica (protótipo, dados FICTÍCIOS)
+/* AgendaPro Saúde — Lista de espera da clínica.
    À esquerda, os médicos e quantas pessoas esperam por cada um; à direita, a fila do escolhido,
-   com a próxima vaga aberta e a ação de oferecê-la à 1ª pessoa. Nada é salvo. */
+   com o próximo horário livre e a ação de oferecê-lo à 1ª pessoa. Tudo fica gravado (clinica-dados.js). */
 (function () {
   "use strict";
 
@@ -22,18 +22,12 @@
   /* vindo da Nova consulta ("Oferecer a Rita"): a vaga daquele horário vem primeiro */
   const vagaPedida = new URLSearchParams(location.search).get("vaga");
 
-  /* horário que alguém marcou fora da fila já não está livre (o registro fica guardado; a consulta, não) */
-  K.guardar.registrosForaDaFila().forEach((r) => {
-    const k = C.consultas.find((x) => x.medico === r.medico && x.data === r.dia && C.txt(x.ini) === r.hora && x.status === "vaga");
-    if (k) { k.status = "confirmada"; k.paciente = r.paciente; }
-  });
-
-  /* a próxima vaga aberta (cancelamento) de um médico, de agora em diante */
+  /* o próximo horário livre ou oferecido de um médico, de agora em diante */
   function proximaVaga(m) {
-    const pedida = C.consultas.find((k) => k.id === vagaPedida && k.medico === m && (k.status === "vaga" || k.status === "oferecida"));
+    const pedida = C.consultas.find((k) => k.id === vagaPedida && k.medico === m && k.horario);
     if (pedida) return pedida;
     return C.consultas
-      .filter((k) => k.medico === m && (k.status === "vaga" || k.status === "oferecida") && (k.data > D.hoje || (k.data === D.hoje && k.ini >= K.agora())))
+      .filter((k) => k.medico === m && k.horario && (k.data > D.hoje || (k.data === D.hoje && k.ini >= K.agora())))
       .sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : a.ini - b.ini))[0];
   }
 
@@ -63,16 +57,16 @@
     const lista = filaDe(m);
     if (!v) {
       return '<div class="vaga-caixa"><span class="vaga-caixa__texto"><b>Nenhuma vaga aberta por enquanto</b>' +
-        "<span>Quando uma consulta for cancelada, a vaga é oferecida sozinha à 1ª pessoa da fila.</span></span></div>";
+        "<span>Quando a recepção cancela uma consulta deste médico, o horário é oferecido à 1ª pessoa da fila.</span></span></div>";
     }
     const quando = K.cap(A.extenso(v.data)) + ", " + C.txt(v.ini);
-    if (v.status === "oferecida") {
-      return '<div class="vaga-caixa vaga-caixa--oferecida">' + A.folha(v.data, { pequena: true, menta: true }) +
+    if (v.horario === "oferecido") {
+      return '<div class="vaga-caixa vaga-caixa--oferecido">' + A.folha(v.data, { pequena: true, menta: true }) +
         '<span class="vaga-caixa__texto"><b>Vaga de ' + quando + " oferecida a " + A.esc(v.paciente) + "</b>" +
         "<span>A pessoa tem 30 minutos para confirmar. Se não confirmar, a vaga passa para a próxima.</span></span></div>";
     }
     return '<div class="vaga-caixa">' + A.folha(v.data, { pequena: true }) +
-      '<span class="vaga-caixa__texto"><b>Vaga aberta: ' + quando + "</b><span>Horário livre por cancelamento.</span></span>" +
+      '<span class="vaga-caixa__texto"><b>Horário livre: ' + quando + "</b><span>Pode ser oferecido à 1ª pessoa da fila.</span></span>" +
       (lista.length
         ? '<button type="button" class="botao botao--menta botao--pequeno" data-oferecer="' + v.id + '">' + I("bell-ring", "ic-sm") + "Oferecer a " + A.esc(primeiroNome(lista[0].nome)) + "</button>"
         : "") + "</div>";
@@ -147,19 +141,20 @@
 
   function oferecer(id) {
     const v = C.consultas.find((k) => k.id === id);
+    if (!v) return;
     const lista = filaDe(v.medico);
-    if (!v || !lista.length) return;
+    if (!lista.length) return;
     const antes = posicoes();
     const p = lista.shift();
-    v.status = "oferecida";
-    v.paciente = p.nome;
+    K.guardar.saiuDaFila(v.medico, p.nome);
+    C.oferecerHorario(v, p.nome);
     desenharTudo();
     subir(antes);
     K.toast({
       titulo: "Vaga oferecida a " + p.nome,
       texto: K.curtoData(v.data) + ", " + C.txt(v.ini) + " com " + K.medico(v.medico).nome + ". " + (p.app ? "Aviso enviado pelo app." : "Ligue para " + (p.tel || "a pessoa") + "."),
       icone: "bell-ring",
-      acao: { rotulo: "Desfazer", fazer: () => { lista.unshift(p); v.status = "vaga"; v.paciente = null; desenharTudo(); } },
+      acao: { rotulo: "Desfazer", fazer: () => { lista.unshift(p); K.guardar.voltouParaFila(v.medico, p); C.liberarHorario(v); desenharTudo(); } },
     });
   }
 
@@ -232,8 +227,16 @@
     desenharTudo();
     const novo = document.querySelector("#pessoas .pessoa:last-child");
     if (novo && !M.reduzido()) novo.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: 240, easing: M.EASE_OUT });
-    K.toast({ titulo: nome + " entrou na fila", texto: filaDe(m).length + "ª posição com " + K.medico(m).nome + ". Fica guardado neste navegador.", icone: "list-ordered" });
+    K.toast({ titulo: nome + " entrou na fila", texto: filaDe(m).length + "ª posição com " + K.medico(m).nome + ".", icone: "list-ordered" });
   });
 
+  /* outra aba mudou a fila ou a agenda (paciente respondeu a vaga, recepção cancelou): redesenha */
+  C.aoMudar(() => { if (atual) desenharTudo(); });
+
+  if (!atual) {
+    $("#subtitulo").textContent = "Cadastre os médicos da clínica para abrir a lista de espera.";
+    $("#adicionar").hidden = true;
+    return;
+  }
   desenharTudo();
 })();

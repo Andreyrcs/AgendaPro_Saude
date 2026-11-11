@@ -1,6 +1,7 @@
-// Tela inicial: atalho para o assistente, próxima consulta, lista de espera,
-// família e o que ficou pendente depois das consultas.
+// Tela inicial: "Confirme sua consulta" (Vou / Não vou), faltas e restrição, atalho para o assistente,
+// próxima consulta, lista de espera, família e o que ficou pendente depois das consultas.
 
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Tela from '../componentes/Tela';
@@ -14,7 +15,9 @@ import { AvatarFamiliar } from '../componentes/Avatar';
 import { Carregando, EstadoVazio, MensagemErro } from '../componentes/Estados';
 import useDadosDaTela from '../componentes/useDadosDaTela';
 import { useSessao } from '../contexto/SessaoContext';
-import { listarConsultas } from '../servicos/consultas';
+import { listarConsultas, listarParaConfirmar, buscarSituacao, confirmarPresenca, cancelarConsulta } from '../servicos/consultas';
+import { CartaoConfirmarPresenca, AvisoRestricao } from '../componentes/Presenca';
+import { textoDasFaltas } from '../utilitarios/status';
 import { buscarMinhaFila } from '../servicos/espera';
 import { listarFamiliares } from '../servicos/familia';
 import { listarAcompanhamento } from '../servicos/acompanhamento';
@@ -33,15 +36,39 @@ function saudacao() {
 export default function InicioTela({ navigation }) {
   const { usuario } = useSessao();
   const { dados, erro, recarregar } = useDadosDaTela(async () => {
-    // As quatro buscas são independentes: pede todas ao mesmo tempo
-    const [consultas, fila, familia, acompanhamento] = await Promise.all([
+    // As buscas são independentes: pede todas ao mesmo tempo
+    const [consultas, fila, familia, acompanhamento, paraConfirmar, situacao] = await Promise.all([
       listarConsultas(usuario),
       buscarMinhaFila(usuario),
       listarFamiliares(usuario),
       listarAcompanhamento(usuario),
+      listarParaConfirmar(usuario),
+      buscarSituacao(usuario),
     ]);
-    return { consultas, fila, familia, acompanhamento };
+    return { consultas, fila, familia, acompanhamento, paraConfirmar, situacao };
   });
+  const [respondendo, setRespondendo] = useState(false);
+  const [aviso, setAviso] = useState(null);
+
+  // "Vou" confirma a presença; "Não vou" cancela (até o fim da véspera, sem nenhuma consequência)
+  async function responder(consulta, vou) {
+    setRespondendo(true);
+    try {
+      if (vou) {
+        await confirmarPresenca(usuario, consulta.id);
+        setAviso('Presença confirmada. Se não puder mais ir, avise; cancelar no dia da consulta conta como falta.');
+      } else {
+        const r = await cancelarConsulta(usuario, consulta.id);
+        setAviso((r.falta ? 'Consulta cancelada. Conta como falta sem aviso.' : 'Consulta cancelada, sem nenhuma consequência.') +
+          (r.oferecidoAFila ? ' O horário foi oferecido a quem espera na lista.' : ''));
+      }
+      await recarregar();
+    } catch (e) {
+      setAviso(e.message);
+    } finally {
+      setRespondendo(false);
+    }
+  }
 
   const titulo = `${saudacao()}, ${primeiroNome(usuario.nome)}`;
   const hoje = extenso(HOJE);
@@ -66,7 +93,29 @@ export default function InicioTela({ navigation }) {
 
   return (
     <Tela titulo={titulo} subtitulo={subtitulo}>
-      {/* Atalho para o assistente */}
+      {/* Confirmação de presença, a partir do início da véspera */}
+      {dados.paraConfirmar.map((c) => (
+        <CartaoConfirmarPresenca
+          key={c.id}
+          consulta={c}
+          ocupado={respondendo}
+          aoVou={() => responder(c, true)}
+          aoNaoVou={() => responder(c, false)}
+        />
+      ))}
+      {aviso && (
+        <Texto variante="meta" accessibilityLiveRegion="polite" style={estilos.avisoPresenca}>
+          {aviso}
+        </Texto>
+      )}
+      <AvisoRestricao situacao={dados.situacao} />
+      {dados.situacao.faltas > 0 && (
+        <Texto variante="meta" style={estilos.avisoPresenca}>
+          {textoDasFaltas(dados.situacao.faltas)}
+        </Texto>
+      )}
+
+      {/* Atalho para o assistente (nunca é bloqueado) */}
       <Pressable
         onPress={() => navigation.navigate('Assistente')}
         accessibilityRole="button"
@@ -190,6 +239,7 @@ export default function InicioTela({ navigation }) {
 }
 
 const estilos = StyleSheet.create({
+  avisoPresenca: { marginBottom: espaco.m },
   flex: { flex: 1 },
   espacoTopo: { marginTop: espaco.xs },
   assistente: { backgroundColor: cores.noite2, borderRadius: raios.cartao, padding: espaco.g, gap: espaco.m },

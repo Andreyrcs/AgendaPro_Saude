@@ -1,4 +1,4 @@
-# AgendaPro Saúde — Documentação Completa do Protótipo
+# AgendaPro Saúde — Documentação Completa do Sistema
 
 ## Sumário
 
@@ -18,7 +18,7 @@
 
 ### O que é
 
-O **AgendaPro Saúde** é um protótipo navegável de sistema de agendamento de consultas médicas para clínicas e consultórios. Ele simula o fluxo completo entre três atores principais: a **recepção da clínica**, o **médico** e o **paciente**.
+O **AgendaPro Saúde** é um sistema de agendamento de consultas médicas para clínicas e consultórios. Ele simula o fluxo completo entre três atores principais: a **recepção da clínica**, o **médico** e o **paciente**.
 
 ### Público-alvo
 
@@ -34,7 +34,7 @@ O **AgendaPro Saúde** é um protótipo navegável de sistema de agendamento de 
 - **Frontend puro** — HTML, CSS e JavaScript vanilla, sem frameworks ou bundlers
 - **Dados simulados** — Gerados deterministicamente via seeded PRNG (pseudo-random number generator) em `clinica-dados.js`, usando dados base de `dados.js`
 - **Persistência local** — `localStorage` para preferências do usuário, comunicação entre telas e estado de retornos/notificações
-- **Sem backend real** — O diretório `backend/` existe mas não é utilizado pelo protótipo frontend
+- **Sem backend real** — O diretório `backend/` existe mas não é utilizado pelo sistema frontend
 - **Relógio simulado** — Na tela do médico, o horário começa em 10:40 e avança em tempo real
 
 ### Estrutura de Arquivos
@@ -393,7 +393,7 @@ O app mobile é apresentado dentro de um **mockup de iPhone** (390×844px) com:
 - Barra de status simulada (hora 9:41, sinais de rede, bateria)
 - Barra de navegação inferior com 4 abas: Início, Agenda, Família, Perfil
 
-**Painel informativo (desktop):** À esquerda do mockup, um painel explica o protótipo com links de navegação rápida e dicas de teste.
+**Painel informativo (desktop):** À esquerda do mockup, um painel explica o sistema com links de navegação rápida e dicas de teste.
 
 ### 4.2 Telas (12 telas)
 
@@ -566,7 +566,7 @@ O app desktop oferece as **mesmas 12 telas** do mobile, mas com layout adaptado:
 
 ### 6.1 Dados Base (`dados.js` → `window.DADOS`)
 
-Contém os dados estáticos do protótipo:
+Contém os dados estáticos do sistema:
 
 **Clínica:**
 - Nome, endereço, telefone, CNPJ
@@ -630,7 +630,7 @@ Gera deterministicamente as consultas usando seeded PRNG:
 
 **Funções de data:**
 - `data(iso)` — Parse de data ISO para objeto Date
-- `hoje()` — Data "hoje" do protótipo (2026-10-20)
+- `hoje()` — Data de hoje (a data real do computador)
 - `diasAte(iso)` — Dias até uma data futura
 - `relativo(iso)` — "hoje", "amanhã", "em 3 dias", "há 2 dias"
 - `extenso(iso)` — "segunda, 20 de outubro"
@@ -784,4 +784,4 @@ confirmada ──→ chegou ──→ em ──→ atendida
 
 ---
 
-*Documento gerado em novembro de 2026 como parte do protótipo AgendaPro Saúde.*
+*Documento gerado em novembro de 2026 como parte do sistema AgendaPro Saúde.*

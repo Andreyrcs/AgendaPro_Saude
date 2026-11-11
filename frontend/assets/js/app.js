@@ -1,4 +1,4 @@
-/* AgendaPro Saúde — app do paciente (protótipo navegável, dados fictícios) */
+/* AgendaPro Saúde — área do paciente na versão para celular (as ações que mexem na clínica estão em paciente-servicos.js) */
 (function () {
   "use strict";
 
@@ -23,7 +23,7 @@
     chat: [],
     notifLidas: false,
     agendaAba: "calendario",
-    cal: { mes: "2026-10", filtro: "todos", foco: null },
+    cal: { mes: D.hoje.slice(0, 7), filtro: "todos", foco: null },
     calAtivo: null,
     pendente: null,
     prevFiltro: "todos",
@@ -132,7 +132,7 @@
       '<span class="consulta-cartao__corpo">' +
       '<span class="consulta-cartao__esp">' + esp(m.esp).nome + "</span>" +
       '<span class="consulta-cartao__medico">' + m.nome + "</span>" +
-      '<span class="meta">' + I("clock") + '<span class="num">' + c.hora + "</span>" + (passada ? " · Realizada" : " · " + A.relativo(c.data)) + "</span>" +
+      '<span class="meta">' + I("clock") + '<span class="num">' + c.hora + "</span>" + (passada ? " · " + D.STATUS_CONSULTA[c.status || "atendida"] : " · " + A.relativo(c.data)) + "</span>" +
       '<span class="pessoa-chip">' + A.avatar(p, 28) + nomeCurto(p) + "</span>" +
       "</span>" +
       I("chevron-right", "item__seta") +
@@ -141,6 +141,31 @@
   }
 
   /* ─── Telas ─── */
+
+  /* ─── Presença e faltas: cartão "Confirme sua consulta", faltas registradas e restrição ─── */
+  function restricaoHTML(r) {
+    return '<div class="aviso-regra aviso-regra--forte" role="note">' + I("info") + "<span><b>" + r.titulo + "</b>" + r.texto +
+      (r.tipo === "so_recepcao"
+        ? '<br><a class="botao botao--principal" style="margin-top:10px" href="tel:' + D.clinica.telefoneLink + '">' + I("phone") + "Ligar para a clínica · " + D.clinica.telefone + "</a>"
+        : "") + "</span></div>";
+  }
+  function presencaHTML() {
+    let h = PACIENTE.paraConfirmar().map((c) => {
+      const m = medico(c.medico);
+      const p = pessoa(c.pessoa);
+      const amanha = c.data > D.hoje;
+      return '<section class="confirmar-presenca" aria-label="Confirmar presença">' +
+        "<p><b>Confirme sua consulta " + (amanha ? "de amanhã" : "de hoje") + "</b><br>" + esp(m.esp).nome + " com " + m.nome + ", às " + c.hora +
+        (p.id === D.titular ? "" : " · para " + p.curto) + ".</p>" +
+        (amanha ? '<p style="font-size:0.875rem">Se não puder ir, toque em “Não vou” até o fim de hoje: não há nenhuma consequência.</p>' : "") +
+        '<div class="confirmar-presenca__acoes"><button type="button" class="botao botao--principal" data-vou="' + c.id + '">Vou</button>' +
+        '<button type="button" class="botao botao--secundario" data-naovou="' + c.id + '">Não vou</button></div></section>';
+    }).join("");
+    const r = PACIENTE.avisoDeRestricao();
+    if (r) h += restricaoHTML(r);
+    if (PACIENTE.situacao().faltas) h += '<p class="item__sub" style="margin:0 0 12px">' + PACIENTE.textoDasFaltas() + "</p>";
+    return h;
+  }
 
   function telaInicio() {
     const t = pessoa(D.titular);
@@ -158,6 +183,7 @@
     html +=
       '<div class="anima" style="--i:1"><p class="saudacao">Olá, ' + t.curto + '</p>' +
       '<h1 class="titulo-tela" tabindex="-1">Como você está se sentindo hoje?</h1></div>';
+    html += '<div class="anima" style="--i:2">' + presencaHTML() + "</div>";
 
 
     html +=
@@ -421,8 +447,11 @@
     let quem = pessoa(pessoaId) && elegivel(pessoa(pessoaId)) ? pessoaId : (D.pessoas.find(elegivel) || pessoa(D.titular)).id;
     let escolha = null;
 
+    /* faltas sem aviso podem limitar o agendamento direto (o assistente e o 192 nunca são bloqueados) */
+    const restricao = PACIENTE.avisoDeRestricao();
+
     function horariosHTML() {
-      const h = primeiroHorario(e);
+      const h = restricao ? null : primeiroHorario(e);
       const primeiro = h
         ? '<button type="button" class="primeiro-livre pressionavel" data-primeiro data-medico="' + h.medico.id + '" data-data="' + h.data + '" data-hora="' + h.hora + '">' +
           A.folha(h.data, { pequena: true }) +
@@ -433,7 +462,7 @@
         primeiro +
         '<h3 class="secao__titulo" style="margin-top:22px">' + (h ? "Ou escolha outro horário" : "Horários") + "</h3>" +
         medicosDa(e).map((m) => {
-          const dias = D.horarios[m.id] || [];
+          const dias = restricao ? [] : D.horarios[m.id] || [];
           const naFila = D.espera && !D.espera.resolvida && D.espera.medico === m.id;
           return (
             '<div class="cartao medico">' +
@@ -446,7 +475,9 @@
                   d.horas.map((hh) => '<button type="button" class="hora pressionavel" aria-pressed="false" data-medico="' + m.id + '" data-data="' + d.data + '" data-hora="' + hh + '" aria-label="' + A.extenso(d.data) + " às " + hh + " com " + m.nome + '">' + hh + "</button>").join("") +
                   "</div></div>"
                 ).join("")
-              : '<div class="sem-horario"><p><b>Sem horários nas próximas 4 semanas.</b> Entre na lista de espera e avisamos quando abrir uma vaga.</p>' +
+              : restricao && restricao.tipo === "so_recepcao"
+              ? '<div class="sem-horario"><p><b>Agende pela recepção.</b></p></div>'
+              : '<div class="sem-horario"><p><b>' + (restricao ? "Agendamento direto indisponível por enquanto." : "Sem horários livres agora.") + "</b> Entre na lista de espera e avisamos quando abrir uma vaga.</p>" +
                 (naFila
                   ? '<p style="margin-top:6px">Você já está na fila: <b>' + A.ordinal(D.espera.posicao, "f") + " posição</b>.</p>" +
                     '<a class="botao botao--menta botao--pequeno" href="#espera">' + I("list-ordered") + "Ver minha posição</a>"
@@ -471,7 +502,11 @@
       "</div>" +
       (e === "pediatria" ? '<p class="item__sub" style="margin-top:8px">A pediatria atende crianças e adolescentes até 18 anos.</p>' : "") +
       "</section>" +
-      '<section class="secao" style="margin-top:22px"><h2 class="secao__titulo">Escolha o horário</h2><div id="horarios" style="margin-top:10px">' + horariosHTML() + "</div></section></div>" +
+      '<section class="secao" style="margin-top:22px"><h2 class="secao__titulo">Escolha o horário</h2>' +
+      (restricao ? restricaoHTML(restricao) : "") +
+      '<div id="horarios" style="margin-top:10px">' + horariosHTML() + "</div></section>" +
+      '<section class="secao" style="margin-top:22px"><p class="item__sub" style="margin-bottom:8px">' + PACIENTE.textoDasFaltas() + "</p>" +
+      '<p class="aviso-regra">' + I("info") + "<span>" + PACIENTE.textoDaRegra() + "</span></p></section></div>" +
       '<div class="barra-confirmar">' +
       '<p class="barra-confirmar__resumo" id="resumo" aria-live="polite">Escolha um horário acima.</p>' +
       '<button type="button" class="botao botao--principal botao--largo" id="confirmar" disabled>Confirmar consulta</button>' +
@@ -516,10 +551,12 @@
         const bf = ev.target.closest("[data-fila]");
         if (bf) {
           const m = medico(bf.dataset.fila);
+          const fila = PACIENTE.entrarNaFila(m.id);
+          if (!fila) return;
           abrirGaveta(
             '<div class="gaveta__ok">' + I("list-ordered") + "</div>" +
             '<h2 class="gaveta__titulo" id="gaveta-titulo">Você entrou na fila</h2>' +
-            '<p class="gaveta__texto">Você é a <b>5ª</b> da fila de ' + m.nome + ". Se alguém cancelar, mandamos uma notificação e você tem 30 minutos para confirmar.</p>" +
+            '<p class="gaveta__texto">Você é a <b>' + A.ordinal(fila.posicao, "f") + "</b> da fila de " + m.nome + ". Quando a recepção cancelar uma consulta deste médico e for a sua vez, avisamos e você tem 30 minutos para confirmar.</p>" +
             '<div class="gaveta__acoes"><button type="button" class="botao botao--principal" data-fechar>Entendi</button></div>'
           );
         }
@@ -545,10 +582,11 @@
 
       botao.addEventListener("click", () => {
         if (!escolha) return;
-        const disp = D.horarioDisputado;
-        if (disp && disp.medico === escolha.medico && disp.data === escolha.data && disp.hora === escolha.hora) {
+        /* outra pessoa pode ter marcado este horário agora há pouco (na recepção ou no app) */
+        const CD = window.CLIDADOS;
+        const ocupado = CD.consultas.some((k) => k.medico === escolha.medico && k.data === escolha.data && k.ini === CD.hm(escolha.hora) && CD.horarioDe(k) === "ocupado");
+        if (ocupado) {
           tirarHorario(escolha);
-          D.horarioDisputado = null;
           el.querySelector("#horarios").innerHTML = horariosHTML();
           resumo.classList.add("barra-confirmar__resumo--erro");
           resumo.innerHTML = "<b>Esse horário acabou de ser ocupado por outra pessoa.</b><br>Escolha outro horário. A lista já foi atualizada.";
@@ -559,6 +597,7 @@
         }
         const nova = { id: "n" + Date.now(), pessoa: quem, medico: escolha.medico, data: escolha.data, hora: escolha.hora, sala: "Sala 3", status: "confirmada", motivo: "Marcada pelo app" };
         D.consultas.push(nova);
+        PACIENTE.marcar(nova);
         tirarHorario(escolha);
         sucessoConsulta(nova);
       });
@@ -608,7 +647,7 @@
     );
   }
 
-  /* ─── Lista de espera: a vaga aberta (vem da clínica ou da simulação) ─── */
+  /* ─── Lista de espera: a vaga que a recepção ofereceu (paciente-servicos.js lê da agenda da clínica) ─── */
   function oferecerVaga() {
     const e = D.espera;
     if (!e || e.resolvida) return;
@@ -662,27 +701,25 @@
             clearInterval(timer);
             const c = { id: "v" + Date.now(), pessoa: e.pessoa, medico: e.medico, data: v.data, hora: v.hora, sala: "Sala 6", status: "confirmada", motivo: "Vaga da lista de espera" };
             D.consultas.push(c);
-            e.resolvida = true;
-            e.oferta = false;
+            PACIENTE.responderVaga(true);
             fecharGaveta(true);
             if (estado.calAtivo) estado.calAtivo.atualizar();
-            MOV.canal.enviar({ tipo: "vaga-confirmada", pessoa: "Juliana Santos" });
             sucessoConsulta(c, "Vaga confirmada!");
           });
           function ligarRecusa() {
             g.querySelector("#vaga-nao").addEventListener("click", () => {
               const r = g.querySelector("#recusa");
               r.innerHTML =
-                "<p><b>Recusar esta vaga?</b> Você continua na 1ª posição para a próxima.</p>" +
+                "<p><b>Recusar esta vaga?</b> Ela passa para a próxima pessoa e você continua na fila.</p>" +
                 '<div class="gaveta__acoes"><button type="button" class="botao botao--secundario" id="vaga-voltar">Voltar</button>' +
                 '<button type="button" class="botao botao--texto-perigo" id="vaga-nao-sim">Sim, recusar esta vaga</button></div>';
               g.querySelector("#vaga-voltar").addEventListener("click", () => { r.innerHTML = recusaHTML; ligarRecusa(); g.querySelector("#vaga-nao").focus(); });
               g.querySelector("#vaga-nao-sim").addEventListener("click", () => {
                 clearInterval(timer);
-                e.oferta = false;
+                PACIENTE.responderVaga(false);
                 if (estado.calAtivo) estado.calAtivo.atualizar();
                 fecharGaveta();
-                aviso({ titulo: "Vaga recusada", texto: "Ela passou para a próxima pessoa. Você continua na 1ª posição.", icone: "info" });
+                aviso({ titulo: "Vaga recusada", texto: "Ela volta para a recepção oferecer a outra pessoa. Você continua na fila.", icone: "info" });
               });
               g.querySelector("#vaga-voltar").focus();
             });
@@ -726,8 +763,7 @@
       interruptor("notificar", "Notificação no celular", "Recomendado: é o aviso mais rápido", e.notificar) +
       interruptor("sms", "Mensagem de texto (SMS)", "Para o número terminado em 4471", e.sms) +
       "</div></section>" +
-      '<div class="demo"><p>Demonstração para a apresentação: simula alguém da fila cancelando a consulta.</p>' +
-      '<button type="button" class="botao botao--secundario botao--largo" id="simular">' + I("repeat") + "Simular cancelamento</button></div>" +
+      '<section class="secao"><div class="cartao"><p><b>Como a vaga chega</b></p><p class="item__sub">Quando a recepção cancela uma consulta com ' + m.nome + ", o horário é oferecido à 1ª pessoa da fila. Se for você, o aviso aparece aqui na hora.</p></div></section>" +
       '<div class="zona-perigo"><button type="button" class="botao botao--texto-perigo" id="sair-fila">Sair da fila</button><p>Você perde a sua posição.</p></div>';
 
     function montar(el) {
@@ -740,20 +776,6 @@
         }
       });
 
-      el.querySelector("#simular").addEventListener("click", (ev) => {
-        if (e.posicao > 1) {
-          e.posicao -= 1;
-          e.naFila -= 1;
-          const novo = A.ordinal(e.posicao, g);
-          rolar(el.querySelector("#pos"), novo);
-          el.querySelector("#pos-txt").textContent = novo;
-          el.querySelector("#fila").innerHTML = filaHTML(e.posicao, e.naFila);
-          anunciar("Alguém cancelou. Agora você é a " + novo + " da fila.");
-          if (e.posicao === 1) ev.currentTarget.lastChild.textContent = "Simular nova vaga";
-        } else {
-          oferecerVaga();
-        }
-      });
 
       el.querySelector("#sair-fila").addEventListener("click", () => {
         abrirGaveta(
@@ -763,7 +785,7 @@
           '<div class="gaveta__acoes" style="margin-top:28px"><button type="button" class="botao botao--texto-perigo" id="confirmar-sair">Sair da fila</button></div>',
           {
             montar: (g2) => g2.querySelector("#confirmar-sair").addEventListener("click", () => {
-              e.resolvida = true;
+              PACIENTE.sairDaFila();
               fecharGaveta();
               aviso({ titulo: "Você saiu da fila", texto: "Sua vaga passou para a próxima pessoa.", icone: "info" });
               location.hash = "#inicio";
@@ -831,8 +853,12 @@
                 campo.focus();
                 return;
               }
+              const rel = (g.querySelector('.opcoes [aria-checked="true"]') || {}).textContent || "Familiar";
+              D.pessoas.push({ id: "f" + Date.now(), nome, curto: nome.split(" ")[0], tratamento: nome.split(" ")[0], relacao: rel, idade: null, genero: null, cor: "var(--id-davi)", alergias: "Nenhuma informada", sus: "" });
+              PACIENTE.salvar();
               fecharGaveta();
-              aviso({ titulo: "Prontinho: " + nome.split(" ")[0] + " agora está na família", texto: "No protótipo nada é salvo: é só uma demonstração.", icone: "users" });
+              navegar();
+              aviso({ titulo: "Prontinho: " + nome.split(" ")[0] + " agora está na família", texto: "Você já pode marcar consultas para essa pessoa.", icone: "users" });
             });
           },
         }
@@ -995,7 +1021,7 @@
         estado.calAtivo = null;
         if (cal) {
           estado.calAtivo = window.CalPaciente.criar(painel, {
-            D, estado: estado.cal, limites: ["2026-09", "2027-04"], anunciar, aoConfirmarVaga: abrirVaga,
+            D, estado: estado.cal, limites: [D.mes(-2), D.mes(6)], anunciar, aoConfirmarVaga: abrirVaga,
           });
           return;
         }
@@ -1012,8 +1038,8 @@
         painel.innerHTML =
           '<section class="secao" style="margin-top:18px" aria-labelledby="t-prox">' + cabecaSecao("Próximas", null, null, "t-prox") +
           (itens.length ? itens.map((x) => x.html).join("") : '<p class="cartao">Nenhuma consulta marcada.</p>') + "</section>" +
-          '<section class="secao" aria-labelledby="t-pass">' + cabecaSecao("Já realizadas", null, null, "t-pass") +
-          (passadas.length ? passadas.map((c) => linhaConsulta(c, true)).join("") : '<p class="cartao">Nenhuma consulta realizada.</p>') + "</section>";
+          '<section class="secao" aria-labelledby="t-pass">' + cabecaSecao("Histórico", null, null, "t-pass") +
+          (passadas.length ? passadas.map((c) => linhaConsulta(c, true)).join("") : '<p class="cartao">Nenhuma consulta no histórico.</p>') + "</section>";
       }
       desenhar();
       el.querySelectorAll('[role="tab"]').forEach((b) => b.addEventListener("click", () => {
@@ -1043,7 +1069,7 @@
     const passada = D.passadas.includes(c);
     const m = medico(c.medico), p = pessoa(c.pessoa);
     const html =
-      barra("Consulta", passada ? "Realizada" : cap(A.relativo(c.data))) +
+      barra("Consulta", passada ? D.STATUS_CONSULTA[c.status || "atendida"] : cap(A.relativo(c.data))) +
       '<div class="cartao consulta-cartao" style="margin-top:8px">' + A.folha(c.data, { bloco: true }) +
       '<span class="consulta-cartao__corpo"><span class="consulta-cartao__esp">' + esp(m.esp).nome + '</span><span class="consulta-cartao__medico">' + m.nome + "</span>" +
       '<span class="pessoa-chip">' + A.avatar(p, 30) + "Para " + (p.id === D.titular ? "você" : p.tratamento) + "</span></span></div>" +
@@ -1060,23 +1086,32 @@
           '<a class="botao botao--principal" href="https://www.google.com/maps/search/' + encodeURIComponent(D.clinica.endereco) + '" target="_blank" rel="noopener">' + I("map-pin") + "Como chegar</a>" +
           '<a class="botao botao--secundario" href="#agendar/' + m.esp + "/" + p.id + '">' + I("calendar-days") + "Remarcar</a>" +
           '<a class="botao botao--secundario" href="tel:' + D.clinica.telefoneLink + '">' + I("phone") + "Ligar para a clínica " + D.clinica.telefone + "</a></div>" +
-          '<p class="aviso-falta">' + I("info") + "<span>Se não puder ir, cancele ou remarque antes. Quem passa de " + D.politica.toleranciaMin + " minutos de atraso é marcado como falta, com multa de <b>" + A.reais(D.politica.multa) + "</b>.</span></p>" +
-          '<div class="zona-perigo"><button type="button" class="botao botao--texto-perigo" id="cancelar">Cancelar consulta</button><p>A vaga vai para quem está na lista de espera.</p></div>');
+          '<p class="aviso-falta">' + I("info") + "<span>" + PACIENTE.textoDaRegra() + "</span></p>" +
+          '<div class="zona-perigo"><button type="button" class="botao botao--texto-perigo" id="cancelar">Cancelar consulta</button><p>Cancelar até o fim do dia anterior não tem nenhuma consequência.</p></div>');
 
     function montar(el) {
       const b = el.querySelector("#cancelar");
       if (!b) return;
       b.addEventListener("click", () => {
+        const contaFalta = PACIENTE.vaiContarFalta(c);
         abrirGaveta(
           '<h2 class="gaveta__titulo" id="gaveta-titulo">Cancelar esta consulta?</h2>' +
           '<p class="gaveta__texto">' + esp(m.esp).nome + " com " + m.nome + ", " + A.extenso(c.data) + ", às " + c.hora + ".</p>" +
+          (contaFalta
+            ? '<p class="aviso-regra aviso-regra--forte">' + I("info") + "<span>Hoje é o dia da consulta e você confirmou presença: cancelar agora conta como falta sem aviso.</span></p>"
+            : '<p class="gaveta__texto">Sem nenhuma consequência: o horário volta para quem precisa.</p>') +
           '<div class="gaveta__acoes"><button type="button" class="botao botao--principal" data-fechar>Manter consulta</button></div>' +
           '<div class="gaveta__acoes" style="margin-top:28px"><button type="button" class="botao botao--texto-perigo" id="confirmar-cancelar">Sim, cancelar consulta</button></div>',
           {
             montar: (g) => g.querySelector("#confirmar-cancelar").addEventListener("click", () => {
-              D.consultas = D.consultas.filter((k) => k !== c);
+              const r = PACIENTE.cancelar(c);
               fecharGaveta();
-              aviso({ titulo: "Consulta cancelada", texto: "A vaga foi oferecida a quem está na lista de espera.", icone: "info" });
+              aviso({
+                titulo: "Consulta cancelada",
+                texto: (r.falta ? "Conta como falta sem aviso. " : "") +
+                  (r.oferecidoA ? "O horário foi oferecido a quem espera na lista." : "O horário ficou livre para outra pessoa."),
+                icone: "info",
+              });
               location.hash = "#agenda";
             }),
           }
@@ -1170,8 +1205,10 @@
           aplicarPrefs();
         }
       });
-      el.querySelector("#sair").addEventListener("click", () => {
-        aviso({ titulo: "Saída desativada no protótipo", texto: "Na versão final, você voltaria para a tela de login.", icone: "info" });
+      el.querySelector("#sair").addEventListener("click", async () => {
+        PACIENTE.salvar();
+        await window.API.sair();
+        location.href = "login.html";
       });
     }
     return { titulo: "Perfil", html, montar };
@@ -1398,4 +1435,29 @@
 
   window.addEventListener("hashchange", navegar);
   navegar();
+
+  /* "Vou" / "Não vou" no cartão do Início */
+  document.addEventListener("click", (ev) => {
+    const vou = ev.target.closest("[data-vou]");
+    const nao = ev.target.closest("[data-naovou]");
+    if (!vou && !nao) return;
+    const c = D.consultas.find((k) => k.id === (vou ? vou.dataset.vou : nao.dataset.naovou));
+    if (!c) return;
+    if (vou) {
+      PACIENTE.confirmarPresenca(c);
+      aviso({ titulo: "Presença confirmada", texto: "A clínica já sabe que você vai. Se não puder mais ir, avise; cancelar no dia da consulta conta como falta.", icone: "circle-check" });
+    } else {
+      const r = PACIENTE.cancelar(c);
+      aviso({ titulo: "Consulta cancelada", texto: (r.falta ? "Conta como falta sem aviso. " : "Sem nenhuma consequência. ") + (r.oferecidoA ? "O horário foi oferecido a quem espera na lista." : "O horário ficou livre para outra pessoa."), icone: "info" });
+    }
+    navegar();
+  });
+
+  /* vaga da lista de espera: a recepção ofereceu (agora, em outra aba, ou antes de a página abrir) */
+  if (D.espera && D.espera.oferta) setTimeout(oferecerVaga, 600);
+  PACIENTE.aoMudar((novaVaga) => {
+    if (novaVaga) oferecerVaga();
+    else if (location.hash.startsWith("#espera")) navegar();
+    if (estado.calAtivo) estado.calAtivo.atualizar();
+  });
 })();

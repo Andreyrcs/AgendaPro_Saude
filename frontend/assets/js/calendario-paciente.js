@@ -17,10 +17,11 @@
         exame: { rotulo: 'Exame', icone: 'flask-conical' },
         prevencao: { rotulo: 'Prevenção', icone: 'calendar-heart' },
         retorno: { rotulo: 'Retorno', icone: 'repeat' },
-        vaga: { rotulo: 'Vaga para você', icone: 'bell-ring' },
-        realizada: { rotulo: 'Realizada', icone: 'check' },
+        oferecido: { rotulo: 'Vaga para você', icone: 'bell-ring' },
+        atendida: { rotulo: 'Atendida', icone: 'check' },
+        cancelada: { rotulo: 'Cancelada', icone: 'x' },
     };
-    const ORDEM_SELO = ['vaga', 'retorno', 'exame', 'prevencao'];
+    const ORDEM_SELO = ['oferecido', 'retorno', 'exame', 'prevencao'];
 
     const pad = (n) => String(n).padStart(2, '0');
     const iso = (d) =>
@@ -70,13 +71,13 @@
             D.passadas.forEach((c) => {
                 const m = medico(c.medico);
                 lista.push({
-                    tipo: 'realizada',
+                    tipo: c.status === 'cancelada' ? 'cancelada' : 'atendida',
                     id: c.id,
                     data: c.data,
                     hora: c.hora,
                     pessoa: c.pessoa,
                     titulo: esp(m.esp).nome,
-                    sub: m.nome + ' · realizada',
+                    sub: m.nome + ' · ' + (D.STATUS_CONSULTA[c.status] || 'Atendida').toLowerCase(),
                     href: '#consulta/' + c.id,
                 });
             });
@@ -96,8 +97,8 @@
             if (e && e.oferta && !e.resolvida) {
                 const m = medico(e.medico);
                 lista.push({
-                    tipo: 'vaga',
-                    id: 'vaga',
+                    tipo: 'oferecido',
+                    id: 'oferecido',
                     data: e.vaga.data,
                     hora: e.vaga.hora,
                     pessoa: e.pessoa,
@@ -237,7 +238,7 @@
                             nomeDe(ev.pessoa) +
                             ', ' +
                             TIPOS[ev.tipo].rotulo.toLowerCase() +
-                            (ev.tipo === 'consulta' || ev.tipo === 'realizada'
+                            (ev.tipo === 'consulta' || ev.tipo === 'atendida' || ev.tipo === 'cancelada'
                                 ? ' de ' + ev.titulo
                                 : '') +
                             (ev.hora ? ' às ' + ev.hora : ''),
@@ -256,7 +257,7 @@
             if (dia < hoje) cls.push('cal-dia--passado');
             if (dia === hoje) cls.push('cal-dia--hoje');
             if (d.getDay() === 0 || feriado(dia)) cls.push('cal-dia--domingo');
-            if (evs.some((ev) => ev.tipo === 'vaga')) cls.push('cal-dia--vaga');
+            if (evs.some((ev) => ev.tipo === 'oferecido')) cls.push('cal-dia--oferecido');
             const selo = ORDEM_SELO.find((t) =>
                 evs.some((ev) => ev.tipo === t && passaFiltro(ev)),
             );
@@ -291,12 +292,12 @@
                 d.getDate() +
                 '</span>' +
                 '<span class="cal-dia__marcas" aria-hidden="true">' +
-                (selo && selo !== 'vaga'
+                (selo && selo !== 'oferecido'
                     ? '<svg class="ic cal-selo-mini" aria-hidden="true"><use href="#i-' +
                       TIPOS[selo].icone +
                       '"/></svg>'
                     : '') +
-                (selo === 'vaga'
+                (selo === 'oferecido'
                     ? '<svg class="ic cal-selo-mini" aria-hidden="true"><use href="#i-bell-ring"/></svg>'
                     : '') +
                 marcas +
@@ -395,7 +396,7 @@
                         '>' +
                         A.folha(ev.data, {
                             pequena: true,
-                            menta: ev.tipo === 'vaga',
+                            menta: ev.tipo === 'oferecido',
                         }) +
                         '<span class="consulta-cartao__corpo">' +
                         '<span class="selo-tipo selo-tipo--' +
@@ -518,7 +519,7 @@
             aberto.innerHTML =
                 '<div class="cda-cabeca">' +
                 A.folha(dia, {
-                    menta: dia === hoje || evs.some((ev) => ev.tipo === 'vaga'),
+                    menta: dia === hoje || evs.some((ev) => ev.tipo === 'oferecido'),
                 }) +
                 '<div class="cda-cabeca__texto"><h3 class="cda-cabeca__titulo" tabindex="-1">' +
                 cap(A.extenso(dia)) +
@@ -556,9 +557,9 @@
                             ' · para ' +
                             paraQuem(p.id) +
                             '</span>';
-                        if (ev.tipo === 'vaga') {
+                        if (ev.tipo === 'oferecido') {
                             return (
-                                '<div class="cda-item cda-item--vaga">' +
+                                '<div class="cda-item cda-item--oferecido">' +
                                 A.avatar(p, 44) +
                                 corpo +
                                 '<button type="button" class="botao botao--principal botao--largo" data-confirmar-vaga>Ver e confirmar a vaga</button></span></div>'
@@ -609,8 +610,8 @@
         }
 
         function frenteHTML(cel, s) {
-            const mod = cel.classList.contains('cal-dia--vaga')
-                ? ' giro__frente--vaga'
+            const mod = cel.classList.contains('cal-dia--oferecido')
+                ? ' giro__frente--oferecido'
                 : cel.classList.contains('cal-dia--hoje')
                   ? ' giro__frente--hoje'
                   : '';

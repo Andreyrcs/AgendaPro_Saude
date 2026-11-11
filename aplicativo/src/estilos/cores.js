@@ -26,7 +26,7 @@ export const cores = {
   sobreNoite: '#ffffff',
   sobreNoite2: '#bccbdc',
 
-  // Cor de cada familiar (a mesma do protótipo)
+  // Cor de cada familiar (a mesma da web)
   familia: {
     juliana: '#cfe2f6',
     davi: '#fbdcc6',

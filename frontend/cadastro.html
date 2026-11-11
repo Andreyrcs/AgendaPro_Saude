@@ -275,11 +275,11 @@
                             />
                             <span
                                 >Li e aceito os
-                                <a href="#" class="acesso-link" data-fora
+                                <a href="termos.html" class="acesso-link" target="_blank" rel="noopener"
                                     >Termos de Uso</a
                                 >
                                 e a
-                                <a href="#" class="acesso-link" data-fora
+                                <a href="privacidade.html" class="acesso-link" target="_blank" rel="noopener"
                                     >Política de Privacidade</a
                                 >.</span
                             >
@@ -435,14 +435,6 @@
                     }, 3000);
                 }
 
-                /* ─── Fora do escopo ─── */
-                document.querySelectorAll('[data-fora]').forEach(function (el) {
-                    el.addEventListener('click', function (ev) {
-                        ev.preventDefault();
-                        toast('Fora do escopo deste protótipo');
-                        anunciar('Fora do escopo deste protótipo');
-                    });
-                });
 
                 /* ─── Mostrar/ocultar senha ─── */
                 function setupVerSenha(btnId, inputId) {
@@ -660,7 +652,7 @@
                         return;
                     }
 
-                    /* Simula criação da conta */
+                    /* Cria a conta (api.js) */
                     btnCadastrar.classList.add('btn--carregando');
                     btnCadastrar.textContent = 'Criando conta...';
                     anunciar('Criando sua conta...');

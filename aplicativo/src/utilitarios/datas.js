@@ -1,10 +1,16 @@
 // Funções de data usadas nas telas. As datas circulam como texto 'AAAA-MM-DD',
 // igual à API (dataReuniao vem nesse formato), e só viram Date aqui dentro.
 
-// "Hoje" fixo, como no protótipo web, para os dados fictícios fazerem sentido.
-export const HOJE = '2026-10-20';
+// "Hoje" é a data do aparelho, lida quando o app abre.
+export const HOJE = paraIso(new Date());
 
-const FERIADOS = ['2026-11-02', '2026-11-20'];
+// Feriados nacionais (a clínica não abre)
+const FERIADOS = [
+  '2026-01-01', '2026-02-16', '2026-02-17', '2026-04-03', '2026-04-21', '2026-05-01', '2026-06-04',
+  '2026-09-07', '2026-10-12', '2026-11-02', '2026-11-15', '2026-11-20', '2026-12-25',
+  '2027-01-01', '2027-02-08', '2027-02-09', '2027-03-26', '2027-04-21', '2027-05-01', '2027-05-27',
+  '2027-09-07', '2027-10-12', '2027-11-02', '2027-11-15', '2027-11-20', '2027-12-25',
+];
 
 const SEMANA = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 const SEMANA_CURTA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
@@ -75,6 +81,22 @@ export function diaSemanaCurto(iso) {
 
 export function ehDomingoOuFeriado(iso) {
   return paraData(iso).getDay() === 0 || FERIADOS.includes(iso);
+}
+
+// Datas da carga inicial contadas a partir de hoje: diaDaqui(3) = daqui a 3 dias.
+// Para consultas (util = true), pula domingo e feriado.
+export function diaDaqui(n, util = true) {
+  let iso = somarDias(HOJE, n);
+  while (util && ehDomingoOuFeriado(iso)) iso = somarDias(iso, n < 0 ? -1 : 1);
+  return iso;
+}
+
+// mesDaqui(0) = 'AAAA-MM' do mês atual; mesDaqui(1) = o próximo
+export function mesDaqui(n) {
+  const d = paraData(HOJE);
+  d.setDate(1);
+  d.setMonth(d.getMonth() + n);
+  return paraIso(d).slice(0, 7);
 }
 
 // '2026-11' → 'Novembro de 2026'

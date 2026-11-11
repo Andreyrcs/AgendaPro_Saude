@@ -1,13 +1,14 @@
-// Dados FICTÍCIOS do app, copiados de frontend/assets/js/dados.js (o protótipo web).
-// Pessoas, médicos, clínica e horários foram inventados para a demonstração.
-// "Hoje" é terça-feira, 20 de outubro de 2026 (ver utilitarios/datas.js).
+// Carga inicial do app (a mesma da web, frontend/assets/js/dados.js).
+// As datas são contadas a partir de hoje (diaDaqui), então a agenda sempre começa em volta do dia atual.
+// Quando a API tiver os endpoints, estes dados passam a vir do banco.
 //
-// Diferenças em relação ao protótipo:
-// - as cores dos familiares são hex (no protótipo eram variáveis CSS);
+// Diferenças em relação à web:
+// - as cores dos familiares são hex (na web são variáveis CSS);
 // - cada item de prevenção, retorno e exame tem um "id";
 // - não há avatar desenhado: o app usa as iniciais na cor de cada pessoa.
 
 import { cores } from '../estilos/cores';
+import { diaDaqui, diaEMes, mesDaqui } from '../utilitarios/datas';
 
 export const clinica = {
   nome: 'Clínica Ipê',
@@ -16,9 +17,6 @@ export const clinica = {
   telefone: '(11) 2345-0000',
   telefoneLink: 'tel:+551123450000',
 };
-
-// Demonstração de erro: este horário "acabou de ser ocupado" ao confirmar
-export const horarioDisputado = { medico: 'fernanda', data: '2026-10-26', hora: '13:00' };
 
 export const pessoas = [
   {
@@ -72,88 +70,89 @@ export const medicos = [
 // Horários livres por médico nas próximas semanas
 export const horarios = {
   helena: [
-    { data: '2026-10-21', horas: ['08:00', '11:30'] },
-    { data: '2026-10-22', horas: ['09:00', '14:00', '16:30'] },
+    { data: diaDaqui(1), horas: ['08:00', '11:30'] },
+    { data: diaDaqui(2), horas: ['09:00', '14:00', '16:30'] },
   ],
   fernanda: [
-    { data: '2026-10-21', horas: ['08:30', '10:00'] },
-    { data: '2026-10-22', horas: ['15:30'] },
-    { data: '2026-10-26', horas: ['09:00', '09:30', '13:00'] },
+    { data: diaDaqui(1), horas: ['08:30', '10:00'] },
+    { data: diaDaqui(2), horas: ['15:30'] },
+    { data: diaDaqui(6), horas: ['09:00', '09:30', '13:00'] },
   ],
-  joao: [{ data: '2026-10-27', horas: ['10:30', '11:00'] }],
+  joao: [{ data: diaDaqui(7), horas: ['10:30', '11:00'] }],
   rafael: [
-    { data: '2026-10-23', horas: ['07:30', '17:00'] },
-    { data: '2026-10-29', horas: ['08:00'] },
+    { data: diaDaqui(3), horas: ['07:30'] },
+    { data: diaDaqui(9), horas: ['08:00'] },
   ],
   camila: [],
-  icaro: [{ data: '2026-11-12', horas: ['14:00'] }],
+  icaro: [{ data: diaDaqui(23), horas: ['14:00'] }],
   paulo: [
-    { data: '2026-11-05', horas: ['10:30', '11:00'] },
-    { data: '2026-11-10', horas: ['08:00'] },
+    { data: diaDaqui(16), horas: ['10:30', '11:00'] },
+    { data: diaDaqui(21), horas: ['08:00'] },
   ],
-  andre: [{ data: '2026-10-22', horas: ['10:00', '10:30'] }],
-  luana: [{ data: '2026-10-28', horas: ['13:30', '15:00'] }],
-  beatriz: [{ data: '2026-10-30', horas: ['09:00'] }],
-  rosa: [{ data: '2026-11-03', horas: ['16:00'] }],
+  andre: [{ data: diaDaqui(2), horas: ['10:00', '10:30'] }],
+  luana: [{ data: diaDaqui(8), horas: ['13:30', '15:00'] }],
+  beatriz: [{ data: diaDaqui(10), horas: ['09:00'] }],
+  rosa: [{ data: diaDaqui(14), horas: ['16:00'] }],
 };
 
 // tipo: 'consulta' (padrão), 'exame' ou 'prevencao'
 export const consultas = [
-  { id: 'c1', pessoa: 'davi', medico: 'fernanda', data: '2026-10-23', hora: '14:30', sala: 'Sala 4', status: 'confirmada', motivo: 'Consulta de rotina', tipo: 'consulta' },
-  { id: 'c5', pessoa: 'marina', medico: 'rafael', data: '2026-10-23', hora: '17:00', sala: 'Sala 1', status: 'confirmada', motivo: 'Acompanhamento da rinite', tipo: 'consulta' },
-  { id: 'c2', pessoa: 'kenji', medico: 'helena', data: '2026-10-28', hora: '07:40', sala: 'Sala 2', status: 'confirmada', motivo: 'Eletrocardiograma pedido no check-up', tipo: 'exame', titulo: 'Eletrocardiograma' },
-  { id: 'c3', pessoa: 'marina', medico: 'luana', data: '2026-11-04', hora: '09:15', sala: 'Sala 7', status: 'confirmada', motivo: 'Dificuldade para enxergar o quadro', tipo: 'consulta' },
-  { id: 'c4', pessoa: 'kenji', medico: 'helena', data: '2026-11-13', hora: '11:00', sala: 'Sala 2', status: 'confirmada', motivo: 'Check-up anual (Novembro Azul)', tipo: 'prevencao', titulo: 'Check-up anual' },
-  { id: 'c6', pessoa: 'cida', medico: 'luana', data: '2026-11-24', hora: '14:00', sala: 'Sala 7', status: 'confirmada', motivo: 'Revisão do grau dos óculos', tipo: 'consulta' },
-  { id: 'c7', pessoa: 'juliana', medico: 'helena', data: '2026-12-08', hora: '08:30', sala: 'Sala 2', status: 'confirmada', motivo: 'Mostrar o resultado dos exames de sangue', tipo: 'consulta' },
-  { id: 'p1', pessoa: 'cida', medico: 'paulo', data: '2026-10-02', hora: '10:30', sala: 'Sala 5', status: 'realizada', motivo: 'Pressão alta', tipo: 'consulta' },
-  { id: 'p2', pessoa: 'juliana', medico: 'helena', data: '2026-09-15', hora: '08:00', sala: 'Sala 2', status: 'realizada', motivo: 'Cansaço frequente', tipo: 'consulta' },
+  { id: 'c1', pessoa: 'davi', medico: 'fernanda', data: diaDaqui(3), hora: '14:30', sala: 'Sala 4', status: 'confirmada', motivo: 'Consulta de rotina', tipo: 'consulta' },
+  { id: 'c5', pessoa: 'marina', medico: 'rafael', data: diaDaqui(3), hora: '17:00', sala: 'Sala 1', status: 'confirmada', motivo: 'Acompanhamento da rinite', tipo: 'consulta' },
+  { id: 'c2', pessoa: 'kenji', medico: 'helena', data: diaDaqui(8), hora: '07:40', sala: 'Sala 2', status: 'confirmada', motivo: 'Eletrocardiograma pedido no check-up', tipo: 'exame', titulo: 'Eletrocardiograma' },
+  { id: 'c3', pessoa: 'marina', medico: 'luana', data: diaDaqui(15), hora: '09:15', sala: 'Sala 7', status: 'confirmada', motivo: 'Dificuldade para enxergar o quadro', tipo: 'consulta' },
+  { id: 'c4', pessoa: 'kenji', medico: 'helena', data: diaDaqui(24), hora: '11:00', sala: 'Sala 2', status: 'confirmada', motivo: 'Check-up anual', tipo: 'prevencao', titulo: 'Check-up anual' },
+  { id: 'c6', pessoa: 'cida', medico: 'luana', data: diaDaqui(35), hora: '14:00', sala: 'Sala 7', status: 'confirmada', motivo: 'Revisão do grau dos óculos', tipo: 'consulta' },
+  { id: 'c7', pessoa: 'juliana', medico: 'helena', data: diaDaqui(49), hora: '08:30', sala: 'Sala 2', status: 'confirmada', motivo: 'Mostrar o resultado dos exames de sangue', tipo: 'consulta' },
+  { id: 'p1', pessoa: 'cida', medico: 'paulo', data: diaDaqui(-18), hora: '10:30', sala: 'Sala 5', status: 'atendida', motivo: 'Pressão alta', tipo: 'consulta' },
+  { id: 'p2', pessoa: 'juliana', medico: 'helena', data: diaDaqui(-35), hora: '08:00', sala: 'Sala 2', status: 'atendida', motivo: 'Cansaço frequente', tipo: 'consulta' },
 ];
 
 // A Juliana é a 3ª de 7 na fila da Dra. Camila Rocha (dermatologia)
 export const fila = {
-  id: 'f1', pessoa: 'juliana', medico: 'camila', posicao: 3, naFila: 7, desde: '2026-10-06',
-  vaga: { data: '2026-10-23', hora: '09:00' }, // vaga que abre quando chegar a vez
+  id: 'f1', pessoa: 'juliana', medico: 'camila', posicao: 3, naFila: 7, desde: diaDaqui(-14, false),
+  vagaOferecida: null, // a recepção oferece quando cancela uma consulta da Dra. Camila e for a vez da Juliana
 };
 
-// Quantas pessoas já esperam na fila de cada médico (contagem das filas do protótipo).
+// Quantas pessoas já esperam na fila de cada médico (contagem das filas da web).
 // Quem entra numa fila nova fica na posição seguinte.
 export const pessoasNaFila = { camila: 7, paulo: 4, fernanda: 2, luana: 3, andre: 1 };
 
 export const acompanhamento = {
   retornos: [
-    { id: 'r1', pessoa: 'cida', titulo: 'Retorno com cardiologista', medico: 'paulo', prazo: '2026-11-16', origem: 'Pedido na consulta de 2 de outubro' },
+    { id: 'r1', pessoa: 'cida', titulo: 'Retorno com cardiologista', medico: 'paulo', prazo: diaDaqui(27), origem: 'Pedido na consulta de ' + diaEMes(diaDaqui(-18)) },
   ],
   exames: [
-    { id: 'e1', pessoa: 'juliana', titulo: 'Hemograma e glicemia em jejum', pedidoPor: 'helena', status: 'pendente', obs: 'Jejum de 8 horas', origem: 'Pedido em 15 de setembro' },
-    { id: 'e2', pessoa: 'kenji', titulo: 'Eletrocardiograma', pedidoPor: 'helena', status: 'agendado', obs: 'Levar exames anteriores', origem: 'Marcado para 28 de outubro' },
+    { id: 'e1', pessoa: 'juliana', titulo: 'Hemograma e glicemia em jejum', pedidoPor: 'helena', status: 'pendente', obs: 'Jejum de 8 horas', origem: 'Pedido em ' + diaEMes(diaDaqui(-35)) },
+    { id: 'e2', pessoa: 'kenji', titulo: 'Eletrocardiograma', pedidoPor: 'helena', status: 'agendado', obs: 'Levar exames anteriores', origem: 'Marcado para ' + diaEMes(diaDaqui(8)) },
   ],
 };
 
-// Calendário de prevenção: sugestões por idade, com as campanhas do Ministério da Saúde
-export const prevencao = [
-  { mes: '2026-10', campanha: 'Outubro Rosa', tema: 'Prevenção do câncer de mama', itens: [
-    { id: 'v1', pessoa: 'cida', titulo: 'Mamografia', status: 'pendente', nota: 'A cada 2 anos, dos 50 aos 74 anos', esp: 'ginecologia' },
-  ] },
-  { mes: '2026-11', campanha: 'Novembro Azul', tema: 'Saúde do homem', itens: [
-    { id: 'v2', pessoa: 'kenji', titulo: 'Check-up anual com clínica geral', status: 'agendado', nota: 'Marcado para 13 de novembro', esp: 'clinica' },
-  ] },
-  { mes: '2026-12', campanha: null, tema: 'Antes das férias', itens: [
-    { id: 'v3', pessoa: 'davi', titulo: 'Revisão no dentista', status: 'pendente', nota: 'A cada 6 meses', esp: null },
-    { id: 'v4', pessoa: 'marina', titulo: 'Revisão no dentista', status: 'pendente', nota: 'A cada 6 meses', esp: null },
-  ] },
-  { mes: '2027-01', campanha: 'Janeiro Branco', tema: 'Saúde mental', itens: [
-    { id: 'v5', pessoa: 'juliana', titulo: 'Check-up anual com clínica geral', status: 'pendente', nota: 'Inclui conversa sobre sono e estresse', esp: 'clinica' },
-  ] },
-  { mes: '2027-02', campanha: null, tema: 'Volta às aulas', itens: [
-    { id: 'v6', pessoa: 'davi', titulo: 'Consulta anual com pediatra', status: 'pendente', nota: 'Conferir a caderneta de vacinação', esp: 'pediatria' },
-    { id: 'v7', pessoa: 'marina', titulo: 'Consulta anual com pediatra', status: 'pendente', nota: 'Conferir a caderneta de vacinação', esp: 'pediatria' },
-  ] },
-  { mes: '2027-03', campanha: 'Março Lilás', tema: 'Prevenção do câncer do colo do útero', itens: [
-    { id: 'v8', pessoa: 'juliana', titulo: 'Exame preventivo (Papanicolau)', status: 'pendente', nota: 'Frequência conforme orientação médica', esp: 'ginecologia' },
-  ] },
-  { mes: '2027-04', campanha: 'Vacinação contra a gripe', tema: 'Campanha anual', itens: [
-    { id: 'v9', pessoa: 'cida', titulo: 'Vacina da gripe', status: 'pendente', nota: 'Grupo prioritário: 60 anos ou mais', esp: null },
-    { id: 'v10', pessoa: 'kenji', titulo: 'Vacina da gripe', status: 'pendente', nota: 'Grupo prioritário: 60 anos ou mais', esp: null },
-  ] },
-];
+// Calendário de prevenção: campanhas do Ministério da Saúde por mês do ano (1 = janeiro)
+const CAMPANHAS = {
+  1: ['Janeiro Branco', 'Saúde mental'], 2: [null, 'Volta às aulas'], 3: ['Março Lilás', 'Prevenção do câncer do colo do útero'],
+  4: ['Vacinação contra a gripe', 'Campanha anual'], 5: ['Maio Amarelo', 'Segurança no trânsito'], 6: [null, 'Inverno: cuidado com o pulmão'],
+  7: [null, 'Férias de julho'], 8: ['Agosto Dourado', 'Aleitamento materno'], 9: ['Setembro Amarelo', 'Prevenção do suicídio'],
+  10: ['Outubro Rosa', 'Prevenção do câncer de mama'], 11: ['Novembro Azul', 'Saúde do homem'], 12: [null, 'Antes das férias'],
+};
+// O que cada pessoa da família tem para fazer em cada mês do ano
+const PREVENCAO_POR_MES = {
+  1: [{ pessoa: 'juliana', titulo: 'Check-up anual com clínica geral', nota: 'Inclui conversa sobre sono e estresse', esp: 'clinica' }],
+  2: [{ pessoa: 'davi', titulo: 'Consulta anual com pediatra', nota: 'Conferir a caderneta de vacinação', esp: 'pediatria' },
+      { pessoa: 'marina', titulo: 'Consulta anual com pediatra', nota: 'Conferir a caderneta de vacinação', esp: 'pediatria' }],
+  3: [{ pessoa: 'juliana', titulo: 'Exame preventivo (Papanicolau)', nota: 'Frequência conforme orientação médica', esp: 'ginecologia' }],
+  4: [{ pessoa: 'cida', titulo: 'Vacina da gripe', nota: 'Grupo prioritário: 60 anos ou mais', esp: null },
+      { pessoa: 'kenji', titulo: 'Vacina da gripe', nota: 'Grupo prioritário: 60 anos ou mais', esp: null }],
+  10: [{ pessoa: 'cida', titulo: 'Mamografia', nota: 'A cada 2 anos, dos 50 aos 74 anos', esp: 'ginecologia' }],
+  11: [{ pessoa: 'kenji', titulo: 'Check-up anual com clínica geral', nota: 'Uma vez por ano depois dos 50', esp: 'clinica' }],
+  12: [{ pessoa: 'davi', titulo: 'Revisão no dentista', nota: 'A cada 6 meses', esp: null },
+       { pessoa: 'marina', titulo: 'Revisão no dentista', nota: 'A cada 6 meses', esp: null }],
+};
+export const prevencao = [-1, 0, 1, 2, 3, 4, 5].map((n) => {
+  const mes = mesDaqui(n);
+  const numero = Number(mes.slice(5));
+  return {
+    mes, campanha: CAMPANHAS[numero][0], tema: CAMPANHAS[numero][1],
+    itens: (PREVENCAO_POR_MES[numero] || []).map((it, i) => ({ id: 'v' + mes + '-' + i, status: 'pendente', ...it })),
+  };
+});
