@@ -1,5 +1,5 @@
 /* AgendaPro Saúde — Médicos da clínica
-   Quem atende nesta unidade e como está a agenda de cada um: expediente de hoje, consultas,
+   Quem atende nesta clínica e como está a agenda de cada um: expediente de hoje, consultas,
    ocupação da semana, fila e o próximo horário livre. Todos os números vêm das consultas. */
 (function () {
   "use strict";
@@ -54,7 +54,7 @@
     const dados = C.MEDICOS.map((m) => ({ m, md: K.medico(m), n: numeros(m) }));
 
     const cheio = dados.slice().sort((a, b) => b.n.ocupacao - a.n.ocupacao)[0];
-    $("#subtitulo").innerHTML = "<b>" + dados.length + " médicos</b> com agenda na " + D.clinica.nome + ", " + D.clinica.unidade + ". " +
+    $("#subtitulo").innerHTML = "<b>" + dados.length + " médicos</b> com agenda na " + D.clinica.nome + ". " +
       "Agenda mais cheia da semana: " + cheio.md.nome + ", " + Math.round(cheio.n.ocupacao * 100) + "% ocupada" +
       (cheio.n.fila ? " e " + cheio.n.fila + " pessoas na fila." : ".");
     $("#meta-semana").textContent = "Semana de " + C.data(SEG).getDate() + " a " + C.data(SEMANA[5]).getDate() + " de " + A.MESES_LONGOS[C.data(SEMANA[5]).getMonth()];
@@ -88,9 +88,11 @@
       : '<tr><td colspan="4" class="tabela__traco">Todos os médicos do cadastro já têm horário.</td></tr>';
   }
 
+  /* o telefone do médico é o da conta dele (Usuarios.Telefone) */
   function contatoHTML(md) {
+    const tel = API.telefoneDoMedico(md.id);
     return (md.sala ? '<span class="contato__sala">' + A.esc(md.sala) + "</span>" : '<span class="tabela__traco">Sala não informada</span>') +
-      '<span class="tabela__sub contato__tel">' + (md.tel ? A.esc(md.tel) : "Sem telefone") + "</span>";
+      '<span class="tabela__sub contato__tel">' + (tel ? A.esc(tel) : "Sem telefone") + "</span>";
   }
   function botaoEditar(md) {
     return '<button type="button" class="link-acao" data-editar="' + md.id + '" aria-label="Editar dados de ' + A.esc(md.nome) + '">Editar</button>';
@@ -131,7 +133,7 @@
       form.nome.value = md.nome;
       form.crm.value = md.crm || "";
       form.esp.value = md.esp;
-      form.tel.value = md.tel || "";
+      form.tel.value = API.telefoneDoMedico(md.id);
       form.sala.value = md.sala || "";
     }
     K.abrirDialogo(dlg);
@@ -162,13 +164,15 @@
     if (digitos && (digitos.length < 10 || digitos.length > 11)) { erro("#c-tel", form.tel, "Use o DDD e o número, com 10 ou 11 dígitos."); return; }
     if (!/^(Dra?\.|Dr\(a\)\.)/.test(nome)) nome = "Dr(a). " + semTitulo;
     const tel = digitos ? "(" + digitos.slice(0, 2) + ") " + digitos.slice(2, -4) + "-" + digitos.slice(-4) : "";
-    const campos = { nome, crm: crm.replace(/^CRM\/([A-Z]{2}) ?/, "CRM/$1 "), esp: form.esp.value, tel, sala: form.sala.value.trim() };
+    const campos = { nome, crm: crm.replace(/^CRM\/([A-Z]{2}) ?/, "CRM/$1 "), esp: form.esp.value, sala: form.sala.value.trim() };
 
     if (editando) {
       const md = editando;
-      const antes = { nome: md.nome, crm: md.crm || "", esp: md.esp, tel: md.tel || "", sala: md.sala || "" };
+      const antes = { nome: md.nome, crm: md.crm || "", esp: md.esp, sala: md.sala || "" };
+      const telAntes = API.telefoneDoMedico(md.id);
       Object.assign(md, campos);
       K.guardar.edicaoMedico(md.id, campos);
+      API.salvarTelefoneMedico(md.id, tel); /* PUT /api/medicos/{id}: o telefone vai para Usuarios.Telefone */
       K.fecharDialogo(dlg);
       desenhar();
       const linha = document.querySelector('[data-editar="' + md.id + '"]');
@@ -177,7 +181,7 @@
         titulo: "Dados de " + md.nome + " atualizados",
         texto: "Já valem em todas as telas da clínica.",
         icone: "stethoscope",
-        acao: { rotulo: "Desfazer", fazer: () => { Object.assign(md, antes); K.guardar.edicaoMedico(md.id, antes); desenhar(); } },
+        acao: { rotulo: "Desfazer", fazer: () => { Object.assign(md, antes); K.guardar.edicaoMedico(md.id, antes); API.salvarTelefoneMedico(md.id, telAntes); desenhar(); } },
       });
       return;
     }
@@ -194,7 +198,8 @@
       if (!M.reduzido()) linha.animate([{ backgroundColor: "#d4f3e6" }, { backgroundColor: "transparent" }], { duration: 1200, easing: "ease" });
     }
     /* a conta de acesso do médico (login com o e-mail e uma senha provisória) */
-    API.cadastrarContaMedico({ nome, email, medicoId: id }).then((r) => {
+    API.cadastrarContaMedico({ nome, email, medicoId: id, telefone: tel }).then((r) => {
+      desenhar();
       K.toast({
         titulo: nome + " cadastrado",
         texto: "Acesso: " + email + " · senha provisória " + r.senhaProvisoria + " (anote e entregue ao médico). Agora defina o expediente em Horários.",

@@ -12,7 +12,6 @@ import { diaDaqui, diaEMes, mesDaqui } from '../utilitarios/datas';
 
 export const clinica = {
   nome: 'Clínica Ipê',
-  unidade: 'Unidade Centro',
   endereco: 'Rua das Palmeiras, 410 — Centro',
   telefone: '(11) 2345-0000',
   telefoneLink: 'tel:+551123450000',
@@ -25,25 +24,26 @@ export const clinicas = [
   { id: 'aroeira', nome: 'Centro Médico Aroeira', codigo: 'ARO-7716' },
 ];
 
+// cpf: Pacientes.CPF, 11 dígitos, fictício e válido (dígitos verificadores corretos), os mesmos da web
 export const pessoas = [
   {
-    id: 'juliana', nome: 'Juliana Santos', curto: 'Juliana', relacao: 'Titular', idade: 36, genero: 'f',
+    id: 'juliana', nome: 'Juliana Santos', curto: 'Juliana', relacao: 'Titular', idade: 36, cpf: '28461593782',
     cor: cores.familia.juliana, alergias: 'Nenhuma informada', titular: true,
   },
   {
-    id: 'davi', nome: 'Davi Santos Tanaka', curto: 'Davi', relacao: 'Filho', idade: 8, genero: 'm',
+    id: 'davi', nome: 'Davi Santos Tanaka', curto: 'Davi', relacao: 'Filho', idade: 8, cpf: '39152840689',
     cor: cores.familia.davi, alergias: 'Nenhuma informada', titular: false,
   },
   {
-    id: 'marina', nome: 'Marina Santos Tanaka', curto: 'Marina', relacao: 'Filha', idade: 14, genero: 'f',
+    id: 'marina', nome: 'Marina Santos Tanaka', curto: 'Marina', relacao: 'Filha', idade: 14, cpf: '47590312860',
     cor: cores.familia.marina, alergias: 'Rinite alérgica', titular: false,
   },
   {
-    id: 'cida', nome: 'Maria Aparecida Santos', curto: 'Dona Cida', relacao: 'Mãe', idade: 71, genero: 'f',
+    id: 'cida', nome: 'Maria Aparecida Santos', curto: 'Dona Cida', relacao: 'Mãe', idade: 71, cpf: '56308174262',
     cor: cores.familia.cida, alergias: 'Alergia a dipirona', titular: false,
   },
   {
-    id: 'kenji', nome: 'Kenji Tanaka', curto: 'Seu Kenji', relacao: 'Sogro', idade: 74, genero: 'm',
+    id: 'kenji', nome: 'Kenji Tanaka', curto: 'Seu Kenji', relacao: 'Sogro', idade: 74, cpf: '61827435909',
     cor: cores.familia.kenji, alergias: 'Nenhuma informada', titular: false,
   },
 ];
@@ -59,6 +59,13 @@ export const especialidades = [
   { id: 'ginecologia', nome: 'Ginecologia', desc: 'Saúde da mulher' },
   { id: 'psiquiatria', nome: 'Psiquiatria', desc: 'Saúde mental, ansiedade, sono e humor' },
 ];
+
+// Especialidades são por clínica (Especialidades.IdClinica); o mesmo nome pode existir em clínicas diferentes
+export const especialidadesPorClinica = {
+  ipe: ['clinica', 'pediatria', 'otorrino', 'dermatologia', 'cardiologia', 'ortopedia', 'oftalmologia', 'ginecologia', 'psiquiatria'],
+  jacaranda: ['clinica', 'pediatria', 'ortopedia'],
+  aroeira: ['cardiologia', 'dermatologia', 'ginecologia'],
+};
 
 export const medicos = [
   { id: 'helena', nome: 'Dra. Helena Duarte', esp: 'clinica', cor: '#d9ecf8', sala: 'Sala 2' },
@@ -115,7 +122,7 @@ export const consultas = [
   { id: 'p2', pessoa: 'juliana', medico: 'helena', data: diaDaqui(-35), hora: '08:00', sala: 'Sala 2', status: 'atendida', motivo: 'Cansaço frequente', tipo: 'consulta' },
 ];
 
-// A Juliana é a 3ª de 7 na fila da Dra. Camila Rocha (dermatologia)
+// A Juliana está na posição 3 de 7 na fila da Dra. Camila Rocha (dermatologia)
 export const fila = {
   id: 'f1', pessoa: 'juliana', medico: 'camila', posicao: 3, naFila: 7, desde: diaDaqui(-14, false),
   vagaOferecida: null, // a recepção oferece quando cancela uma consulta da Dra. Camila e for a vez da Juliana
@@ -128,7 +135,7 @@ export const pessoasNaFila = { camila: 7, paulo: 4, fernanda: 2, luana: 3, andre
 // Avisos da conta da Juliana (tabela Notificacoes: tipo, mensagem, data de envio, lida)
 export const notificacoes = [
   { id: 'n1', tipo: 'LEMBRETE', mensagem: 'A consulta do Davi com a Dra. Fernanda Lima é em ' + diaEMes(diaDaqui(3)) + ', às 14:30.', dataEnvio: diaDaqui(0, false), lida: false },
-  { id: 'n2', tipo: 'FILA', mensagem: 'Você subiu para 3ª na fila de Dermatologia.', dataEnvio: diaDaqui(-1, false), lida: false },
+  { id: 'n2', tipo: 'FILA', mensagem: 'Você subiu para a posição 3 na fila de Dermatologia.', dataEnvio: diaDaqui(-1, false), lida: false },
   { id: 'n3', tipo: 'RETORNO', mensagem: 'Dona Cida precisa marcar o retorno com o cardiologista até ' + diaEMes(diaDaqui(27)) + '.', dataEnvio: diaDaqui(-3, false), lida: true },
 ];
 
@@ -142,31 +149,60 @@ export const acompanhamento = {
   ],
 };
 
-// Calendário de prevenção: campanhas do Ministério da Saúde por mês do ano (1 = janeiro)
+// ─── Prevenção: o mesmo modelo do banco e da web (frontend/assets/js/dados.js) ───
+// Campanhas_Prevencao: um registro por mês. [Nome (pode ser vazio), Tema]. 1 = janeiro.
 const CAMPANHAS = {
   1: ['Janeiro Branco', 'Saúde mental'], 2: [null, 'Volta às aulas'], 3: ['Março Lilás', 'Prevenção do câncer do colo do útero'],
   4: ['Vacinação contra a gripe', 'Campanha anual'], 5: ['Maio Amarelo', 'Segurança no trânsito'], 6: [null, 'Inverno: cuidado com o pulmão'],
   7: [null, 'Férias de julho'], 8: ['Agosto Dourado', 'Aleitamento materno'], 9: ['Setembro Amarelo', 'Prevenção do suicídio'],
   10: ['Outubro Rosa', 'Prevenção do câncer de mama'], 11: ['Novembro Azul', 'Saúde do homem'], 12: [null, 'Antes das férias'],
 };
-// O que cada pessoa da família tem para fazer em cada mês do ano
-const PREVENCAO_POR_MES = {
-  1: [{ pessoa: 'juliana', titulo: 'Check-up anual com clínica geral', nota: 'Inclui conversa sobre sono e estresse', esp: 'clinica' }],
-  2: [{ pessoa: 'davi', titulo: 'Consulta anual com pediatra', nota: 'Conferir a caderneta de vacinação', esp: 'pediatria' },
-      { pessoa: 'marina', titulo: 'Consulta anual com pediatra', nota: 'Conferir a caderneta de vacinação', esp: 'pediatria' }],
-  3: [{ pessoa: 'juliana', titulo: 'Exame preventivo (Papanicolau)', nota: 'Frequência conforme orientação médica', esp: 'ginecologia' }],
-  4: [{ pessoa: 'cida', titulo: 'Vacina da gripe', nota: 'Grupo prioritário: 60 anos ou mais', esp: null },
-      { pessoa: 'kenji', titulo: 'Vacina da gripe', nota: 'Grupo prioritário: 60 anos ou mais', esp: null }],
-  10: [{ pessoa: 'cida', titulo: 'Mamografia', nota: 'A cada 2 anos, dos 50 aos 74 anos', esp: 'ginecologia' }],
-  11: [{ pessoa: 'kenji', titulo: 'Check-up anual com clínica geral', nota: 'Uma vez por ano depois dos 50', esp: 'clinica' }],
-  12: [{ pessoa: 'davi', titulo: 'Revisão no dentista', nota: 'A cada 6 meses', esp: null },
-       { pessoa: 'marina', titulo: 'Revisão no dentista', nota: 'A cada 6 meses', esp: null }],
+// Exames_Prevencao de cada campanha: titulo, nota e especialidade (o NOME; null = não se marca pela clínica)
+const EXAMES_DO_MES = {
+  1: [{ titulo: 'Consulta de saúde mental', nota: 'Conversa sobre sono, humor e estresse', especialidade: 'Psiquiatria' }],
+  2: [{ titulo: 'Consulta anual com pediatra', nota: 'Conferir a caderneta de vacinação', especialidade: 'Pediatria' }],
+  3: [{ titulo: 'Exame preventivo (Papanicolau)', nota: 'Frequência conforme orientação médica', especialidade: 'Ginecologia' }],
+  4: [{ titulo: 'Vacina da gripe', nota: 'Grupo prioritário: 60 anos ou mais', especialidade: null }],
+  10: [
+    { titulo: 'Mamografia', nota: 'A cada 2 anos, dos 50 aos 74 anos', especialidade: 'Ginecologia' },
+    { titulo: 'Consulta com ginecologista', nota: 'Inclui o exame clínico das mamas', especialidade: 'Ginecologia' },
+  ],
+  11: [{ titulo: 'Exame de próstata (PSA)', nota: 'Conforme orientação médica, a partir dos 50 anos', especialidade: 'Clínica geral' }],
 };
-export const prevencao = [-1, 0, 1, 2, 3, 4, 5].map((n) => {
+// As sugestões gerais (IdCampanha nulo) valem para todo mês
+export const examesGerais = [
+  { id: 'exg-1', idCampanha: null, titulo: 'Check-up anual com clínica geral', nota: 'Uma vez por ano', especialidade: 'Clínica geral' },
+  { id: 'exg-2', idCampanha: null, titulo: 'Revisão no dentista', nota: 'A cada 6 meses', especialidade: null },
+];
+// Pessoa_Prevencao da carga inicial: [pessoa, título do exame] em cada mês
+const PREVENCAO_POR_MES = {
+  1: [['juliana', 'Check-up anual com clínica geral']],
+  2: [['davi', 'Consulta anual com pediatra'], ['marina', 'Consulta anual com pediatra']],
+  3: [['juliana', 'Exame preventivo (Papanicolau)']],
+  4: [['cida', 'Vacina da gripe'], ['kenji', 'Vacina da gripe']],
+  10: [['cida', 'Mamografia']],
+  11: [['kenji', 'Check-up anual com clínica geral']],
+  12: [['davi', 'Revisão no dentista'], ['marina', 'Revisão no dentista']],
+};
+// Mês: { id, mes, campanha (Nome ou null), tema, exames, itens }
+// Item: { id, pessoa, exame, titulo, nota, especialidade, status, consulta? } (titulo, nota e especialidade vêm do exame)
+// Sem itens: cada conta recebe os seus (a da Juliana, os da carga inicial).
+export const campanhas = [-1, 0, 1, 2, 3, 4, 5].map((n) => {
   const mes = mesDaqui(n);
   const numero = Number(mes.slice(5));
+  const id = 'camp-' + mes;
   return {
-    mes, campanha: CAMPANHAS[numero][0], tema: CAMPANHAS[numero][1],
-    itens: (PREVENCAO_POR_MES[numero] || []).map((it, i) => ({ id: 'v' + mes + '-' + i, status: 'pendente', ...it })),
+    id, mes, campanha: CAMPANHAS[numero][0], tema: CAMPANHAS[numero][1],
+    exames: (EXAMES_DO_MES[numero] || []).map((e, i) => ({ id: 'ex' + mes + '-' + i, idCampanha: id, ...e })),
+  };
+});
+export const prevencao = campanhas.map((m) => {
+  const todos = [...m.exames, ...examesGerais];
+  return {
+    ...m,
+    itens: (PREVENCAO_POR_MES[Number(m.mes.slice(5))] || []).map(([pessoa, titulo], i) => {
+      const e = todos.find((x) => x.titulo === titulo);
+      return { id: 'v' + m.mes + '-' + i, pessoa, exame: e.id, titulo: e.titulo, nota: e.nota, especialidade: e.especialidade, status: 'pendente' };
+    }),
   };
 });

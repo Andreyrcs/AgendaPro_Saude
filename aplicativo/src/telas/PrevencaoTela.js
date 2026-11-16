@@ -14,6 +14,7 @@ import useDadosDaTela from '../componentes/useDadosDaTela';
 import { useSessao } from '../contexto/SessaoContext';
 import { listarPrevencao, marcarItemPrevencao } from '../servicos/prevencao';
 import { listarFamiliares } from '../servicos/familia';
+import { especialidadeNaClinica } from '../servicos/medicos';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 import { nomeDoMes } from '../utilitarios/datas';
@@ -22,6 +23,7 @@ export default function PrevencaoTela({ navigation }) {
   const { usuario } = useSessao();
   const [filtro, setFiltro] = useState('todos');
   const [ocupado, setOcupado] = useState(null); // id do item sendo atualizado
+  const [avisos, setAvisos] = useState({}); // id do item → "Esta clínica não atende essa especialidade."
   const { dados, erro, recarregar } = useDadosDaTela(async () => {
     const [meses, familia] = await Promise.all([listarPrevencao(usuario), listarFamiliares(usuario)]);
     return { meses, familia };
@@ -48,6 +50,16 @@ export default function PrevencaoTela({ navigation }) {
       await recarregar();
     } finally {
       setOcupado(null);
+    }
+  }
+
+  // "Marcar": a especialidade é procurada pelo nome na clínica atual do paciente
+  function marcar(item) {
+    try {
+      const especialidade = especialidadeNaClinica(usuario, item.especialidade);
+      navigation.navigate('Agendar', { especialidade, pessoa: item.pessoa.id, itemPrevencao: item.id });
+    } catch (e) {
+      setAvisos({ ...avisos, [item.id]: e.message });
     }
   }
 
@@ -130,15 +142,13 @@ export default function PrevencaoTela({ navigation }) {
                 )}
                 {item.status === 'pendente' && (
                   <View style={estilos.acoes}>
-                    {item.esp && (
+                    {item.especialidade && (
                       <Botao
                         titulo="Marcar"
                         icone="calendar"
                         pequeno
                         accessibilityLabel={`Marcar ${item.titulo} para ${item.pessoa.titular ? 'você' : item.pessoa.curto}`}
-                        onPress={() =>
-                          navigation.navigate('Agendar', { especialidade: item.esp, pessoa: item.pessoa.id, itemPrevencao: item.id })
-                        }
+                        onPress={() => marcar(item)}
                       />
                     )}
                     <Botao
@@ -150,6 +160,11 @@ export default function PrevencaoTela({ navigation }) {
                       carregando={ocupado === item.id}
                     />
                   </View>
+                )}
+                {avisos[item.id] && (
+                  <Texto variante="meta" cor={cores.domingo} accessibilityLiveRegion="polite">
+                    {avisos[item.id]}
+                  </Texto>
                 )}
               </View>
             ))}

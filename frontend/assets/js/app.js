@@ -78,7 +78,7 @@
 
   function textoFila(pos) {
     const frente = pos - 1;
-    if (frente <= 0) return "Você é a próxima";
+    if (frente <= 0) return "Você é a próxima pessoa da fila";
     return frente === 1 ? "1 pessoa na sua frente" : frente + " pessoas na sua frente";
   }
 
@@ -231,15 +231,14 @@
     html += '<section class="secao anima" style="--i:4">' + cabecaSecao("Lista de espera");
     if (e && !e.resolvida && e.posicao > 0) {
       const m = medico(e.medico);
-      const ord = A.ordinal(e.posicao, pessoa(e.pessoa).genero);
       html +=
-        '<a class="cartao espera-cartao pressionavel" href="#espera" aria-label="Lista de espera: você é a ' + ord + " da fila para " + esp(m.esp).nome + " com " + m.nome + ". " + textoFila(e.posicao) + ". Aviso de vaga " + (e.notificar ? "ativado" : "desativado") + '.">' +
+        '<a class="cartao espera-cartao pressionavel" href="#espera" aria-label="Lista de espera: você está na posição ' + e.posicao + " da fila para " + esp(m.esp).nome + " com " + m.nome + ". " + textoFila(e.posicao) + ". Aviso de vaga " + (e.notificar ? "ativado" : "desativado") + '.">' +
         '<span class="espera-cartao__topo"><span class="espera-cartao__rotulo">Aguardando vaga</span>' +
         (e.notificar
           ? '<span class="selo selo--branco">' + I("bell-ring") + "Aviso ativado</span>"
           : '<span class="selo selo--branco">' + I("bell") + "Aviso desligado</span>") +
         "</span>" +
-        '<span class="espera-cartao__meio"><span class="posicao">' + ord + '</span><span class="espera-cartao__texto"><strong>Você é a ' + ord + " da fila</strong><span>" + esp(m.esp).nome + " · " + m.nome + "</span></span></span>" +
+        '<span class="espera-cartao__meio"><span class="posicao">' + e.posicao + '</span><span class="espera-cartao__texto"><strong>Você está na posição ' + e.posicao + " da fila</strong><span>" + esp(m.esp).nome + " · " + m.nome + "</span></span></span>" +
         filaHTML(e.posicao, e.naFila) +
         "</a>";
     } else {
@@ -443,7 +442,7 @@
   /* Agendar */
   /* itemId: o item de prevenção que esta consulta resolve (vem do "Marcar" da Prevenção) */
   function telaAgendar(espId, pessoaId, itemId) {
-    const e = esp(espId) ? espId : "clinica";
+    const e = esp(espId) ? espId : Object.keys(D.especialidades)[0];
     const elegivel = (p) => (e === "pediatria" ? p.idade < 18 : true);
     let quem = pessoa(pessoaId) && elegivel(pessoa(pessoaId)) ? pessoaId : (D.pessoas.find(elegivel) || pessoa(D.titular)).id;
     let escolha = null;
@@ -468,7 +467,7 @@
           return (
             '<div class="cartao medico">' +
             '<div class="medico__cabeca">' + A.avatarMedico(m, 48) +
-            '<div><p class="medico__nome">' + m.nome + '</p><p class="meta">' + I("map-pin") + D.clinica.nome + " · " + D.clinica.unidade + "</p></div></div>" +
+            '<div><p class="medico__nome">' + m.nome + '</p><p class="meta">' + I("map-pin") + D.clinica.nome + "</p></div></div>" +
             (dias.length
               ? dias.map((d) =>
                   '<div class="dia-horarios">' + A.folha(d.data, { pequena: true }) +
@@ -480,7 +479,7 @@
               ? '<div class="sem-horario"><p><b>Agende pela recepção.</b></p></div>'
               : '<div class="sem-horario"><p><b>' + (restricao ? "Agendamento direto indisponível por enquanto." : "Sem horários livres agora.") + "</b> Entre na lista de espera e avisamos quando abrir uma vaga.</p>" +
                 (naFila
-                  ? '<p style="margin-top:6px">Você já está na fila: <b>' + A.ordinal(D.espera.posicao, "f") + " posição</b>.</p>" +
+                  ? '<p style="margin-top:6px">Você já está na fila: <b>posição ' + D.espera.posicao + "</b>.</p>" +
                     '<a class="botao botao--menta botao--pequeno" href="#espera">' + I("list-ordered") + "Ver minha posição</a>"
                   : '<button type="button" class="botao botao--menta botao--pequeno" data-fila="' + m.id + '">' + I("list-ordered") + "Entrar na lista de espera</button>") +
                 "</div>") +
@@ -557,7 +556,7 @@
           abrirGaveta(
             '<div class="gaveta__ok">' + I("list-ordered") + "</div>" +
             '<h2 class="gaveta__titulo" id="gaveta-titulo">Você entrou na fila</h2>' +
-            '<p class="gaveta__texto">Você é a <b>' + A.ordinal(fila.posicao, "f") + "</b> da fila de " + m.nome + ". Quando a recepção cancelar uma consulta deste médico e for a sua vez, avisamos e você tem 30 minutos para confirmar.</p>" +
+            '<p class="gaveta__texto">Você está na <b>posição ' + fila.posicao + "</b> da fila de " + m.nome + ". Quando a recepção cancelar uma consulta deste médico e for a sua vez, avisamos e você tem 30 minutos para confirmar.</p>" +
             '<div class="gaveta__acoes"><button type="button" class="botao botao--principal" data-fechar>Entendi</button></div>'
           );
         }
@@ -746,14 +745,13 @@
       };
     }
     const m = medico(e.medico);
-    const g = pessoa(e.pessoa).genero;
-    const ord = A.ordinal(e.posicao, g);
+    const ord = String(e.posicao);
 
     const html =
       barra("Lista de espera", esp(m.esp).nome) +
       '<section class="espera-painel" aria-labelledby="pos-frase">' +
       '<div class="espera-painel__linha"><span class="posicao" id="pos" aria-hidden="true">' + ord + "</span>" +
-      '<p class="espera-painel__frase" id="pos-frase">Você é a <span id="pos-txt">' + ord + "</span><br>da fila</p></div>" +
+      '<p class="espera-painel__frase" id="pos-frase">Você está na posição <span id="pos-txt">' + ord + "</span><br>da fila</p></div>" +
       '<p class="espera-painel__detalhe"><b>' + esp(m.esp).nome + "</b> · " + m.nome + "<br>Na fila desde " + A.extenso(e.desde, false) + "</p>" +
       '<div id="fila">' + filaHTML(e.posicao, e.naFila) + "</div>" +
       "</section>" +
@@ -785,7 +783,7 @@
       el.querySelector("#sair-fila").addEventListener("click", () => {
         abrirGaveta(
           '<h2 class="gaveta__titulo" id="gaveta-titulo">Sair da lista de espera?</h2>' +
-          '<p class="gaveta__texto">Você vai perder a ' + A.ordinal(e.posicao, g) + " posição na fila de " + m.nome + ". Se quiser voltar depois, entra no fim da fila.</p>" +
+          '<p class="gaveta__texto">Você vai perder a posição ' + e.posicao + " na fila de " + m.nome + ". Se quiser voltar depois, entra no fim da fila.</p>" +
           '<div class="gaveta__acoes"><button type="button" class="botao botao--principal" data-fechar>Continuar na fila</button></div>' +
           '<div class="gaveta__acoes" style="margin-top:28px"><button type="button" class="botao botao--texto-perigo" id="confirmar-sair">Sair da fila</button></div>',
           {
@@ -837,6 +835,7 @@
         '<p class="gaveta__texto">Depois de adicionar, você pode marcar consultas para essa pessoa.</p>' +
         '<form id="form-familiar" class="formulario" novalidate>' +
         '<div class="campo" id="c-nome"><label for="f-nome">Nome completo</label><input id="f-nome" type="text" autocomplete="off" placeholder="Ex.: Ana Beatriz Santos"></div>' +
+        '<div class="campo" id="c-cpf"><label for="f-cpf">CPF</label><input id="f-cpf" type="text" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14"></div>' +
         '<div class="campo" id="c-rel"><span class="campo__rotulo" id="f-rel">Parentesco (obrigatório)</span><div class="opcoes" role="radiogroup" aria-labelledby="f-rel" aria-required="true">' +
         PACIENTE.PARENTESCOS.map((o) => '<button type="button" role="radio" aria-checked="false">' + o + "</button>").join("") +
         "</div></div>" +
@@ -849,21 +848,25 @@
             g.querySelectorAll('.opcoes [role="radio"]').forEach((b) =>
               b.addEventListener("click", () => g.querySelectorAll('.opcoes [role="radio"]').forEach((x) => x.setAttribute("aria-checked", String(x === b))))
             );
+            /* máscara do CPF: só números, no formato 000.000.000-00 */
+            const cpf = g.querySelector("#f-cpf");
+            cpf.addEventListener("input", () => { cpf.value = API.formatarCPF(cpf.value); });
             g.querySelector("#form-familiar").addEventListener("submit", (ev) => {
               ev.preventDefault();
-              /* nome, parentesco e nascimento obrigatórios (paciente-servicos.js) */
+              /* nome, CPF, parentesco e nascimento obrigatórios (paciente-servicos.js) */
               const r = PACIENTE.adicionarFamiliar({
                 nome: g.querySelector("#f-nome").value,
+                cpf: cpf.value,
                 relacao: (g.querySelector('.opcoes [aria-checked="true"]') || {}).textContent || "",
                 nascimento: g.querySelector("#f-nasc").value,
                 alergias: g.querySelector("#f-alergias").value,
               });
               g.querySelectorAll(".campo__erro").forEach((x) => x.remove());
               if (!r.familiar) {
-                [["#c-nome", r.erros.nome], ["#c-rel", r.erros.relacao], ["#c-nasc", r.erros.nascimento]].forEach(([c, t]) => {
+                [["#c-nome", r.erros.nome], ["#c-cpf", r.erros.cpf], ["#c-rel", r.erros.relacao], ["#c-nasc", r.erros.nascimento]].forEach(([c, t]) => {
                   if (t) g.querySelector(c).insertAdjacentHTML("beforeend", '<p class="campo__erro" role="alert">' + t + "</p>");
                 });
-                (r.erros.nome ? g.querySelector("#f-nome") : r.erros.relacao ? g.querySelector('#c-rel [role="radio"]') : g.querySelector("#f-nasc")).focus();
+                (r.erros.nome ? g.querySelector("#f-nome") : r.erros.cpf ? cpf : r.erros.relacao ? g.querySelector('#c-rel [role="radio"]') : g.querySelector("#f-nasc")).focus();
                 return;
               }
               const nome = r.familiar.nome;
@@ -930,6 +933,7 @@
       '<section class="secao">' + cabecaSecao("Dados de saúde") +
       '<dl class="cartao lista-cartao ficha">' +
       "<div><dt>Parentesco</dt><dd>" + A.esc(p.relacao) + "</dd></div>" +
+      "<div><dt>CPF</dt><dd>" + (p.cpf ? API.formatarCPF(p.cpf) : "—") + "</dd></div>" +
       "<div><dt>Alergias</dt><dd>" + p.alergias + "</dd></div>" +
       "</dl></section>";
     return { titulo: p.curto, html };

@@ -44,6 +44,43 @@
     return "(" + t.slice(0, 2) + ") " + t.slice(2, -4) + "-" + t.slice(-4);
   }
 
+  /* ─── CPF: 11 dígitos e os dois dígitos verificadores (Pacientes.CPF guarda só os dígitos) ─── */
+  function digitoCPF(base) {
+    const soma = base.split("").reduce((s, n, i) => s + Number(n) * (base.length + 1 - i), 0);
+    const resto = (soma * 10) % 11;
+    return resto === 10 ? 0 : resto;
+  }
+  function validarCPF(valor) {
+    const c = so(valor);
+    if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
+    const d1 = digitoCPF(c.slice(0, 9));
+    return c.endsWith(String(d1) + String(digitoCPF(c.slice(0, 9) + d1)));
+  }
+  /* máscara 000.000.000-00: só entram números */
+  function formatarCPF(valor) {
+    return so(valor).slice(0, 11).replace(/^(\d{3})(\d)/, "$1.$2").replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1-$2");
+  }
+  /* CPF fictício e válido para os pacientes da carga inicial da agenda (sempre o mesmo para o mesmo nome) */
+  function cpfFicticio(nome) {
+    let h = 7;
+    for (const ch of String(nome)) h = (h * 31 + ch.charCodeAt(0)) % 1000000007;
+    const base = String(100000000 + (h % 900000000));
+    const d1 = digitoCPF(base);
+    return base + d1 + digitoCPF(base + d1);
+  }
+  const ERRO_CPF = "CPF inválido.";
+  const ERRO_CPF_REPETIDO = "Este CPF já está cadastrado.";
+
+  /* ─── UF: as 27 siglas, sempre em 2 letras maiúsculas (Clinica.UF) ─── */
+  const UFS = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"];
+  const validarUF = (uf) => UFS.includes(String(uf || "").trim());
+  const ERRO_UF = "Use a sigla do estado em 2 letras maiúsculas, como SP.";
+
+  /* ─── Senha: mínimo de 8 caracteres (igual ao app) ─── */
+  const SENHA_MINIMA = 8;
+  const ERRO_SENHA = "A senha precisa ter pelo menos 8 caracteres.";
+  function exigirSenha(senha) { if (String(senha || "").length < SENHA_MINIMA) throw new Error(ERRO_SENHA); }
+
   /* ─── Senha ───
      ┌─ PONTO DE TROCA PARA A API ────────────────────────────────────────────────┐
      │ Enquanto as contas ficam neste navegador, a senha vira um resumo SHA-256    │
@@ -78,26 +115,32 @@
     try { localStorage.setItem(CHAVE, JSON.stringify(banco)); } catch (e) { /* sem armazenamento: vale só nesta visita */ }
   }
 
-  /* Carga inicial: três clínicas e uma conta de cada papel (as do "Acesso rápido" do login) */
+  /* Carga inicial: três clínicas, uma conta de cada papel (as do "Acesso rápido" do login)
+     e a conta de acesso de cada médico (Medicos.IdUsuario é obrigatório) */
+  const DOMINIO = { ipe: "clinicaipe.com.br", jacaranda: "clinicajacaranda.com.br", aroeira: "centroaroeira.com.br" };
   async function semear() {
     const b = ler();
     if (b.semente) return;
     const ipe = D.clinica;
     b.clinicas.push(
-      { id: "ipe", nome: ipe.nome, unidade: ipe.unidade, cnpj: cnpjDe("123456780001"), telefone: ipe.telefone, endereco: ipe.endereco, cidade: "São Paulo", uf: "SP", codigo: "IPE-4821", publica: true },
-      { id: "jacaranda", nome: "Clínica Jacarandá", unidade: "Unidade Cambuí", cnpj: cnpjDe("234567810001"), telefone: "(19) 3311-0000", endereco: "Rua dos Ipês, 88 — Cambuí", cidade: "Campinas", uf: "SP", codigo: "JAC-2093", publica: true },
-      { id: "aroeira", nome: "Centro Médico Aroeira", unidade: "Unidade Tatuapé", cnpj: cnpjDe("345678120001"), telefone: "(11) 2200-0000", endereco: "Av. das Aroeiras, 1500 — Tatuapé", cidade: "São Paulo", uf: "SP", codigo: "ARO-7716", publica: true },
+      { id: "ipe", nome: ipe.nome, cnpj: cnpjDe("123456780001"), telefone: ipe.telefone, endereco: ipe.endereco, cidade: "São Paulo", uf: "SP", codigo: "IPE-4821", publica: true },
+      { id: "jacaranda", nome: "Clínica Jacarandá", cnpj: cnpjDe("234567810001"), telefone: "(19) 3311-0000", endereco: "Rua dos Ipês, 88 — Cambuí", cidade: "Campinas", uf: "SP", codigo: "JAC-2093", publica: true },
+      { id: "aroeira", nome: "Centro Médico Aroeira", cnpj: cnpjDe("345678120001"), telefone: "(11) 2200-0000", endereco: "Av. das Aroeiras, 1500 — Tatuapé", cidade: "São Paulo", uf: "SP", codigo: "ARO-7716", publica: true },
     );
+    const familiaJuliana = D.pessoas.find((p) => p.id === "juliana");
     const contas = [
       { nome: "Renata Albuquerque", email: "dono@clinicaipe.com.br", senha: "dono1234", papel: "dono", clinicaId: "ipe" },
       { nome: "Carla Mendes", email: "recepcao@clinicaipe.com.br", senha: "recepcao123", papel: "recepcao", clinicaId: "ipe" },
-      { nome: "Dr. Paulo Menezes", email: "paulo.menezes@clinicaipe.com.br", senha: "medico123", papel: "medico", clinicaId: "ipe", medicoId: "paulo" },
-      { nome: "Juliana Santos", email: "juliana.santos@email.com", senha: "paciente123", papel: "paciente", clinicaId: null },
+      { nome: "Juliana Santos", email: "juliana.santos@email.com", senha: "paciente123", papel: "paciente", clinicaId: null, cpf: familiaJuliana.cpf },
       { nome: "Marta Ferraz", email: "recepcao@clinicajacaranda.com.br", senha: "recepcao123", papel: "recepcao", clinicaId: "jacaranda" },
-      { nome: "Dr. Marcos Vieira", email: "marcos.vieira@clinicajacaranda.com.br", senha: "medico123", papel: "medico", clinicaId: "jacaranda", medicoId: "marcos" },
     ];
+    /* e-mail do médico: primeiro.ultimo@dominio-da-clinica (ex.: paulo.menezes@clinicaipe.com.br) */
+    D.todosMedicos.forEach((m) => {
+      const partes = semAcento(m.nome.replace(/^Dra?\.\s+/, "")).split(" ");
+      contas.push({ nome: m.nome, email: partes[0] + "." + partes[partes.length - 1] + "@" + DOMINIO[m.clinica], senha: "medico123", papel: "medico", clinicaId: m.clinica, medicoId: m.id });
+    });
     for (const c of contas) {
-      b.usuarios.push({ id: novoId("u"), nome: c.nome, email: c.email, senha: await resumo(c.senha), papel: c.papel, clinicaId: c.clinicaId, medicoId: c.medicoId || null });
+      b.usuarios.push({ id: novoId("u"), nome: c.nome, email: c.email, senha: await resumo(c.senha), papel: c.papel, clinicaId: c.clinicaId, medicoId: c.medicoId || null, telefone: "", cpf: c.cpf || "" });
     }
     const juliana = b.usuarios.find((u) => u.papel === "paciente");
     b.vinculos.push({ pacienteId: juliana.id, clinicaId: "ipe" });
@@ -165,6 +208,29 @@
     return ler().usuarios.some((u) => u.email === email.toLowerCase().trim());
   }
 
+  /* ─── CPFs já cadastrados (Pacientes.CPF é único): titulares e familiares de todas as contas ───
+     Começa com a família da carga inicial (dados.js). { cpf: "11 dígitos", nome } */
+  const FAMILIA_INICIAL = D.pessoas.map((p) => ({ cpf: p.cpf, nome: p.nome }));
+  function cpfsCadastrados() {
+    const b = ler();
+    if (!b.cpfs) { b.cpfs = FAMILIA_INICIAL.slice(); gravar(); }
+    return b.cpfs;
+  }
+  const cpfEmUso = (cpf) => cpfsCadastrados().some((x) => x.cpf === so(cpf));
+  /* o CPF de um paciente pelo nome (quem se cadastrou ou foi incluído como familiar), ou null */
+  function cpfDe(nome) {
+    const x = cpfsCadastrados().find((p) => p.nome === nome);
+    return x ? x.cpf : null;
+  }
+  /* valida e reserva o CPF; lança "CPF inválido." ou "Este CPF já está cadastrado." */
+  function guardarCPF(cpf, nome) {
+    if (!validarCPF(cpf)) throw new Error(ERRO_CPF);
+    if (cpfEmUso(cpf)) throw new Error(ERRO_CPF_REPETIDO);
+    cpfsCadastrados().push({ cpf: so(cpf), nome });
+    gravar();
+    return so(cpf);
+  }
+
   /* ─── Funções que as telas usam ─── */
 
   /* POST /api/auth/login   corpo { email, senha }  (com a API: senha sem resumo(), ver PONTO DE TROCA) */
@@ -186,6 +252,7 @@
     const u = usuarioAtual();
     if (!u) throw new Error("Entre de novo para trocar a senha.");
     if (u.senha !== (await resumo(atual))) throw new Error("A senha atual não confere.");
+    exigirSenha(nova);
     u.senha = await resumo(nova);
     delete u.provisoria;
     gravar();
@@ -204,10 +271,12 @@
     if (!validarCNPJ(c.cnpj)) throw new Error("CNPJ inválido. Confira os 14 números.");
     if (b.clinicas.some((x) => so(x.cnpj) === so(c.cnpj))) throw new Error("Já existe uma clínica com este CNPJ.");
     if (emailEmUso(d.email)) throw new Error("Este e-mail já tem uma conta. Use outro ou entre com ele.");
+    if (!validarUF(c.uf)) throw new Error(ERRO_UF);
+    exigirSenha(d.senha);
     const clinica = {
-      id: novoId("c"), nome: c.nome.trim(), unidade: (c.unidade || "").trim() || "Unidade principal",
+      id: novoId("c"), nome: c.nome.trim(),
       cnpj: formatarCNPJ(c.cnpj), telefone: formatarTelefone(c.telefone), endereco: c.endereco.trim(),
-      cidade: c.cidade.trim(), uf: c.uf.trim().toUpperCase(), codigo: gerarCodigo(c.nome), publica: c.publica !== false,
+      cidade: c.cidade.trim(), uf: c.uf.trim(), codigo: gerarCodigo(c.nome), publica: c.publica !== false,
     };
     const dono = { id: novoId("u"), nome: d.nome.trim(), email: d.email.toLowerCase().trim(), senha: await resumo(d.senha), papel: "dono", clinicaId: clinica.id };
     b.clinicas.push(clinica);
@@ -231,8 +300,8 @@
     exigir(["dono"]);
     const c = clinicaAtual();
     if (!c) throw new Error("Nenhuma clínica aberta.");
-    ["nome", "unidade", "endereco", "cidade"].forEach((k) => { if (campos[k] !== undefined) c[k] = String(campos[k]).trim(); });
-    if (campos.uf !== undefined) c.uf = String(campos.uf).trim().toUpperCase();
+    if (campos.uf !== undefined && !validarUF(campos.uf)) throw new Error(ERRO_UF);
+    ["nome", "endereco", "cidade", "uf"].forEach((k) => { if (campos[k] !== undefined) c[k] = String(campos[k]).trim(); });
     if (campos.telefone !== undefined) c.telefone = formatarTelefone(campos.telefone);
     if (campos.publica !== undefined) c.publica = !!campos.publica;
     gravar();
@@ -263,17 +332,31 @@
     return { usuario: u, senhaProvisoria };
   }
   /* POST /api/clinicas/{id}/medicos  (cria a conta de acesso do médico: tabela Medicos.IdUsuario)
-     dados = { nome, email, medicoId } → { usuario, senhaProvisoria } */
+     dados = { nome, email, medicoId, telefone } → { usuario, senhaProvisoria }
+     O telefone do médico é o da conta dele (Usuarios.Telefone). */
   async function cadastrarContaMedico(dados) {
     await pronto;
     exigir(["dono", "recepcao"]);
     const c = clinicaAtual();
     if (emailEmUso(dados.email)) throw new Error("Este e-mail já tem uma conta.");
     const senhaProvisoria = gerarSenhaProvisoria();
-    const u = { id: novoId("u"), nome: dados.nome.trim(), email: dados.email.toLowerCase().trim(), senha: await resumo(senhaProvisoria), papel: "medico", clinicaId: c.id, medicoId: dados.medicoId, provisoria: true };
+    const u = { id: novoId("u"), nome: dados.nome.trim(), email: dados.email.toLowerCase().trim(), senha: await resumo(senhaProvisoria), papel: "medico", clinicaId: c.id, medicoId: dados.medicoId, telefone: dados.telefone || "", provisoria: true };
     ler().usuarios.push(u);
     gravar();
     return { usuario: u, senhaProvisoria };
+  }
+  /* Telefone do médico = telefone da conta dele (Usuarios.Telefone).
+     Ler: vem junto da lista de médicos. Gravar: PUT /api/medicos/{id} (a API grava em Usuarios.Telefone). */
+  function telefoneDoMedico(medicoId) {
+    const u = ler().usuarios.find((x) => x.papel === "medico" && x.medicoId === medicoId);
+    return u ? u.telefone || "" : "";
+  }
+  function salvarTelefoneMedico(medicoId, telefone) {
+    const u = ler().usuarios.find((x) => x.papel === "medico" && x.medicoId === medicoId);
+    if (!u) return false; /* médico ainda sem conta: o telefone entra quando a conta for criada */
+    u.telefone = telefone || "";
+    gravar();
+    return true;
   }
   function emailLivre(email) { return !emailEmUso(email); }
   function gerarSenhaProvisoria() {
@@ -296,14 +379,19 @@
     return removido;
   }
 
-  /* POST /api/pacientes */
+  /* POST /api/pacientes   corpo { nome, email, senha, telefone, cpf: "11 dígitos", nascimento }
+     O CPF é obrigatório, válido e único (Pacientes.CPF). */
   async function cadastrarPaciente(dados) {
     await pronto;
     if (emailEmUso(dados.email)) throw new Error("Este e-mail já tem uma conta. Entre com ele ou use outro.");
+    if (!validarCPF(dados.cpf)) throw new Error(ERRO_CPF);
+    if (cpfEmUso(dados.cpf)) throw new Error(ERRO_CPF_REPETIDO);
+    exigirSenha(dados.senha);
     const u = {
       id: novoId("u"), nome: dados.nome.trim(), email: dados.email.toLowerCase().trim(), senha: await resumo(dados.senha),
-      papel: "paciente", clinicaId: null, telefone: dados.telefone || "", documento: dados.documento || "", nascimento: dados.nascimento || "",
+      papel: "paciente", clinicaId: null, telefone: dados.telefone || "", cpf: so(dados.cpf), nascimento: dados.nascimento || "",
     };
+    guardarCPF(u.cpf, u.nome);
     ler().usuarios.push(u);
     gravar();
     abrirSessao(u, null);
@@ -315,7 +403,7 @@
     await pronto;
     const t = semAcento(termo).trim();
     return ler().clinicas
-      .filter((c) => c.publica && (!t || [c.nome, c.cidade, c.unidade, c.endereco].some((x) => semAcento(x).includes(t))))
+      .filter((c) => c.publica && (!t || [c.nome, c.cidade, c.endereco].some((x) => semAcento(x).includes(t))))
       .sort((a, b) => a.nome.localeCompare(b.nome));
   }
 
@@ -355,7 +443,6 @@
     if (!c || !D || !D.clinica) return;
     D.clinica.id = c.id;
     D.clinica.nome = c.nome;
-    D.clinica.unidade = c.unidade;
     D.clinica.endereco = c.endereco;
     D.clinica.telefone = c.telefone;
     D.clinica.telefoneLink = "+55" + so(c.telefone);
@@ -371,7 +458,10 @@
     entrar, sair, trocarSenha,
     cadastrarClinica, atualizarClinica,
     listarEquipe, cadastrarRecepcionista, removerDaEquipe, cadastrarContaMedico, emailLivre,
+    telefoneDoMedico, salvarTelefoneMedico,
     cadastrarPaciente, buscarClinicas, clinicaPorCodigo, vincularClinica, clinicasDoPaciente,
     validarCNPJ, formatarCNPJ, formatarTelefone,
+    validarCPF, formatarCPF, cpfFicticio, cpfEmUso, cpfDe, guardarCPF, ERRO_CPF, ERRO_CPF_REPETIDO,
+    UFS, validarUF, ERRO_UF, SENHA_MINIMA, ERRO_SENHA,
   };
 })();

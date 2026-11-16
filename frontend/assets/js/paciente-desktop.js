@@ -181,7 +181,7 @@
 
     function textoFila(pos) {
         const frente = pos - 1;
-        if (frente <= 0) return 'Você é a próxima';
+        if (frente <= 0) return 'Você é a próxima pessoa da fila';
         return frente === 1
             ? '1 pessoa na sua frente'
             : frente + ' pessoas na sua frente';
@@ -303,8 +303,8 @@
                 ' · ' +
                 m.nome +
                 '</span>' +
-                '<span class="item__sub" style="display:block">Você é ' +
-                A.ordinal(e.posicao, pessoa(e.pessoa).genero) +
+                '<span class="item__sub" style="display:block">Você está na posição ' +
+                e.posicao +
                 ' da fila</span></span>' +
                 I('chevron-right', 'item__seta') +
                 '</a></section></div>';
@@ -911,6 +911,9 @@
             '<div><dt>Parentesco</dt><dd>' +
             A.esc(p.relacao) +
             '</dd></div>' +
+            '<div><dt>CPF</dt><dd>' +
+            (p.cpf ? API.formatarCPF(p.cpf) : '—') +
+            '</dd></div>' +
             '<div><dt>Alergias</dt><dd>' +
             p.alergias +
             '</dd></div>' +
@@ -1241,15 +1244,14 @@
             };
         }
         const m = medico(e.medico);
-        const g = pessoa(e.pessoa).genero;
-        const ord = A.ordinal(e.posicao, g);
+        const ord = String(e.posicao);
         const html =
             tituloPagina('Lista de espera', esp(m.esp).nome + ' · ' + m.nome) +
             '<section class="espera-painel grupo" aria-labelledby="pos-frase">' +
             '<div class="espera-painel__linha"><span class="posicao" id="pos" aria-hidden="true">' +
             ord +
             '</span>' +
-            '<p class="espera-painel__frase" id="pos-frase">Você é a <span id="pos-txt">' +
+            '<p class="espera-painel__frase" id="pos-frase">Você está na posição <span id="pos-txt">' +
             ord +
             '</span><br>da fila</p></div>' +
             '<p class="espera-painel__detalhe"><b>' +
@@ -1300,9 +1302,9 @@
             el.querySelector('#sair-fila').addEventListener('click', () => {
                 abrirGaveta(
                     '<h2 class="gaveta__titulo" id="gaveta-titulo">Sair da lista de espera?</h2>' +
-                        '<p class="gaveta__texto">Você vai perder a ' +
-                        A.ordinal(e.posicao, g) +
-                        ' posição.</p>' +
+                        '<p class="gaveta__texto">Você vai perder a posição ' +
+                        e.posicao +
+                        ' na fila.</p>' +
                         '<div class="gaveta__acoes"><button type="button" class="botao botao--principal" data-fechar>Continuar na fila</button></div>' +
                         '<div class="gaveta__acoes" style="margin-top:28px"><button type="button" class="botao botao--texto-perigo" id="confirmar-sair">Sair da fila</button></div>',
                     {
@@ -1769,6 +1771,8 @@
             '<form id="form-familiar" class="formulario" novalidate>' +
             '<div class="campo"><label for="f-nome">Nome completo</label>' +
             '<input id="f-nome" type="text" autocomplete="off" placeholder="Ex.: Ana Beatriz Santos" required></div>' +
+            '<div class="campo" id="c-cpf"><label for="f-cpf">CPF</label>' +
+            '<input id="f-cpf" type="text" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required></div>' +
             '<div class="campo" id="c-rel"><span class="campo__rotulo" id="f-rel-label">Parentesco (obrigatório)</span>' +
             '<div class="opcoes" role="radiogroup" aria-labelledby="f-rel-label" aria-required="true">' +
             PACIENTE.PARENTESCOS.map(
@@ -1811,6 +1815,9 @@
 
         function montar(el) {
             let corSelecionada = CORES[0];
+            /* máscara do CPF: só números, no formato 000.000.000-00 */
+            const cpf = el.querySelector('#f-cpf');
+            cpf.addEventListener('input', () => { cpf.value = API.formatarCPF(cpf.value); });
 
             el.querySelectorAll('#grade-cores .cor-btn').forEach((b) =>
                 b.addEventListener('click', () => {
@@ -1836,9 +1843,10 @@
                 (ev) => {
                     ev.preventDefault();
                     const relBtn = el.querySelector('.opcoes [aria-checked="true"]');
-                    /* nome, parentesco e nascimento obrigatórios (paciente-servicos.js) */
+                    /* nome, CPF, parentesco e nascimento obrigatórios (paciente-servicos.js) */
                     const r = PACIENTE.adicionarFamiliar({
                         nome: el.querySelector('#f-nome').value,
+                        cpf: cpf.value,
                         relacao: relBtn ? relBtn.textContent.trim() : '',
                         nascimento: el.querySelector('#f-nasc').value,
                         alergias: el.querySelector('#f-alergias').value,
@@ -1853,7 +1861,9 @@
                     if (!r.familiar) {
                         mostrarErro('#c-nasc', null, r.erros.nascimento);
                         mostrarErro('#c-rel', null, r.erros.relacao);
+                        mostrarErro('#c-cpf', null, r.erros.cpf);
                         if (r.erros.nome) el.querySelector('#f-nome').focus();
+                        else if (r.erros.cpf) cpf.focus();
                         else if (r.erros.relacao) el.querySelector('#c-rel [role="radio"]').focus();
                         else el.querySelector('#f-nasc').focus();
                         return;

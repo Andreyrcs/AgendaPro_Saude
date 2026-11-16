@@ -1,4 +1,4 @@
-// Adicionar familiar: nome, parentesco, nascimento, alergias e a cor do avatar.
+// Adicionar familiar: nome, CPF, parentesco, nascimento, alergias e a cor do avatar.
 
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -13,6 +13,7 @@ import { adicionarFamiliar } from '../servicos/familia';
 import { cores, opcoesFamilia } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 import { HOJE, brParaIso, mascararData } from '../utilitarios/datas';
+import { ERRO_CPF, cpfValido, mascararCPF } from '../utilitarios/validacao';
 
 // Parentesco é obrigatório (coluna Pacientes.Parentesco); as mesmas opções da web
 const PARENTESCOS = ['Filho(a)', 'Cônjuge', 'Pai/Mãe', 'Irmão(ã)', 'Outro'];
@@ -20,6 +21,7 @@ const PARENTESCOS = ['Filho(a)', 'Cônjuge', 'Pai/Mãe', 'Irmão(ã)', 'Outro'];
 export default function AdicionarFamiliarTela({ navigation }) {
   const { usuario } = useSessao();
   const [nome, setNome] = useState('');
+  const [cpf, setCpf] = useState('');
   const [relacao, setRelacao] = useState(null);
   const [nascimento, setNascimento] = useState('');
   const [alergias, setAlergias] = useState('');
@@ -31,6 +33,7 @@ export default function AdicionarFamiliarTela({ navigation }) {
     const iso = brParaIso(nascimento);
     const encontrados = {};
     if (!nome.trim()) encontrados.nome = 'Informe o nome do familiar.';
+    if (!cpfValido(cpf)) encontrados.cpf = ERRO_CPF;
     if (!relacao) encontrados.relacao = 'Escolha o parentesco.';
     if (!iso || iso > HOJE) encontrados.nascimento = 'Informe uma data válida, no formato DD/MM/AAAA.';
     setErros(encontrados);
@@ -38,10 +41,10 @@ export default function AdicionarFamiliarTela({ navigation }) {
 
     setSalvando(true);
     try {
-      await adicionarFamiliar(usuario, { nome, relacao, nascimento: iso, alergias, cor });
+      await adicionarFamiliar(usuario, { nome, cpf, relacao, nascimento: iso, alergias, cor });
       navigation.goBack();
     } catch (e) {
-      setErros({ geral: e.message });
+      setErros(e.message.includes('CPF') ? { cpf: e.message } : { geral: e.message });
       setSalvando(false);
     }
   }
@@ -55,6 +58,15 @@ export default function AdicionarFamiliarTela({ navigation }) {
 
       <View style={estilos.campos}>
         <CampoTexto rotulo="Nome completo" value={nome} onChangeText={setNome} erro={erros.nome} autoComplete="name" />
+        <CampoTexto
+          rotulo="CPF"
+          value={cpf}
+          onChangeText={(t) => setCpf(mascararCPF(t))}
+          erro={erros.cpf}
+          keyboardType="number-pad"
+          placeholder="000.000.000-00"
+          maxLength={14}
+        />
 
         <View style={estilos.grupo}>
           <Texto variante="rotulo" cor={cores.tinta}>

@@ -19,6 +19,7 @@ import { cores } from '../estilos/cores';
 import { espaco } from '../estilos/espacos';
 import { diaEMes } from '../utilitarios/datas';
 import { descricaoFamiliar } from '../utilitarios/texto';
+import { mascararCPF } from '../utilitarios/validacao';
 
 export default function PessoaTela({ route, navigation }) {
   const { usuario } = useSessao();
@@ -65,6 +66,10 @@ export default function PessoaTela({ route, navigation }) {
         <View>
           <Texto variante="meta">Parentesco</Texto>
           <Texto variante="negrito">{pessoa.relacao}</Texto>
+        </View>
+        <View>
+          <Texto variante="meta">CPF</Texto>
+          <Texto variante="negrito">{pessoa.cpf ? mascararCPF(pessoa.cpf) : '—'}</Texto>
         </View>
         <View>
           <Texto variante="meta">Alergias</Texto>
@@ -120,7 +125,7 @@ export default function PessoaTela({ route, navigation }) {
 const estilos = StyleSheet.create({
   centro: { textAlign: 'center' },
   topo: { alignItems: 'center', gap: espaco.p, marginBottom: espaco.g },
-  ficha: { flexDirection: 'row', justifyContent: 'space-around', gap: espaco.g },
+  ficha: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', gap: espaco.g },
   marcar: { marginTop: espaco.g },
   lista: { gap: espaco.m },
   pendencia: { gap: espaco.xs },

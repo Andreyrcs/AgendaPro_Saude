@@ -14,11 +14,34 @@ export function codigoValido(texto) {
   return /^[A-Z]{3}-\d{4}$/.test(normalizarCodigo(texto));
 }
 
+// ─── CPF (Pacientes.CPF): 11 dígitos, com os dois dígitos verificadores; guarda só os números ───
+export const ERRO_CPF = 'CPF inválido.';
+export const ERRO_CPF_REPETIDO = 'Este CPF já está cadastrado.';
+export const soDigitos = (texto) => String(texto || '').replace(/\D/g, '');
+function digitoCPF(base) {
+  const soma = base.split('').reduce((s, n, i) => s + Number(n) * (base.length + 1 - i), 0);
+  const resto = (soma * 10) % 11;
+  return resto === 10 ? 0 : resto;
+}
+export function cpfValido(texto) {
+  const c = soDigitos(texto);
+  if (c.length !== 11 || /^(\d)\1+$/.test(c)) return false;
+  const d1 = digitoCPF(c.slice(0, 9));
+  return c.endsWith(`${d1}${digitoCPF(c.slice(0, 9) + d1)}`);
+}
+// Máscara 000.000.000-00: só entram números
+export function mascararCPF(texto) {
+  return soDigitos(texto).slice(0, 11)
+    .replace(/^(\d{3})(\d)/, '$1.$2')
+    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1-$2');
+}
+
 export function validarLogin(email, senha) {
   return !String(email || '').trim() || !senha ? ERRO_PREENCHA : null;
 }
 
-// f = { nome, email, telefone, senha, confirmar, nascimento: 'DD/MM/AAAA', alergias, codigo, privacidade }
+// f = { nome, email, telefone, cpf, senha, confirmar, nascimento: 'DD/MM/AAAA', alergias, codigo, privacidade }
 // Devolve { campo: 'mensagem' } com cada problema encontrado (vazio = tudo certo)
 export function validarCadastro(f, hoje) {
   const erros = {};
@@ -27,6 +50,7 @@ export function validarCadastro(f, hoje) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(f.email || '').trim())) erros.email = 'Informe um e-mail válido, como nome@exemplo.com.';
   const digitos = String(f.telefone || '').replace(/\D/g, '');
   if (digitos.length < 10 || digitos.length > 11) erros.telefone = 'Informe o telefone com DDD (10 ou 11 números).';
+  if (!cpfValido(f.cpf)) erros.cpf = ERRO_CPF;
   if (String(f.senha || '').length < 8) erros.senha = 'A senha precisa ter pelo menos 8 caracteres.';
   if (f.confirmar !== f.senha) erros.confirmar = 'As senhas não são iguais.';
   const nasc = brParaIso(String(f.nascimento || ''));

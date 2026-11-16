@@ -70,7 +70,8 @@
     if (telDigitos.length < 10 || telDigitos.length > 11) erro("telefone", "Use o DDD e o número.");
     if (v("endereco").length < 5) erro("endereco", "Escreva rua, número e bairro.");
     if (!v("cidade")) erro("cidade", "Informe a cidade.");
-    if (!/^[A-Z]{2}$/.test(v("uf"))) erro("uf", "Use a sigla, como SP.");
+    /* UF: 2 letras maiúsculas e uma sigla de estado de verdade (Clinica.UF) */
+    if (!API.validarUF(v("uf"))) erro("uf", API.ERRO_UF);
     if (v("nome-dono").split(/\s+/).length < 2) erro("nome-dono", "Escreva o nome e o sobrenome.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v("email"))) erro("email", "Confira o e-mail: falta o @ ou o domínio.");
     if (senha.length < 8 || !/[a-zA-Z]/.test(senha) || !/\d/.test(senha)) erro("senha", "Pelo menos 8 caracteres, com letras e números.");
@@ -100,6 +101,7 @@
       erroGeral(e.message);
       if (/CNPJ/.test(e.message)) erro("cnpj", e.message);
       if (/e-mail/i.test(e.message)) erro("email", e.message);
+      if (/sigla/.test(e.message)) erro("uf", e.message);
     } finally {
       botao.classList.remove("btn--carregando");
       botao.textContent = "Cadastrar clínica";

@@ -38,34 +38,56 @@
   const diaSemana = (s) => { const p = s.split("-").map(Number); return SEMANA[new Date(p[0], p[1] - 1, p[2]).getDay()]; };
   const porExtenso = (s) => { const p = s.split("-").map(Number); return p[2] + " de " + MESES[p[1] - 1]; };
 
-  /* Campanhas do Ministério da Saúde por mês do ano (1 = janeiro) */
+  /* ─── Prevenção: o mesmo modelo do banco ───
+     Campanhas_Prevencao: um registro por mês. [Nome (pode ser vazio), Tema]. 1 = janeiro. */
   const CAMPANHAS = {
     1: ["Janeiro Branco", "Saúde mental"], 2: [null, "Volta às aulas"], 3: ["Março Lilás", "Prevenção do câncer do colo do útero"],
     4: ["Vacinação contra a gripe", "Campanha anual"], 5: ["Maio Amarelo", "Segurança no trânsito"], 6: [null, "Inverno: cuidado com o pulmão"],
     7: [null, "Férias de julho"], 8: ["Agosto Dourado", "Aleitamento materno"], 9: ["Setembro Amarelo", "Prevenção do suicídio"],
     10: ["Outubro Rosa", "Prevenção do câncer de mama"], 11: ["Novembro Azul", "Saúde do homem"], 12: [null, "Antes das férias"],
   };
-  /* O que cada pessoa da família tem para fazer em cada mês do ano */
-  const PREVENCAO_POR_MES = {
-    1: [{ pessoa: "juliana", titulo: "Check-up anual com clínica geral", nota: "Inclui conversa sobre sono e estresse", esp: "clinica" }],
-    2: [{ pessoa: "davi", titulo: "Consulta anual com pediatra", nota: "Conferir a caderneta de vacinação", esp: "pediatria" },
-        { pessoa: "marina", titulo: "Consulta anual com pediatra", nota: "Conferir a caderneta de vacinação", esp: "pediatria" }],
-    3: [{ pessoa: "juliana", titulo: "Exame preventivo (Papanicolau)", nota: "Frequência conforme orientação médica", esp: "ginecologia" }],
-    4: [{ pessoa: "cida", titulo: "Vacina da gripe", nota: "Grupo prioritário: 60 anos ou mais", esp: null },
-        { pessoa: "kenji", titulo: "Vacina da gripe", nota: "Grupo prioritário: 60 anos ou mais", esp: null }],
-    10: [{ pessoa: "cida", titulo: "Mamografia", nota: "A cada 2 anos, dos 50 aos 74 anos", esp: "ginecologia" }],
-    11: [{ pessoa: "kenji", titulo: "Check-up anual com clínica geral", nota: "Uma vez por ano depois dos 50", esp: "clinica" }],
-    12: [{ pessoa: "davi", titulo: "Revisão no dentista", nota: "A cada 6 meses", esp: null },
-         { pessoa: "marina", titulo: "Revisão no dentista", nota: "A cada 6 meses", esp: null }],
+  /* Exames_Prevencao: as sugestões de cada campanha (Titulo, Nota, Especialidade = NOME da especialidade;
+     null = não se marca pela clínica, como vacina e dentista) */
+  const EXAMES_DO_MES = {
+    1: [{ titulo: "Consulta de saúde mental", nota: "Conversa sobre sono, humor e estresse", especialidade: "Psiquiatria" }],
+    2: [{ titulo: "Consulta anual com pediatra", nota: "Conferir a caderneta de vacinação", especialidade: "Pediatria" }],
+    3: [{ titulo: "Exame preventivo (Papanicolau)", nota: "Frequência conforme orientação médica", especialidade: "Ginecologia" }],
+    4: [{ titulo: "Vacina da gripe", nota: "Grupo prioritário: 60 anos ou mais", especialidade: null }],
+    10: [{ titulo: "Mamografia", nota: "A cada 2 anos, dos 50 aos 74 anos", especialidade: "Ginecologia" },
+         { titulo: "Consulta com ginecologista", nota: "Inclui o exame clínico das mamas", especialidade: "Ginecologia" }],
+    11: [{ titulo: "Exame de próstata (PSA)", nota: "Conforme orientação médica, a partir dos 50 anos", especialidade: "Clínica geral" }],
   };
+  /* as sugestões gerais (IdCampanha nulo) valem para todo mês */
+  const EXAMES_GERAIS = [
+    { id: "exg-1", idCampanha: null, titulo: "Check-up anual com clínica geral", nota: "Uma vez por ano", especialidade: "Clínica geral" },
+    { id: "exg-2", idCampanha: null, titulo: "Revisão no dentista", nota: "A cada 6 meses", especialidade: null },
+  ];
+  /* Pessoa_Prevencao da carga inicial: [pessoa, título do exame] em cada mês */
+  const PREVENCAO_POR_MES = {
+    1: [["juliana", "Check-up anual com clínica geral"]],
+    2: [["davi", "Consulta anual com pediatra"], ["marina", "Consulta anual com pediatra"]],
+    3: [["juliana", "Exame preventivo (Papanicolau)"]],
+    4: [["cida", "Vacina da gripe"], ["kenji", "Vacina da gripe"]],
+    10: [["cida", "Mamografia"]],
+    11: [["kenji", "Check-up anual com clínica geral"]],
+    12: [["davi", "Revisão no dentista"], ["marina", "Revisão no dentista"]],
+  };
+  /* Cada mês: { id, mes: "AAAA-MM", campanha (Nome ou null), tema, exames: [Exames_Prevencao do mês], itens: [Pessoa_Prevencao] }
+     Item: { id, pessoa, exame (id), titulo, nota, especialidade, status, consulta? } (titulo, nota e especialidade vêm do exame) */
   function prevencao() {
     const lista = [];
     for (let i = -1; i <= 5; i++) {
       const m = mes(i);
       const n = Number(m.slice(5));
+      const idCampanha = "camp-" + m;
+      const exames = (EXAMES_DO_MES[n] || []).map((e, j) => Object.assign({ id: "ex" + m + "-" + j, idCampanha }, e));
+      const todos = exames.concat(EXAMES_GERAIS);
       lista.push({
-        mes: m, campanha: CAMPANHAS[n][0], tema: CAMPANHAS[n][1],
-        itens: (PREVENCAO_POR_MES[n] || []).map((it, i) => Object.assign({ id: "v" + m + "-" + i, status: "pendente" }, it)),
+        id: idCampanha, mes: m, campanha: CAMPANHAS[n][0], tema: CAMPANHAS[n][1], exames,
+        itens: (PREVENCAO_POR_MES[n] || []).map(([pessoa, titulo], j) => {
+          const e = todos.find((x) => x.titulo === titulo);
+          return { id: "v" + m + "-" + j, pessoa, exame: e.id, titulo: e.titulo, nota: e.nota, especialidade: e.especialidade, status: "pendente" };
+        }),
       });
     }
     return lista;
@@ -113,7 +135,6 @@
 
     clinica: {
       nome: "Clínica Ipê",
-      unidade: "Unidade Centro",
       endereco: "Rua das Palmeiras, 410 — Centro",
       telefone: "(11) 2345-0000",
       telefoneLink: "+551123450000",
@@ -123,34 +144,35 @@
 
     titular: "juliana",
 
+    /* cpf: Pacientes.CPF, 11 dígitos, fictício e válido (dígitos verificadores corretos), sem repetir */
     pessoas: [
       {
         id: "juliana", nome: "Juliana Santos", curto: "Juliana", tratamento: "você",
-        relacao: "Titular", idade: 36, genero: "f", cor: "var(--id-juliana)",
+        relacao: "Titular", idade: 36, cpf: "28461593782", cor: "var(--id-juliana)",
         alergias: "Nenhuma informada",
         avatar: { pele: "#8d5524", cabelo: "crespo", corCabelo: "#1e1410", roupa: "#12263f" },
       },
       {
         id: "davi", nome: "Davi Santos Tanaka", curto: "Davi", tratamento: "o Davi",
-        relacao: "Filho", idade: 8, genero: "m", cor: "var(--id-davi)",
+        relacao: "Filho", idade: 8, cpf: "39152840689", cor: "var(--id-davi)",
         alergias: "Nenhuma informada",
         avatar: { pele: "#c68642", cabelo: "cacheado", corCabelo: "#2b1b12", roupa: "#e07b39" },
       },
       {
         id: "marina", nome: "Marina Santos Tanaka", curto: "Marina", tratamento: "a Marina",
-        relacao: "Filha", idade: 14, genero: "f", cor: "var(--id-marina)",
+        relacao: "Filha", idade: 14, cpf: "47590312860", cor: "var(--id-marina)",
         alergias: "Rinite alérgica",
         avatar: { pele: "#b5703f", cabelo: "trancas", corCabelo: "#1a120d", roupa: "#2f6f9f" },
       },
       {
         id: "cida", nome: "Maria Aparecida Santos", curto: "Dona Cida", tratamento: "a Dona Cida",
-        relacao: "Mãe", idade: 71, genero: "f", cor: "var(--id-cida)",
+        relacao: "Mãe", idade: 71, cpf: "56308174262", cor: "var(--id-cida)",
         alergias: "Alergia a dipirona",
         avatar: { pele: "#6b3e26", cabelo: "grisalho", corCabelo: "#d6d3cf", roupa: "#b5543a", oculos: true },
       },
       {
         id: "kenji", nome: "Kenji Tanaka", curto: "Seu Kenji", tratamento: "o Seu Kenji",
-        relacao: "Sogro", idade: 74, genero: "m", cor: "var(--id-kenji)",
+        relacao: "Sogro", idade: 74, cpf: "61827435909", cor: "var(--id-kenji)",
         alergias: "Nenhuma informada",
         avatar: { pele: "#e8c39e", cabelo: "calvo", corCabelo: "#bdbab5", roupa: "#2e5e4e", oculos: true },
       },
@@ -166,6 +188,13 @@
       oftalmologia: { nome: "Oftalmologia", desc: "Olhos e visão", duracao: 30 },
       ginecologia: { nome: "Ginecologia", desc: "Saúde da mulher", duracao: 30 },
       psiquiatria: { nome: "Psiquiatria", desc: "Saúde mental, ansiedade, sono e humor", duracao: 30 },
+    },
+    /* Especialidades são por clínica (Especialidades.IdClinica): cada clínica tem as suas, e o mesmo nome
+       pode existir em clínicas diferentes. clinica-dados.js deixa em DADOS.especialidades só as da clínica aberta. */
+    ESPECIALIDADES_DA_CLINICA: {
+      ipe: ["clinica", "pediatria", "otorrino", "dermatologia", "cardiologia", "ortopedia", "oftalmologia", "ginecologia", "psiquiatria"],
+      jacaranda: ["clinica", "pediatria", "ortopedia"],
+      aroeira: ["cardiologia", "dermatologia", "ginecologia"],
     },
 
     /* Todos os médicos cadastrados; "clinica" diz onde cada um atende.
@@ -222,6 +251,7 @@
 
     /* Calendário de prevenção: do mês passado até 5 meses à frente, com as campanhas do Ministério da Saúde */
     prevencao: prevencao(),
+    examesPrevencaoGerais: EXAMES_GERAIS,
 
     /* Lista de espera de cada médico, em ordem de chegada.
        A Juliana (titular do app) é a 3ª da fila da Dra. Camila Rocha. */
@@ -262,7 +292,7 @@
 
     notificacoes: [
       { id: "n1", tipo: "lembrete", icone: "calendar-days", texto: "A consulta do Davi com a Dra. Fernanda Lima é " + diaSemana(consultas[0].data) + ", às 14:30.", quando: "Hoje, 08:00", nova: true },
-      { id: "n2", tipo: "fila", icone: "list-ordered", texto: "Você subiu para 3ª na fila de Dermatologia.", quando: "Ontem, 17:12", nova: true },
+      { id: "n2", tipo: "fila", icone: "list-ordered", texto: "Você subiu para a posição 3 na fila de Dermatologia.", quando: "Ontem, 17:12", nova: true },
       { id: "n3", tipo: "retorno", icone: "repeat", texto: "Dona Cida precisa marcar o retorno com o cardiologista até " + porExtenso(dia(27)) + ".", quando: "Há 3 dias", nova: false },
       { id: "n4", tipo: "prevencao", icone: "calendar-heart", texto: "Lembrete de prevenção: confira o que a família tem para este mês.", quando: "Dia 1º", nova: false },
     ],

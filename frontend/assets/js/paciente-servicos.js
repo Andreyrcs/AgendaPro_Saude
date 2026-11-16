@@ -19,8 +19,8 @@
   if (eu && eu.email !== "juliana.santos@email.com") {
     const primeiro = eu.nome.split(" ")[0];
     D.pessoas = [{
-      id: "eu", nome: eu.nome, curto: primeiro, tratamento: "você", relacao: "Titular", nascimento: eu.nascimento || null,
-      idade: eu.nascimento ? new Date().getFullYear() - Number(eu.nascimento.slice(0, 4)) - (D.hoje.slice(5) < eu.nascimento.slice(5) ? 1 : 0) : null, genero: null,
+      id: "eu", nome: eu.nome, curto: primeiro, tratamento: "você", relacao: "Titular", nascimento: eu.nascimento || null, cpf: eu.cpf || "",
+      idade: eu.nascimento ? new Date().getFullYear() - Number(eu.nascimento.slice(0, 4)) - (D.hoje.slice(5) < eu.nascimento.slice(5) ? 1 : 0) : null,
       cor: "var(--id-juliana)", alergias: "Nenhuma informada",
       avatar: { pele: "#c68642", cabelo: "cacheado", corCabelo: "#2b1b12", roupa: "#12263f" },
     }];
@@ -38,7 +38,8 @@
     const salvo = JSON.parse(localStorage.getItem(CHAVE));
     if (salvo) ["consultas", "passadas", "pessoas", "espera"].forEach((k) => { if (salvo[k] !== undefined) D[k] = salvo[k]; });
     /* prevenção: os meses seguem a data de hoje; os itens de cada mês voltam como foram salvos */
-    if (salvo && salvo.prevencao) D.prevencao.forEach((m) => { const s2 = salvo.prevencao.find((x) => x.mes === m.mes); if (s2) m.itens = s2.itens; });
+    /* (itens no formato antigo, sem "exame", são ignorados) */
+    if (salvo && salvo.prevencao) D.prevencao.forEach((m) => { const s2 = salvo.prevencao.find((x) => x.mes === m.mes); if (s2 && s2.itens.every((i) => i.exame)) m.itens = s2.itens; });
   } catch (e) { /* sem armazenamento */ }
   function salvar() {
     try {
@@ -92,7 +93,7 @@
     const r = C.cancelarPeloPaciente(naAgenda(c));
     let oferecidoA = null;
     const fila = D.filas[c.medico] || [];
-    if (r.horario && fila.length) {
+    if (r.horario && fila.length && C.podeOferecer(r.horario)) {
       const p = fila.shift();
       C.guardar.saiuDaFila(c.medico, p.nome);
       C.oferecerHorario(r.horario, p.nome);
@@ -142,15 +143,18 @@
   }
 
   /* ─── Família ───
-     POST /api/pacientes/{id}/familiares   corpo { nome, parentesco, nascimento: "AAAA-MM-DD", alergias, cor }
-     Parentesco e data de nascimento são obrigatórios (tabela Pacientes); a idade é calculada pela data. */
+     POST /api/pacientes/{id}/familiares   corpo { nome, cpf: "11 dígitos", parentesco, nascimento: "AAAA-MM-DD", alergias, cor }
+     CPF, parentesco e data de nascimento são obrigatórios (tabela Pacientes); a idade é calculada pela data. */
   const PARENTESCOS = ["Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
   const CORES_FAMILIA = ["#fbdcc6", "#d9ecf8", "#e3f2dc", "#efe2f5", "#f9e9b9", "#fbe0ea"];
-  /* d = { nome, relacao, nascimento: "dd/mm/aaaa", alergias, cor } → { erros, familiar } */
+  /* d = { nome, cpf, relacao, nascimento: "dd/mm/aaaa", alergias, cor } → { erros, familiar } */
   function validarFamiliar(d) {
     const erros = {};
     const nome = String(d.nome || "").trim().replace(/\s+/g, " ");
     if (!nome) erros.nome = "Informe o nome do familiar.";
+    /* CPF: obrigatório, válido e único (Pacientes.CPF) */
+    if (!API.validarCPF(d.cpf)) erros.cpf = API.ERRO_CPF;
+    else if (API.cpfEmUso(d.cpf)) erros.cpf = API.ERRO_CPF_REPETIDO;
     if (!PARENTESCOS.includes(d.relacao)) erros.relacao = "Escolha o parentesco.";
     const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(d.nascimento || "").trim());
     const iso = m ? m[3] + "-" + m[2] + "-" + m[1] : null;
@@ -166,60 +170,59 @@
       erros,
       familiar: {
         id: "novo-" + Date.now(), nome, curto, tratamento: curto, relacao: d.relacao, nascimento: iso, idade,
+        cpf: String(d.cpf).replace(/\D/g, ""),
         cor: d.cor || CORES_FAMILIA[D.pessoas.length % CORES_FAMILIA.length],
-        alergias: String(d.alergias || "").trim() || "Nenhuma informada", genero: null,
+        alergias: String(d.alergias || "").trim() || "Nenhuma informada",
       },
     };
   }
   function adicionarFamiliar(d) {
     const r = validarFamiliar(d);
-    if (r.familiar) { D.pessoas.push(r.familiar); salvar(); }
+    if (r.familiar) {
+      API.guardarCPF(r.familiar.cpf, r.familiar.nome);
+      D.pessoas.push(r.familiar);
+      salvar();
+    }
     return r;
   }
 
-  /* ─── Prevenção (tabelas Campanhas_Prevencao e Pessoa_Prevencao) ───
+  /* ─── Prevenção (tabelas Campanhas_Prevencao, Exames_Prevencao e Pessoa_Prevencao) ───
      As mesmas funções, regras e mensagens do app (aplicativo/src/servicos/prevencao.js).
-     Formato: [{ mes: "AAAA-MM", campanha, tema, itens: [{ id, pessoa, titulo, status, nota, esp, consulta? }] }]
+     Mês: { id, mes: "AAAA-MM", campanha (Nome, pode ser null), tema (Tema), exames, itens }
+     Exame: { id, idCampanha (null nas gerais), titulo, nota, especialidade (NOME, ex.: "Ginecologia") }
+     Item:  { id, pessoa, exame, titulo, nota, especialidade, status, consulta? }
      status: "pendente" | "agendado" | "feito"; consulta = id da consulta marcada a partir do item. */
   const SITUACOES_PREVENCAO = ["pendente", "agendado", "feito"];
-  /* o que faz sentido pedir em cada campanha; todo mês também aceita os itens gerais */
-  const SUGESTOES_PREVENCAO = {
-    "Outubro Rosa": [
-      { titulo: "Mamografia", nota: "A cada 2 anos, dos 50 aos 74 anos", esp: "ginecologia" },
-      { titulo: "Consulta com ginecologista", nota: "Inclui o exame clínico das mamas", esp: "ginecologia" },
-    ],
-    "Novembro Azul": [
-      { titulo: "Exame de próstata (PSA)", nota: "Conforme orientação médica, a partir dos 50 anos", esp: "clinica" },
-    ],
-    "Janeiro Branco": [
-      { titulo: "Consulta de saúde mental", nota: "Conversa sobre sono, humor e estresse", esp: "psiquiatria" },
-    ],
-    "Março Lilás": [
-      { titulo: "Exame preventivo (Papanicolau)", nota: "Frequência conforme orientação médica", esp: "ginecologia" },
-    ],
-    "Vacinação contra a gripe": [{ titulo: "Vacina da gripe", nota: "Grupo prioritário: 60 anos ou mais", esp: null }],
-  };
-  const GERAIS_PREVENCAO = [
-    { titulo: "Check-up anual com clínica geral", nota: "Uma vez por ano", esp: "clinica" },
-    { titulo: "Revisão no dentista", nota: "A cada 6 meses", esp: null },
-  ];
-  /* lista de { titulo, nota, esp } que o paciente pode escolher para um mês */
+  /* os exames da campanha do mês + os gerais (IdCampanha nulo) */
   function sugestoesDoMes(mes) {
-    const especificas = SUGESTOES_PREVENCAO[mes.campanha] || [];
-    return especificas.concat(GERAIS_PREVENCAO.filter((g) => !especificas.some((s) => s.titulo === g.titulo)));
+    const especificas = mes.exames || [];
+    return especificas.concat(D.examesPrevencaoGerais.filter((g) => !especificas.some((s) => s.titulo === g.titulo)));
   }
   /* POST /api/pacientes/{id}/prevencao — inclui uma pessoa da família numa campanha.
-     d = { mes: "AAAA-MM", pessoa: id, titulo, nota, esp }. Lança erro com a mesma frase do app. */
+     d = { mes: "AAAA-MM", pessoa: id, exame: id do exame }. Lança erro com a mesma frase do app.
+     O mesmo exame no mesmo mês para a mesma pessoa é recusado (UQ_Prevencao_Paciente_Exame). */
   function incluirNaPrevencao(d) {
     const mes = D.prevencao.find((m) => m.mes === d.mes);
     if (!mes) throw new Error("Escolha uma campanha.");
     if (!D.pessoas.some((p) => p.id === d.pessoa)) throw new Error("Escolha quem vai entrar na prevenção.");
-    if (!d.titulo) throw new Error("Escolha o exame ou check-up.");
-    if (mes.itens.some((i) => i.pessoa === d.pessoa && i.titulo === d.titulo)) throw new Error("Essa pessoa já está nesse item da prevenção.");
-    const item = { id: "prev" + Date.now().toString(36), pessoa: d.pessoa, titulo: d.titulo, status: "pendente", nota: d.nota || "", esp: d.esp === undefined ? null : d.esp };
+    const exame = sugestoesDoMes(mes).find((e) => e.id === d.exame);
+    if (!exame) throw new Error("Escolha o exame ou check-up.");
+    if (mes.itens.some((i) => i.pessoa === d.pessoa && i.exame === exame.id)) throw new Error("Essa pessoa já está nesse item da prevenção.");
+    const item = {
+      id: "prev" + Date.now().toString(36), pessoa: d.pessoa, exame: exame.id,
+      titulo: exame.titulo, nota: exame.nota || "", especialidade: exame.especialidade || null, status: "pendente",
+    };
     mes.itens.push(item);
     salvar();
     return item;
+  }
+  /* "Marcar": procura a especialidade pelo NOME na clínica atual do paciente.
+     Devolve o id dela na clínica ou lança "Esta clínica não atende essa especialidade." */
+  const semAcento = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  function especialidadeNaClinica(nome) {
+    const id = Object.keys(D.especialidades).find((k) => semAcento(D.especialidades[k].nome) === semAcento(nome));
+    if (!id) throw new Error("Esta clínica não atende essa especialidade.");
+    return id;
   }
   /* PUT /api/prevencao/{id} — status e, ao agendar, a consulta ligada ao item (Pessoa_Prevencao.IdConsulta) */
   function marcarItemPrevencao(idItem, status, idConsulta) {
@@ -314,7 +317,7 @@
   window.PACIENTE = {
     salvar, cancelar, marcar, sincronizar, responderVaga, entrarNaFila, sairDaFila, aoMudar,
     paraConfirmar, confirmarPresenca, vaiContarFalta, PARENTESCOS, validarFamiliar, adicionarFamiliar,
-    sugestoesDoMes, incluirNaPrevencao, marcarItemPrevencao, itemPrevencao,
+    sugestoesDoMes, incluirNaPrevencao, marcarItemPrevencao, itemPrevencao, especialidadeNaClinica,
     situacao, avisoDeRestricao, textoDaRegra, textoDasFaltas, atualizarHorarios,
   };
 })();

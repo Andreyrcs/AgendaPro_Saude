@@ -1,7 +1,7 @@
 // Especialidades, médicos e horários livres da clínica.
 
-import { esperar, horariosLivres, especialidadePorId } from '../dados/bancoSimulado';
-import { especialidades, medicos } from '../dados/dadosFicticios';
+import { clinicaDe, esperar, horariosLivres, especialidadePorId } from '../dados/bancoSimulado';
+import { especialidades, especialidadesPorClinica, medicos } from '../dados/dadosFicticios';
 import { HOJE } from '../utilitarios/datas';
 
 // TODO: troca pra chamada real quando o endpoint GET /api/especialidades existir
@@ -16,6 +16,16 @@ export async function buscarEspecialidade(idEspecialidade) {
   const especialidade = especialidadePorId(idEspecialidade);
   if (!especialidade) throw new Error('Especialidade não encontrada.');
   return especialidade;
+}
+
+// "Marcar" da prevenção: procura a especialidade pelo NOME na clínica atual do paciente.
+// Devolve o id dela ou lança "Esta clínica não atende essa especialidade."
+const semAcento = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+export function especialidadeNaClinica(usuario, nome) {
+  const daClinica = especialidadesPorClinica[clinicaDe(usuario)] || [];
+  const achada = especialidades.find((e) => daClinica.includes(e.id) && semAcento(e.nome) === semAcento(nome));
+  if (!achada) throw new Error('Esta clínica não atende essa especialidade.');
+  return achada.id;
 }
 
 // Lê os horários sem esperar (o assistente também usa)

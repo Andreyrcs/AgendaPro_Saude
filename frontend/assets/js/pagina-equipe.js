@@ -21,7 +21,7 @@
   const dono = eu.papel === "dono";
 
   function desenharTopo() {
-    $("#subtitulo").innerHTML = "<b>" + A.esc(clinica.nome) + "</b> · " + A.esc(clinica.unidade) + " · " + (dono ? "você é o responsável" : "só o responsável altera estes dados");
+    $("#subtitulo").innerHTML = "<b>" + A.esc(clinica.nome) + "</b> · " + (dono ? "você é o responsável" : "só o responsável altera estes dados");
   }
 
   /* ─── Erros de campo (mesmo padrão de Minha conta) ─── */
@@ -47,7 +47,6 @@
   const fc = $("#form-clinica");
   function preencher() {
     fc.nome.value = clinica.nome;
-    fc.unidade.value = clinica.unidade;
     fc.telefone.value = clinica.telefone;
     fc.endereco.value = clinica.endereco;
     fc.cidade.value = clinica.cidade;
@@ -73,10 +72,11 @@
     if (tel.length < 10 || tel.length > 11) return erro("#c-tel", fc.telefone, "Use o DDD e o número, com 10 ou 11 dígitos.");
     if (fc.endereco.value.trim().length < 5) return erro("#c-endereco", fc.endereco, "Escreva rua, número e bairro.");
     if (!fc.cidade.value.trim()) return erro("#c-cidade", fc.cidade, "Informe a cidade.");
-    if (!/^[A-Z]{2}$/.test(fc.uf.value)) return erro("#c-uf", fc.uf, "Use a sigla, como SP.");
+    /* UF: 2 letras maiúsculas e uma sigla de estado de verdade (Clinica.UF) */
+    if (!API.validarUF(fc.uf.value)) return erro("#c-uf", fc.uf, API.ERRO_UF);
     try {
       await API.atualizarClinica({
-        nome: fc.nome.value, unidade: fc.unidade.value, telefone: fc.telefone.value, endereco: fc.endereco.value,
+        nome: fc.nome.value, telefone: fc.telefone.value, endereco: fc.endereco.value,
         cidade: fc.cidade.value, uf: fc.uf.value, publica: $("#f-publica").checked,
       });
       Object.assign(clinica, API.clinicaAtual());

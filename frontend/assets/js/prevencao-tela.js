@@ -36,9 +36,10 @@
         ' aria-label="Desfazer: ' + A.esc(it.titulo) + ' volta a ficar pendente">Desfazer</button>';
     }
     if (it.status === "pendente") {
-      acoes = (it.esp
-        ? '<a class="botao botao--principal botao--pequeno" href="#agendar/' + it.esp + "/" + it.pessoa + "/" + it.id + '"' +
-          ' aria-label="Marcar ' + A.esc(it.titulo) + " para " + quemMinusculo(p) + '">' + I("calendar-days") + "Marcar</a>"
+      /* "Marcar" só nos itens com especialidade; ela é procurada pelo nome na clínica atual */
+      acoes = (it.especialidade
+        ? '<button type="button" class="botao botao--principal botao--pequeno" data-prev-marcar="' + it.id + '"' +
+          ' aria-label="Marcar ' + A.esc(it.titulo) + " para " + quemMinusculo(p) + '">' + I("calendar-days") + "Marcar</button>"
         : "") +
         '<button type="button" class="botao botao--secundario botao--pequeno" data-prev-status="feito" data-id="' + it.id + '"' +
         ' aria-label="Já fiz: ' + A.esc(it.titulo) + " de " + quemMinusculo(p) + '">Já fiz</button>';
@@ -47,7 +48,8 @@
       '<div class="prev-item">' + A.avatar(p, 36) +
       '<div class="item__corpo"><p class="prev-item__titulo">' + A.esc(it.titulo) + "</p>" +
       '<p class="prev-item__nota">' + quem(p) + " · " + A.esc(it.nota) + "</p>" +
-      '<div class="prev-item__acao">' + acoes + "</div></div></div>"
+      '<div class="prev-item__acao">' + acoes + "</div>" +
+      '<p class="campo__erro" role="alert" data-prev-erro="' + it.id + '" hidden></p></div></div>'
     );
   }
 
@@ -79,7 +81,7 @@
 
     /* ─── Incluir na prevenção: quem → campanha → exame ─── */
     function abrirIncluir() {
-      const escolha = { pessoa: null, mes: null, titulo: null };
+      const escolha = { pessoa: null, mes: null, exame: null };
       const radios = (grupo, itens) => itens.map((x) =>
         '<button type="button" role="radio" aria-checked="false" data-grupo="' + grupo + '" data-valor="' + A.esc(x.valor) + '"' +
         (x.rotulo ? ' aria-label="' + A.esc(x.rotulo) + '"' : "") + ">" + x.html + "</button>").join("");
@@ -113,13 +115,13 @@
             const desenharExames = () => {
               const caixa = g.querySelector("#prev-exames");
               caixa.hidden = !escolha.mes;
-              g.querySelector("#prev-exames-lista").innerHTML = radios("titulo", sugestoes().map((s) => ({ valor: s.titulo, html: "<b>" + A.esc(s.titulo) + "</b><small>" + A.esc(s.nota) + "</small>" })));
+              g.querySelector("#prev-exames-lista").innerHTML = radios("exame", sugestoes().map((s) => ({ valor: s.id, html: "<b>" + A.esc(s.titulo) + "</b><small>" + A.esc(s.nota || "") + "</small>" })));
             };
             g.addEventListener("click", (ev) => {
               const b = ev.target.closest("[data-grupo]");
               if (!b) return;
               marcar(b.dataset.grupo, b.dataset.valor);
-              if (b.dataset.grupo === "mes") { escolha.titulo = null; desenharExames(); } /* cada campanha tem os seus exames */
+              if (b.dataset.grupo === "mes") { escolha.exame = null; desenharExames(); } /* cada campanha tem os seus exames */
             });
             /* setas mudam a escolha dentro de cada grupo (padrão de radiogroup) */
             g.addEventListener("keydown", (ev) => {
@@ -134,11 +136,11 @@
             g.querySelector("#form-prev").addEventListener("submit", (ev) => {
               ev.preventDefault();
               const erro = g.querySelector("#prev-erro");
-              const sugestao = sugestoes().find((s) => s.titulo === escolha.titulo);
+              const sugestao = sugestoes().find((s) => s.id === escolha.exame);
               const mostrar = (t) => { erro.textContent = t; erro.hidden = false; };
               if (!escolha.pessoa || !escolha.mes || !sugestao) { mostrar("Escolha quem vai entrar, a campanha e o exame."); return; }
               try {
-                P.incluirNaPrevencao(Object.assign({ mes: escolha.mes, pessoa: escolha.pessoa }, sugestao));
+                P.incluirNaPrevencao({ mes: escolha.mes, pessoa: escolha.pessoa, exame: sugestao.id });
               } catch (e) { mostrar(e.message); return; }
               op.fecharGaveta();
               desenhar();
@@ -154,6 +156,20 @@
       const bf = ev.target.closest("[data-f]");
       if (bf) { op.estado.prevFiltro = bf.dataset.f; desenhar(); el.querySelector('[data-f="' + bf.dataset.f + '"]').focus(); return; }
       if (ev.target.closest("#prev-incluir")) { abrirIncluir(); return; }
+      /* "Marcar": abre o agendamento com a especialidade da clínica atual, ou avisa que ela não atende */
+      const bm = ev.target.closest("[data-prev-marcar]");
+      if (bm) {
+        const it = P.itemPrevencao(bm.dataset.prevMarcar);
+        try {
+          location.hash = "#agendar/" + P.especialidadeNaClinica(it.especialidade) + "/" + it.pessoa + "/" + it.id;
+        } catch (e) {
+          const aviso = el.querySelector('[data-prev-erro="' + it.id + '"]');
+          aviso.textContent = e.message;
+          aviso.hidden = false;
+          op.anunciar(e.message);
+        }
+        return;
+      }
       const bs = ev.target.closest("[data-prev-status]");
       if (bs) {
         const it = P.marcarItemPrevencao(bs.dataset.id, bs.dataset.prevStatus);

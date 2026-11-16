@@ -5,10 +5,10 @@
 
 import { config } from './config';
 import { chamarApi } from './api';
-import { esperar, usuariosLocais } from '../dados/bancoSimulado';
+import { cpfEmUso, esperar, usuariosLocais } from '../dados/bancoSimulado';
 import { clinicas } from '../dados/dadosFicticios';
 import { normalizarEmail } from '../utilitarios/texto';
-import { ERRO_LOGIN, normalizarCodigo } from '../utilitarios/validacao';
+import { ERRO_CPF, ERRO_CPF_REPETIDO, ERRO_LOGIN, cpfValido, normalizarCodigo, soDigitos } from '../utilitarios/validacao';
 
 const ERRO_CODIGO = 'Não achamos uma clínica com esse código. Confira com a recepção.';
 
@@ -39,13 +39,15 @@ export async function entrar(email, senha) {
   return { idUsuario: usuario.idUsuario, nome: usuario.nome, email: usuario.email, token: null };
 }
 
-// dados = { nome, email, senha, telefone, nascimento: 'AAAA-MM-DD', alergias, codigo: 'AAA-0000' | '' }
+// dados = { nome, email, senha, telefone, cpf, nascimento: 'AAAA-MM-DD', alergias, codigo: 'AAA-0000' | '' }
+// O CPF é obrigatório, válido e único (Pacientes.CPF); vai só com os 11 números.
 // (a tela já validou os campos com utilitarios/validacao.js)
 // Devolve o usuário já logado, no mesmo formato de entrar().
 export async function cadastrar(dados) {
   const nome = dados.nome.trim();
   const email = normalizarEmail(dados.email);
   const codigo = normalizarCodigo(dados.codigo);
+  const cpf = soDigitos(dados.cpf);
 
   if (config.USAR_API_REAL) {
     // POST /api/usuarios → { mensagem, idUsuario }  (existe; a senha vai como digitada e o servidor faz BCrypt)
@@ -56,7 +58,7 @@ export async function cadastrar(dados) {
       corpo: { nome, email, senha: dados.senha },
     });
     // TODO: quando existirem no backend:
-    //   POST /api/pacientes  { idUsuario, nome, nascimento, alergias, parentesco: 'Titular', telefone }
+    //   POST /api/pacientes  { idUsuario, nome, cpf, nascimento, alergias, parentesco: 'Titular', telefone }
     //   if (codigo) POST /api/pacientes/{idUsuario}/clinicas  { codigo }
     return { idUsuario: resposta.idUsuario, nome, email, token: resposta.token || null };
   }
@@ -65,12 +67,14 @@ export async function cadastrar(dados) {
   if (usuariosLocais.some((u) => u.email === email)) {
     throw new Error('Este e-mail já tem uma conta. Entre com ele ou use outro.');
   }
+  if (!cpfValido(cpf)) throw new Error(ERRO_CPF);
+  if (cpfEmUso(cpf)) throw new Error(ERRO_CPF_REPETIDO);
   // código da clínica (opcional): liga o paciente à clínica (Paciente_Clinica)
   const clinica = codigo ? clinicas.find((c) => c.codigo === codigo) : null;
   if (codigo && !clinica) throw new Error(ERRO_CODIGO);
   const novo = {
     idUsuario: usuariosLocais.length + 1, nome, email, senha: dados.senha,
-    telefone: dados.telefone, nascimento: dados.nascimento, alergias: (dados.alergias || '').trim(),
+    telefone: dados.telefone, cpf, nascimento: dados.nascimento, alergias: (dados.alergias || '').trim(),
     clinicas: clinica ? [clinica.id] : [],
   };
   usuariosLocais.push(novo);

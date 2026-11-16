@@ -14,20 +14,14 @@
 
   const filaDe = (m) => D.filas[m] || (D.filas[m] = []);
   const diasNaFila = (p) => Math.max(0, Math.round((C.data(D.hoje) - C.data(p.desde)) / 86400000));
-  const primeiroNome = (nome) => nome.split(" ")[0];
 
   let atual = location.hash.slice(1);
   if (!C.MEDICOS.includes(atual)) atual = C.MEDICOS.slice().sort((a, b) => filaDe(b).length - filaDe(a).length)[0];
 
-  /* vindo da Nova consulta ("Oferecer a Rita"): a vaga daquele horário vem primeiro */
-  const vagaPedida = new URLSearchParams(location.search).get("vaga");
-
-  /* o próximo horário livre ou oferecido de um médico, de agora em diante */
+  /* a próxima vaga de um médico, de agora em diante: a já oferecida à fila ou a que sobrou de um cancelamento */
   function proximaVaga(m) {
-    const pedida = C.consultas.find((k) => k.id === vagaPedida && k.medico === m && k.horario);
-    if (pedida) return pedida;
     return C.consultas
-      .filter((k) => k.medico === m && k.horario && (k.data > D.hoje || (k.data === D.hoje && k.ini >= K.agora())))
+      .filter((k) => k.medico === m && (k.horario === "oferecido" || k.vaga) && k.horario && (k.data > D.hoje || (k.data === D.hoje && k.ini >= K.agora())))
       .sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : a.ini - b.ini))[0];
   }
 
@@ -65,10 +59,13 @@
         '<span class="vaga-caixa__texto"><b>Vaga de ' + quando + " oferecida a " + A.esc(v.paciente) + "</b>" +
         "<span>A pessoa tem 30 minutos para confirmar. Se não confirmar, a vaga passa para a próxima.</span></span></div>";
     }
+    /* vaga: sobrou de um cancelamento quando ninguém estava na fila; só ela pode ser oferecida */
     return '<div class="vaga-caixa">' + A.folha(v.data, { pequena: true }) +
-      '<span class="vaga-caixa__texto"><b>Horário livre: ' + quando + "</b><span>Pode ser oferecido à 1ª pessoa da fila.</span></span>" +
-      (lista.length
-        ? '<button type="button" class="botao botao--menta botao--pequeno" data-oferecer="' + v.id + '">' + I("bell-ring", "ic-sm") + "Oferecer a " + A.esc(primeiroNome(lista[0].nome)) + "</button>"
+      '<span class="vaga-caixa__texto"><b>Vaga: ' + quando + "</b><span>Sobrou de um cancelamento" +
+      (lista.length ? ". Pode ser oferecida à 1ª pessoa da fila." : ", quando ninguém estava na fila.") + "</span></span>" +
+      (lista.length && C.podeOferecer(v)
+        ? '<button type="button" class="botao botao--menta botao--pequeno" data-oferecer="' + v.id + '" aria-label="Oferecer horário a ' + A.esc(lista[0].nome) + '">' +
+          I("bell-ring", "ic-sm") + "Oferecer horário</button>"
         : "") + "</div>";
   }
 
@@ -87,28 +84,14 @@
             const dias = diasNaFila(p);
             return '<li class="pessoa" data-nome="' + A.esc(p.nome) + '">' +
               '<span class="pessoa__pos num" aria-hidden="true">' + (i + 1) + "º</span>" +
-              '<span><span class="pessoa__nome"><span class="visualmente-oculto">' + (i + 1) + "ª posição: </span>" + A.esc(p.nome) + "</span>" +
+              '<span><span class="pessoa__nome"><span class="visualmente-oculto">Posição ' + (i + 1) + ": </span>" + A.esc(p.nome) + "</span>" +
               (p.app ? '<span class="pessoa__app">' + I("smartphone") + "pelo app</span>" : "") +
               '<span class="pessoa__sub">Desde ' + A.extenso(p.desde, false) + ' · <span class="' + (dias >= 14 ? "pessoa__espera--longa" : "") + '">' + (dias ? dias + (dias === 1 ? " dia" : " dias") : "entrou hoje") + "</span>" +
               (p.tel ? " · tel. " + A.esc(p.tel) : "") +
               (p.qualquer ? ' · <span class="pessoa__qualquer">aceita qualquer médico de ' + K.esp(p.qualquer).nome + "</span>" : "") + "</span></span>" +
               '<button type="button" class="link-acao link-acao--discreto" data-tirar="' + A.esc(p.nome) + '" aria-label="Tirar ' + A.esc(p.nome) + ' da fila">Tirar da fila</button></li>';
           }).join("") + "</ol>"
-        : '<p class="vazio" style="margin-top:12px">Ninguém aguardando vaga com ' + md.nome + ".</p>") +
-      foraDaFilaHTML(m);
-  }
-
-  /* quem foi marcado num horário da fila sem passar por ela: quando, por quem e por quê */
-  function foraDaFilaHTML(m) {
-    const registros = K.guardar.registrosForaDaFila(m);
-    if (!registros.length) return "";
-    return '<div class="fora-fila"><h3>Marcados fora da fila</h3>' +
-      '<p class="painel__titulo-sub">Horários liberados por cancelamento que não foram oferecidos a quem esperava.</p><ul class="historico">' +
-      registros.slice().reverse().map((r) =>
-        '<li><span class="historico__quando">' + A.esc(r.paciente) + " · " + K.curtoData(r.dia) + " " + r.hora + "</span>" +
-        '<span class="historico__quem">' + A.esc(r.motivo) + " · por " + A.esc(r.por) + ", " + K.curtoData(r.em) + " às " + r.as +
-        " · " + r.naFila + (r.naFila === 1 ? " pessoa esperava" : " pessoas esperavam") + "</span></li>"
-      ).join("") + "</ul></div>";
+        : '<p class="vazio" style="margin-top:12px">Ninguém aguardando vaga com ' + md.nome + ".</p>");
   }
 
   function desenharTudo() {
@@ -139,9 +122,10 @@
     });
   }
 
+  /* "Oferecer horário" (POST /api/consultas/{id}/oferecer): só numa vaga */
   function oferecer(id) {
     const v = C.consultas.find((k) => k.id === id);
-    if (!v) return;
+    if (!C.podeOferecer(v)) return;
     const lista = filaDe(v.medico);
     if (!lista.length) return;
     const antes = posicoes();
@@ -227,7 +211,7 @@
     desenharTudo();
     const novo = document.querySelector("#pessoas .pessoa:last-child");
     if (novo && !M.reduzido()) novo.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: 240, easing: M.EASE_OUT });
-    K.toast({ titulo: nome + " entrou na fila", texto: filaDe(m).length + "ª posição com " + K.medico(m).nome + ".", icone: "list-ordered" });
+    K.toast({ titulo: nome + " entrou na fila", texto: "Posição " + filaDe(m).length + " na fila de " + K.medico(m).nome + ".", icone: "list-ordered" });
   });
 
   /* outra aba mudou a fila ou a agenda (paciente respondeu a vaga, recepção cancelou): redesenha */
