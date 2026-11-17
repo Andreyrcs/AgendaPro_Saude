@@ -60,7 +60,7 @@
     const sem = D.medicos.filter((md) => !temHorario(md.id));
     const sabado = com.filter((md) => exp[md.id].sabado);
 
-    $("#subtitulo").innerHTML = "<b>" + com.length + (com.length === 1 ? " médico" : " médicos") + "</b> com expediente nesta unidade. " +
+    $("#subtitulo").innerHTML = "<b>" + com.length + (com.length === 1 ? " médico" : " médicos") + "</b> com expediente nesta clínica. " +
       (sabado.length
         ? "Aos sábados atendem " + sabado.length + ": " + sabado.map((md) => md.nome.split(" ").slice(0, 2).join(" ")).join(", ").replace(/, ([^,]*)$/, " e $1") + "."
         : "Ninguém atende aos sábados.");

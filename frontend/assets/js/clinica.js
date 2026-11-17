@@ -510,7 +510,7 @@
     $("#fila-lista").innerHTML = lista.length
       ? lista.map((p, i) =>
           '<li class="fila__item" data-nome="' + A.esc(p.nome) + '"><span class="fila__pos num" aria-hidden="true">' + (i + 1) + "º</span>" +
-          '<span><span class="fila__nome"><span class="visualmente-oculto">' + (i + 1) + "ª posição: </span>" + A.esc(p.nome) +
+          '<span><span class="fila__nome"><span class="visualmente-oculto">Posição ' + (i + 1) + ": </span>" + A.esc(p.nome) +
           (p.app ? '<span class="fila__app">' + I("smartphone") + "pelo app</span>" : "") + "</span>" +
           '<span class="fila__sub" style="display:block">Desde ' + A.extenso(p.desde, false) + " · tel. " + p.tel + "</span></span></li>"
         ).join("")
@@ -983,8 +983,9 @@
       if (k.status === "confirmada" && hojeFuturo) itens.push(["chegada", "user-check", "Marcar chegada"]);
       if (k.status === "confirmada" && (k.data < D.hoje || (k.data === D.hoje && k.ini <= agora()))) itens.push(["falta", "x", "Marcar falta"]);
       itens.push(["cancelar", "calendar-x", "Cancelar consulta", true]);
-    } else if (k.horario === "livre" && filaDe(k.medico).length && (k.data > D.hoje || k.ini >= agora())) {
-      itens.push(["oferecer", "bell-ring", "Oferecer à lista de espera"]);
+    } else if (C.podeOferecer(k) && filaDe(k.medico).length) {
+      /* "Oferecer horário": só em vaga (sobra de um cancelamento quando ninguém estava na fila) */
+      itens.push(["oferecer", "bell-ring", "Oferecer horário"]);
     }
     const semAcao = k.horario === "oferecido" ? "Aguardando a resposta da pessoa (até 30 minutos)."
       : k.horario === "livre" ? "Horário livre. Para marcar, use “Nova consulta”."
@@ -1103,7 +1104,7 @@
     const lista = filaDe(k.medico);
     const m = medico(k.medico);
     if (!viaTrigger) { acender("c3"); }
-    if (!lista.length) {
+    if (!lista.length || !C.podeOferecer(k)) {
       await registrar("Ninguém na fila de " + m.nome + ": o horário fica <b>livre</b>");
       acender(null);
       toast({ titulo: "Consulta cancelada · horário livre", texto: "Ninguém está esperando vaga com " + m.nome + ".", icone: "info" });
@@ -1111,7 +1112,7 @@
     }
     acender("c3");
     const p = lista[0];
-    await registrar("Horário " + C.txt(k.ini) + " com " + m.nome + " <b>oferecido</b> à 1ª da fila: " + A.esc(p.nome));
+    await registrar("Horário " + C.txt(k.ini) + " com " + m.nome + " <b>oferecido</b> à 1ª pessoa da fila: " + A.esc(p.nome));
     /* 3. a 1ª pessoa da fila desliza até o horário livre */
     if (est.filaMedico !== k.medico) { est.filaMedico = k.medico; desenharFila(); }
     const card = $("#fila-lista .fila__item");
@@ -1161,7 +1162,7 @@
     acender(null);
     await registrar("Aviso enviado para " + A.esc(p.nome));
     /* 4. o aviso */
-    toast({ titulo: "Consulta cancelada · vaga oferecida a " + p.nome, texto: "Vaga de " + curtoData(k.data) + ", " + C.txt(k.ini) + " com " + m.nome + ". A pessoa tem 30 minutos para confirmar.", icone: "bell-ring", duracao: 6000 });
+    toast({ titulo: (viaTrigger ? "Consulta cancelada · vaga oferecida a " : "Vaga oferecida a ") + p.nome, texto: "Vaga de " + curtoData(k.data) + ", " + C.txt(k.ini) + " com " + m.nome + ". A pessoa tem 30 minutos para confirmar.", icone: "bell-ring", duracao: 6000 });
     /* 5. quem usa o app vê a vaga na área do paciente: a fila e a agenda ficam gravadas (clinica-dados.js) */
   }
 
@@ -1259,7 +1260,7 @@
   desenharLegenda();
   $("#folha-hoje").innerHTML = A.folha(D.hoje, { menta: true });
   const nMed = C.MEDICOS.length;
-  $("#subtitulo").textContent = cap(A.extenso(D.hoje)) + " · " + D.clinica.nome + ", " + D.clinica.unidade + " · " +
+  $("#subtitulo").textContent = cap(A.extenso(D.hoje)) + " · " + D.clinica.nome + " · " +
     (nMed ? nMed + (nMed === 1 ? " médico atendendo" : " médicos atendendo") : "nenhum médico cadastrado ainda");
   document.querySelectorAll("[data-marca]").forEach((el) => { el.outerHTML = A.marca(Number(el.dataset.marca)); });
 

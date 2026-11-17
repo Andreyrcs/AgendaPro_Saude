@@ -20,7 +20,7 @@ import { cores } from '../estilos/cores';
 import { fontes } from '../estilos/tipografia';
 import { espaco, raios } from '../estilos/espacos';
 import { diaEMes, extenso } from '../utilitarios/datas';
-import { fraseDaFila, ordinal } from '../utilitarios/texto';
+import { fraseDaFila } from '../utilitarios/texto';
 
 // Milissegundos → '29:59'
 function relogio(ms) {
@@ -131,7 +131,7 @@ export default function EsperaTela({ navigation }) {
       {/* Posição na fila */}
       <View style={estilos.painel} accessible accessibilityLabel={`${frase}. ${fila.naFila} pessoas na fila.`}>
         <View style={estilos.linha}>
-          <Texto style={estilos.posicao}>{ordinal(fila.posicao, fila.pessoa.genero === 'f' ? 'f' : 'm')}</Texto>
+          <Texto style={estilos.posicao}>{fila.posicao}</Texto>
           <Texto variante="subtitulo" cor={cores.noite} style={estilos.flex}>
             {frase}
           </Texto>
@@ -201,7 +201,7 @@ export default function EsperaTela({ navigation }) {
       <Confirmacao
         visivel={perguntandoSaida}
         titulo="Sair da lista de espera?"
-        texto={`Você vai perder a ${fila.posicao}ª posição na fila de ${fila.medico.nome}. Se quiser voltar depois, entra no fim da fila.`}
+        texto={`Você vai perder a posição ${fila.posicao} na fila de ${fila.medico.nome}. Se quiser voltar depois, entra no fim da fila.`}
         rotuloConfirmar="Sair da fila"
         rotuloCancelar="Continuar na fila"
         perigo

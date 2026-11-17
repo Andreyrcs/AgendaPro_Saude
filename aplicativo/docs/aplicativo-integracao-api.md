@@ -21,7 +21,7 @@ A lista completa (web + app) está em [`docs/relatorio-integracao.md`](../../doc
 | Tela | Função de serviço | Endpoint | Situação |
 |---|---|---|---|
 | Login | `entrar(email, senha)` | `POST /api/auth/login` | **API real** ✅ |
-| Cadastro | `cadastrar(dados)` | `POST /api/usuarios` | **API real** ✅ (telefone e nascimento ainda são descartados) |
+| Cadastro | `cadastrar(dados)` | `POST /api/usuarios` + `POST /api/pacientes` (CPF, nascimento, parentesco `Titular`) | **API real** ✅ só no `POST /api/usuarios` (telefone, CPF e nascimento ainda são descartados) |
 | Início, Agenda, Detalhe, Família, Pessoa | `listarConsultas(usuario)` | `GET /api/pacientes/{id}/consultas` | Simulado — falta endpoint |
 | Detalhe da consulta | `buscarConsulta(usuario, id)` | `GET /api/consultas/{id}?idUsuarioLogado=` | Simulado — falta endpoint |
 | Detalhe da consulta, Início | `cancelarConsulta(usuario, id)` | `DELETE /api/consultas/{id}?idUsuarioLogado=` | Simulado — falta endpoint (devolve `{ falta, oferecidoAFila }`) |
@@ -58,10 +58,13 @@ como a API atual já faz com `nomeOrganizador`. Assim a tela não precisa de cha
 
 ### Familiar
 ```json
-{ "id": "davi", "nome": "Davi Santos Tanaka", "curto": "Davi", "relacao": "Filho(a)", "nascimento": "2018-05-14",
+{ "id": "davi", "nome": "Davi Santos Tanaka", "curto": "Davi", "cpf": "39152840689", "relacao": "Filho(a)", "nascimento": "2018-05-14",
   "cor": "#fbdcc6", "alergias": "Nenhuma informada", "titular": false }
 ```
-`POST /api/pacientes/{id}/familiares` recebe `{ "nome", "relacao", "nascimento": "AAAA-MM-DD", "alergias", "cor" }`.
+`POST /api/pacientes/{id}/familiares` recebe `{ "nome", "cpf", "relacao", "nascimento": "AAAA-MM-DD", "alergias", "cor" }`.
+`cpf` = `Pacientes.CPF`: obrigatório, só os 11 números, com os dois dígitos verificadores certos e único entre todos os pacientes
+(titulares e familiares). Erros: 400 `"CPF inválido."` e 409 `"Este CPF já está cadastrado."` (os mesmos do titular no cadastro).
+Não há `genero` no formato: a fila diz "Você está na posição 3 da fila".
 `relacao` = `Pacientes.Parentesco` (`Titular`, ou `Filho(a)`, `Cônjuge`, `Pai/Mãe`, `Irmão(ã)`, `Outro`); a idade é calculada pela data de nascimento.
 
 ### Consulta
@@ -101,9 +104,9 @@ São dois conceitos separados. Web (`frontend/assets/js/dados.js`) e app (`src/u
 
 | Valor | Quando |
 |---|---|
-| `livre` | Ninguém marcado |
+| `livre` | Ninguém marcado. Se sobrou de um cancelamento quando ninguém estava na fila, é `VAGA` no banco: só ela pode ser oferecida pela recepção (`POST /api/consultas/{id}/oferecer`) |
 | `ocupado` | Tem uma consulta que não está `cancelada` |
-| `oferecido` | Vaga mandada à 1ª pessoa da lista de espera, aguardando resposta (30 min) |
+| `oferecido` | Vaga mandada à 1ª pessoa da lista de espera, aguardando resposta (30 min). Ninguém marca nela: 400 `"Este horário está reservado para a lista de espera."` |
 
 Sugestão de restrição no MySQL:
 
@@ -202,16 +205,23 @@ O médico sem horário vem com `"dias": []`; o app então oferece a lista de esp
 
 ### Prevenção
 ```json
-[ { "mes": "2026-10", "campanha": "Outubro Rosa", "tema": "Prevenção do câncer de mama",
-    "itens": [ { "id": "v1", "titulo": "Mamografia", "status": "pendente|agendado|feito",
-                 "nota": "A cada 2 anos, dos 50 aos 74 anos", "esp": "ginecologia", "pessoa": {},
-                 "consulta": null } ] } ]
+[ { "id": 10, "mes": "2026-10", "campanha": "Outubro Rosa", "tema": "Prevenção do câncer de mama",
+    "exames": [ { "id": 3, "idCampanha": 10, "titulo": "Mamografia", "nota": "A cada 2 anos, dos 50 aos 74 anos", "especialidade": "Ginecologia" } ],
+    "itens": [ { "id": 7, "exame": 3, "titulo": "Mamografia", "nota": "A cada 2 anos, dos 50 aos 74 anos",
+                 "especialidade": "Ginecologia", "status": "pendente|agendado|feito", "pessoa": {}, "consulta": null } ] } ]
 ```
+- Mês = `Campanhas_Prevencao` (um registro por mês): `campanha` = `Nome` (pode ser `null`, ex.: "Antes das férias"), `tema` = `Tema`.
+- `exames` = `Exames_Prevencao` daquela campanha. As sugestões gerais têm `IdCampanha` nulo e valem para todo mês
+  (o app junta as duas listas em `sugestoesDoMes`). `especialidade` é o NOME da especialidade (`null` = vacina, dentista).
+- `itens` = `Pessoa_Prevencao` (`IdPaciente`, `IdCampanha`, `IdExamePrevencao`, `IdConsulta`, `Status`);
+  `titulo`, `nota` e `especialidade` vêm do exame.
+- "Marcar": o app procura a especialidade pelo nome na clínica atual do paciente (`especialidadeNaClinica`). Se a
+  clínica não tiver, mostra "Esta clínica não atende essa especialidade."
 - `PUT /api/prevencao/{id}` recebe `{ "idUsuarioLogado", "status", "idConsulta"? }`. Ao marcar a partir do item,
   `idConsulta` liga a consulta ao item (`Pessoa_Prevencao.IdConsulta`) e a consulta passa a ter `"tipo": "prevencao"`.
-- `POST /api/pacientes/{id}/prevencao` recebe `{ "mes": "AAAA-MM", "pessoa", "titulo", "nota", "esp" }` (incluir alguém numa campanha).
+- `POST /api/pacientes/{id}/prevencao` recebe `{ "mes": "AAAA-MM", "pessoa", "exame" }` (incluir alguém numa campanha).
   Erros: "Escolha uma campanha.", "Escolha quem vai entrar na prevenção.", "Escolha o exame ou check-up.",
-  "Essa pessoa já está nesse item da prevenção."
+  "Essa pessoa já está nesse item da prevenção." (o mesmo exame no mesmo mês para a mesma pessoa: `UQ_Prevencao_Paciente_Exame`).
 
 ## Pendências no backend que afetam o app
 

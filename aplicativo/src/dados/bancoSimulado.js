@@ -31,7 +31,7 @@ export function novoId(prefixo) {
 // A senha fica em texto aqui porque é só memória do aparelho e some ao fechar o app.
 // Com a API, a senha vai por HTTPS e o servidor guarda só o hash BCrypt.
 export const usuariosLocais = [
-  { idUsuario: 1, nome: 'Juliana Santos', email: EMAIL_CARGA_INICIAL, senha: 'paciente123', clinicas: ['ipe'] },
+  { idUsuario: 1, nome: 'Juliana Santos', email: EMAIL_CARGA_INICIAL, senha: 'paciente123', cpf: ficticios.pessoas[0].cpf, clinicas: ['ipe'] },
 ];
 
 // Horários livres da clínica. São de todos os pacientes, não de uma conta só.
@@ -67,8 +67,8 @@ function contaNova(usuario) {
     familia: [
       {
         id: 'titular', nome: usuario.nome || 'Você', curto: primeiroNome(usuario.nome) || 'Você',
-        relacao: 'Titular', nascimento: dados.nascimento || null,
-        idade: dados.nascimento ? idadeEm(dados.nascimento) : null, genero: null, cor: ficticios.pessoas[0].cor,
+        relacao: 'Titular', nascimento: dados.nascimento || null, cpf: dados.cpf || '',
+        idade: dados.nascimento ? idadeEm(dados.nascimento) : null, cor: ficticios.pessoas[0].cor,
         alergias: dados.alergias || 'Nenhuma informada', titular: true,
       },
     ],
@@ -76,7 +76,7 @@ function contaNova(usuario) {
     fila: null,
     acompanhamento: { retornos: [], exames: [] },
     notificacoes: [],
-    prevencao: [],
+    prevencao: copiar(ficticios.campanhas).map((m) => ({ ...m, itens: [] })), // as campanhas do ano, sem ninguém ainda
     faltas: [], // { id, consulta, data, confirmou, motivo, retirada }
   };
 }
@@ -111,6 +111,19 @@ export function garantirDaFamilia(conta, idPessoa) {
   const pessoa = conta.familia.find((p) => p.id === idPessoa);
   if (!pessoa) throw new Error('Você só pode gerenciar a sua família.');
   return pessoa;
+}
+
+// CPF é único entre todos os pacientes (titulares e familiares de todas as contas): Pacientes.CPF
+export function cpfEmUso(cpf) {
+  const digitos = String(cpf || '').replace(/D/g, '');
+  const familiares = [...ficticios.pessoas, ...Object.values(contas).flatMap((c) => c.familia)];
+  return usuariosLocais.some((u) => u.cpf === digitos) || familiares.some((p) => p.cpf === digitos);
+}
+
+// A clínica atual do paciente: a primeira ligada à conta (Paciente_Clinica); sem nenhuma, a da carga inicial
+export function clinicaDe(usuario) {
+  const dados = usuariosLocais.find((u) => u.idUsuario === usuario.idUsuario);
+  return (dados && dados.clinicas && dados.clinicas[0]) || 'ipe';
 }
 
 // Busca simples nas tabelas fixas da clínica

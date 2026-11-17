@@ -40,7 +40,7 @@ export default function PerfilTela() {
       <CabecalhoSecao titulo="Sua clínica" />
       <Cartao>
         <Texto variante="negrito">
-          {clinica.nome} · {clinica.unidade}
+          {clinica.nome}
         </Texto>
         <Texto variante="meta">{clinica.endereco}</Texto>
         <Texto variante="meta">{clinica.telefone}</Texto>

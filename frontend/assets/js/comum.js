@@ -163,7 +163,7 @@
     el.className = "lateral__clinica";
     if (opcoes.href) el.href = opcoes.href;
     var funcao = FUNCOES[papel] || "";
-    var linha = papel === "paciente" ? (opcoes.acao || "Trocar de clínica") : funcao + " · " + c.unidade;
+    var linha = papel === "paciente" ? (opcoes.acao || "Trocar de clínica") : funcao;
     el.dataset.dicaLateral = c.nome + " · " + funcao;
     el.setAttribute("aria-label", (papel === "paciente" ? "Sua clínica: " : "Clínica em que você atua: ") + c.nome + ", " + linha);
     el.innerHTML =
@@ -174,15 +174,11 @@
     return el;
   }
 
-  function ordinal(n, genero) {
-    return n + (genero === "f" ? "ª" : "º");
-  }
-
   window.AP = {
     MESES: MESES, MESES_LONGOS: MESES_LONGOS, SEMANA: SEMANA, SEMANA_CURTA: SEMANA_CURTA,
     data: data, hoje: hoje, diasAte: diasAte, relativo: relativo, extenso: extenso, curto: curto,
     esc: esc, icone: icone, folha: folha, folhaMes: folhaMes, avatar: avatar,
-    avatarMedico: avatarMedico, iniciais: iniciais, marca: marca, ordinal: ordinal, seloClinica: seloClinica,
+    avatarMedico: avatarMedico, iniciais: iniciais, marca: marca, seloClinica: seloClinica,
     movimentoReduzido: function () {
       return document.documentElement.dataset.movimento === "reduzido" ||
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;

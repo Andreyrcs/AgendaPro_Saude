@@ -19,11 +19,6 @@ export function iniciais(nome) {
   return (primeira + ultima).toUpperCase();
 }
 
-// 3, 'f' → '3ª' · 1, 'm' → '1º'
-export function ordinal(n, genero) {
-  return `${n}${genero === 'f' ? 'ª' : 'º'}`;
-}
-
 // O e-mail é comparado sempre sem espaços e em minúsculas
 export function normalizarEmail(email) {
   return String(email || '').trim().toLowerCase();
@@ -41,11 +36,9 @@ export function descricaoFamiliar(pessoa) {
     : pessoa.relacao;
 }
 
-// 'Você é a 3ª da fila' · 'Davi é o 2º da fila' · 'Posição na fila: 4ª'
+// 'Você está na posição 3 da fila' · 'Davi está na posição 2 da fila' (sem gênero)
 export function fraseDaFila(pessoa, posicao) {
   const quem = pessoa.titular ? 'Você' : pessoa.curto;
-  if (pessoa.genero === 'f') return `${quem} é a ${ordinal(posicao, 'f')} da fila`;
-  if (pessoa.genero === 'm') return `${quem} é o ${ordinal(posicao, 'm')} da fila`;
   return `${quem} está na posição ${posicao} da fila`;
 }
 

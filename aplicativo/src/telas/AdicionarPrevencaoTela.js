@@ -25,7 +25,7 @@ export default function AdicionarPrevencaoTela({ navigation }) {
   });
   const [pessoa, setPessoa] = useState(null);
   const [mes, setMes] = useState(null);
-  const [titulo, setTitulo] = useState(null);
+  const [exame, setExame] = useState(null); // id do exame (Exames_Prevencao)
   const [mensagem, setMensagem] = useState(null);
   const [salvando, setSalvando] = useState(false);
 
@@ -41,7 +41,7 @@ export default function AdicionarPrevencaoTela({ navigation }) {
   const sugestoes = mesEscolhido ? sugestoesDoMes(mesEscolhido) : [];
 
   async function salvar() {
-    const sugestao = sugestoes.find((s) => s.titulo === titulo);
+    const sugestao = sugestoes.find((s) => s.id === exame);
     if (!pessoa || !mesEscolhido || !sugestao) {
       setMensagem('Escolha quem vai entrar, a campanha e o exame.');
       return;
@@ -49,7 +49,7 @@ export default function AdicionarPrevencaoTela({ navigation }) {
     setMensagem(null);
     setSalvando(true);
     try {
-      await incluirNaPrevencao(usuario, { mes, pessoa, ...sugestao });
+      await incluirNaPrevencao(usuario, { mes, pessoa, exame: sugestao.id });
       navigation.goBack();
     } catch (e) {
       setMensagem(e.message);
@@ -94,7 +94,7 @@ export default function AdicionarPrevencaoTela({ navigation }) {
                   key={m.mes}
                   onPress={() => {
                     setMes(m.mes);
-                    setTitulo(null); // cada campanha tem os seus exames
+                    setExame(null); // cada campanha tem os seus exames
                   }}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: ativo }}
@@ -121,11 +121,11 @@ export default function AdicionarPrevencaoTela({ navigation }) {
             <Texto variante="subtitulo">Qual exame ou check-up?</Texto>
             <View style={estilos.lista} accessibilityRole="radiogroup">
               {sugestoes.map((s) => {
-                const ativo = titulo === s.titulo;
+                const ativo = exame === s.id;
                 return (
                   <Pressable
-                    key={s.titulo}
-                    onPress={() => setTitulo(s.titulo)}
+                    key={s.id}
+                    onPress={() => setExame(s.id)}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: ativo }}
                     style={[estilos.linha, ativo && estilos.ativo]}

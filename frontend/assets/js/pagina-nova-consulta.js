@@ -2,9 +2,8 @@
    Paciente → especialidade e médico → dia (calendário até onde a agenda abre) → horário livre.
    Os horários seguem a mesma regra da agenda: expediente, almoço, o que já passou e o que já está ocupado.
    Regras da lista de espera:
-   · horário que abriu por cancelamento, de médico com fila, é da fila: só se marca fora dela com um motivo,
-     que fica registrado;
-   · horário já oferecido à fila (aguardando os 30 minutos) não aparece como livre;
+   · horário oferecido à fila (aguardando os 30 minutos) aparece com cadeado e não pode ser marcado aqui:
+     "Este horário está reservado para a lista de espera.";
    · sem dia que sirva, a pessoa entra na lista de espera dali mesmo, com os dados já preenchidos.
    Aceita vir preenchida: ?paciente=, ?esp=, ?medico=&dia=&hora=. */
 (function () {
@@ -19,14 +18,16 @@
   const $ = (s) => document.querySelector(s);
 
   const espComAgenda = Object.keys(D.especialidades).filter((id) => C.MEDICOS.some((m) => K.medico(m).esp === id));
-  const est = { esp: null, medico: null, dia: null, hora: null, mes: 0, furar: null, abrirFurar: false };
+  const est = { esp: null, medico: null, dia: null, hora: null, mes: 0 };
   const ATE = A.extenso(K.ULTIMO_DIA, false);
-  const MOTIVOS = ["Urgência médica", "Retorno pedido pelo médico", "Remarcação de consulta que a clínica cancelou"];
+  const RESERVADO = "Este horário está reservado para a lista de espera.";
 
   const filaDe = (m) => D.filas[m] || [];
-  const ehDaFila = (x) => !!(x && x.vaga && filaDe(est.medico).length);
   const curtoMedico = (md) => md.nome.split(" ").slice(0, 2).join(" ");
-  const primeiroNome = (n) => n.split(" ")[0];
+  /* horários já oferecidos à fila (status OFERECIDA): aparecem com cadeado, mas a recepção não marca */
+  const oferecidos = (m, dia) => C.consultas
+    .filter((k) => k.medico === m && k.data === dia && k.horario === "oferecido" && (dia > D.hoje || k.ini >= K.agora()))
+    .map((k) => ({ ini: k.ini, dur: k.dur, oferecido: true }));
 
   /* ─── Os dias da janela: de hoje até onde a agenda abre ─── */
   function diasDaJanela() {
@@ -58,7 +59,7 @@
       Object.keys(D.especialidades).map((id) => {
         const ok = espComAgenda.includes(id);
         return '<option value="' + id + '"' + (ok ? "" : " disabled") + (id === est.esp ? " selected" : "") + ">" +
-          D.especialidades[id].nome + (ok ? "" : " (sem médico nesta unidade)") + "</option>";
+          D.especialidades[id].nome + (ok ? "" : " (sem médico nesta clínica)") + "</option>";
       }).join("");
   }
 
@@ -76,7 +77,7 @@
     const fila = est.medico ? filaDe(est.medico).length : 0;
     $("#aviso-fila").innerHTML = fila
       ? '<p class="aviso-fila">' + I("info") + "<span>" + fila + (fila === 1 ? " pessoa aguarda" : " pessoas aguardam") + " vaga com " + K.medico(est.medico).nome +
-        '. Os horários liberados por cancelamento ficam reservados para a fila. <a href="lista-espera.html#' + est.medico + '">Ver a fila</a></span></p>'
+        '. Horário oferecido à fila fica reservado para ela. <a href="lista-espera.html#' + est.medico + '">Ver a fila</a></span></p>'
       : "";
   }
 
@@ -87,7 +88,7 @@
     if (!C.expediente(est.medico, d)) return { tipo: "fechado", feriado };
     const l = K.livres(est.medico, d);
     if (!l.length) return { tipo: "lotado" };
-    return { tipo: "livre", n: l.length, fila: l.some(ehDaFila) };
+    return { tipo: "livre", n: l.length, fila: oferecidos(est.medico, d).length > 0 };
   }
 
   function mesHTML(ano, mes) {
@@ -159,60 +160,34 @@
       desenharBloqueio();
       return;
     }
-    const lista = K.livres(est.medico, est.dia);
-    const daFila = lista.some(ehDaFila);
-    const oferecidos = C.consultas.filter((k) => k.medico === est.medico && k.data === est.dia && k.horario === "oferecido").length;
+    const lista = K.livres(est.medico, est.dia).concat(oferecidos(est.medico, est.dia)).sort((a, b) => a.ini - b.ini);
+    const reservados = lista.filter((x) => x.oferecido).length;
     $("#hora-sub").textContent = K.cap(A.extenso(est.dia)) + " · consultas de " + (C.DURACAO[est.medico] || 30) + " minutos." +
-      (daFila ? " Com cadeado, horários liberados por cancelamento: são da lista de espera." : "") +
-      (oferecidos ? " " + oferecidos + (oferecidos === 1 ? " horário já foi oferecido" : " horários já foram oferecidos") + " à fila e aguarda resposta, por isso não aparece." : "");
+      (reservados ? " Com cadeado, " + (reservados === 1 ? "o horário oferecido" : "os horários oferecidos") + " à lista de espera, aguardando resposta." : "");
     caixa.innerHTML = lista.map((x) => {
       const h = C.txt(x.ini);
-      const fila = ehDaFila(x);
-      return '<div class="hora-opcao' + (fila ? " hora-opcao--fila" : x.vaga ? " hora-opcao--vaga" : "") + '"><input type="radio" name="hora" id="h-' + x.ini + '" value="' + h + '"' +
-        (h === est.hora ? " checked" : "") + (fila ? ' aria-label="' + h + ', reservado à lista de espera"' : "") + ' /><label for="h-' + x.ini + '">' +
-        (fila ? '<svg class="ic cadeado" aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>' : "") + h + "</label></div>";
+      return '<div class="hora-opcao' + (x.oferecido ? " hora-opcao--fila" : x.vaga ? " hora-opcao--vaga" : "") + '"><input type="radio" name="hora" id="h-' + x.ini + '" value="' + h + '"' +
+        (h === est.hora ? " checked" : "") + (x.oferecido ? ' aria-label="' + h + ', reservado para a lista de espera"' : "") + ' /><label for="h-' + x.ini + '">' +
+        (x.oferecido ? '<svg class="ic cadeado" aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>' : "") + h + "</label></div>";
     }).join("") || '<p class="vazio">Sem horário livre neste dia.</p>';
     desenharBloqueio();
   }
 
-  /* o horário escolhido é da fila? então mostra quem está esperando e o caminho para marcar fora dela */
+  /* o horário escolhido foi oferecido à fila? a recepção não pode marcar nele */
   function horarioEscolhido() {
     if (!est.medico || !est.dia || !est.hora) return null;
-    return K.livres(est.medico, est.dia).find((x) => C.txt(x.ini) === est.hora) || null;
+    return K.livres(est.medico, est.dia).concat(oferecidos(est.medico, est.dia)).find((x) => C.txt(x.ini) === est.hora) || null;
   }
+  const reservado = () => { const x = horarioEscolhido(); return !!(x && x.oferecido); };
   function desenharBloqueio() {
     const caixa = $("#bloqueio");
-    const x = horarioEscolhido();
-    if (!ehDaFila(x)) { caixa.innerHTML = ""; est.furar = null; est.abrirFurar = false; return; }
+    if (!reservado()) { caixa.innerHTML = ""; return; }
     const lista = filaDe(est.medico);
-    const p = lista[0];
-    const md = K.medico(est.medico);
-    const motivo = est.furar ? est.furar.motivo : "";
-    const outro = motivo && !MOTIVOS.includes(motivo);
     caixa.innerHTML =
-      '<div class="bloqueio">' +
-      '<p class="bloqueio__titulo">' + I("list-ordered", "ic-sm") + "<span>Esse horário é da lista de espera. Oferecer a " + A.esc(primeiroNome(p.nome)) + "?</span></p>" +
-      "<p>Ele abriu por cancelamento, e " + lista.length + (lista.length === 1 ? " pessoa aguarda" : " pessoas aguardam") + " vaga com " + curtoMedico(md) + ". " +
-      "A 1ª é " + A.esc(p.nome) + ", na fila desde " + A.extenso(p.desde, false) + ".</p>" +
-      '<div class="bloqueio__acoes"><a class="botao botao--menta botao--pequeno" href="lista-espera.html?vaga=' + x.vaga.id + "#" + est.medico + '">' +
-      I("bell-ring", "ic-sm") + "Oferecer a " + A.esc(primeiroNome(p.nome)) + "</a>" +
-      '<button type="button" class="link-acao" id="furar" aria-expanded="' + est.abrirFurar + '" aria-controls="furar-caixa">Marcar fora da fila</button></div>' +
-      '<div class="bloqueio__furar" id="furar-caixa"' + (est.abrirFurar ? "" : " hidden") + ">" +
-      '<div class="campo" id="c-motivo"><label for="f-motivo">Por que marcar fora da fila?</label><select id="f-motivo">' +
-      '<option value="">Escolha o motivo</option>' + MOTIVOS.map((m) => "<option" + (m === motivo ? " selected" : "") + ">" + m + "</option>").join("") +
-      '<option value="outro"' + (outro ? " selected" : "") + ">Outro motivo</option></select></div>" +
-      '<div class="campo" id="c-motivo-outro"' + (outro ? "" : " hidden") + '><label for="f-motivo-outro">Explique em poucas palavras</label>' +
-      '<input id="f-motivo-outro" autocomplete="off" value="' + (outro ? A.esc(motivo) : "") + '" /></div>' +
-      '<p class="campo__dica">Fica registrado com o seu nome (' + A.esc(K.conta.nome) + "), a data e o motivo, e aparece na tela da lista de espera.</p></div></div>";
-  }
-  function lerMotivo() {
-    const sel = $("#f-motivo");
-    if (!sel) return;
-    const outro = sel.value === "outro";
-    $("#c-motivo-outro").hidden = !outro;
-    const texto = outro ? $("#f-motivo-outro").value.trim() : sel.value;
-    est.furar = texto.length >= 3 ? { motivo: texto } : null;
-    desenharResumo();
+      '<div class="bloqueio" role="alert">' +
+      '<p class="bloqueio__titulo">' + I("list-ordered", "ic-sm") + "<span>" + RESERVADO + "</span></p>" +
+      "<p>Ele foi oferecido a quem espera vaga com " + curtoMedico(K.medico(est.medico)) + " e aguarda a resposta (até 30 minutos). Escolha outro horário." +
+      (lista.length ? " " + lista.length + (lista.length === 1 ? " pessoa ainda aguarda" : " pessoas ainda aguardam") + " na fila." : "") + "</p></div>";
   }
 
   /* ─── Resumo ─── */
@@ -222,7 +197,7 @@
     if (!est.medico) f.push(["médico", est.esp ? "#medicos input" : "#f-esp"]);
     if (!est.dia) f.push(["dia", "#dias input"]);
     if (!est.hora) f.push(["horário", "#horas input"]);
-    else if (ehDaFila(horarioEscolhido()) && !est.furar) f.push(["oferecer à fila ou dar o motivo", est.abrirFurar ? "#f-motivo" : "#furar"]);
+    else if (reservado()) f.push(["outro horário (este está reservado para a lista de espera)", "#horas input:checked"]);
     return f;
   }
 
@@ -237,8 +212,7 @@
       item("Paciente", nome ? A.esc(nome) : "") +
       item("Especialidade", est.esp ? D.especialidades[est.esp].nome : "") +
       item("Médico", md ? md.nome : "") +
-      item("Duração", md ? (C.DURACAO[est.medico] || 30) + " minutos" : "") +
-      (est.furar ? item("Fora da fila", A.esc(est.furar.motivo)) : "");
+      item("Duração", md ? (C.DURACAO[est.medico] || 30) + " minutos" : "");
     const f = faltando();
     $("#marcar").setAttribute("aria-disabled", String(f.length > 0));
     $("#r-falta").textContent = f.length ? "Falta: " + f.map((x) => x[0]).join(", ") + "." : "Tudo pronto. Confira e marque.";
@@ -266,13 +240,11 @@
     else if (t.name === "dia") { est.dia = t.value; est.hora = null; desenharDias(); desenharHoras(); desenharResumo(); $("#d-" + t.value).focus(); }
     else if (t.name === "hora") {
       est.hora = t.value;
-      est.abrirFurar = false;
       desenharBloqueio();
       desenharResumo();
       if (!M.reduzido() && $("#bloqueio .bloqueio")) $("#bloqueio .bloqueio").animate([{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }], { duration: 200, easing: M.EASE_OUT });
-    } else if (t.id === "f-motivo") { lerMotivo(); if (t.value === "outro") $("#f-motivo-outro").focus(); }
+    }
   });
-  $("#form").addEventListener("input", (ev) => { if (ev.target.id === "f-motivo-outro") lerMotivo(); });
   $("#form").addEventListener("click", (ev) => {
     const m = ev.target.closest("[data-mes]");
     if (m && !m.disabled) {
@@ -280,14 +252,6 @@
       desenharDias();
       const mesmo = $('#dias [data-mes="' + m.dataset.mes + '"]:not(:disabled)') || $("#dias [data-mes]:not(:disabled)");
       if (mesmo) mesmo.focus();
-      return;
-    }
-    if (ev.target.closest("#furar")) {
-      est.abrirFurar = !est.abrirFurar;
-      $("#furar").setAttribute("aria-expanded", String(est.abrirFurar));
-      $("#furar-caixa").hidden = !est.abrirFurar;
-      if (est.abrirFurar) $("#f-motivo").focus();
-      desenharResumo();
       return;
     }
     if (ev.target.closest("[data-abrir-fila]")) abrirFila();
@@ -346,7 +310,7 @@
     mostrarFeito(
       A.folha(D.hoje, { bloco: true, menta: true }) +
       '<h2 id="t-feito">Na lista de espera</h2>' +
-      "<p><b>" + A.esc(nome) + "</b> é a " + lista.length + "ª da fila de " + md.nome +
+      "<p><b>" + A.esc(nome) + "</b> está na posição " + lista.length + " da fila de " + md.nome +
       (qualquer ? " e também recebe as vagas de qualquer médico de " + K.esp(md.esp).nome : "") +
       ". Quando uma consulta for cancelada, a vaga é oferecida a quem estiver em 1º" + (p.app ? ", com aviso pelo app" : ", e a recepção liga") + ". Fica guardado neste navegador.</p>" +
       '<div class="feito__acoes"><a class="botao botao--principal" href="lista-espera.html#' + est.medico + '">Ver a fila</a>' +
@@ -360,6 +324,7 @@
     const f = faltando();
     if (f.length) {
       if (f[0][0] === "paciente") $("#c-nome").classList.add("campo--erro");
+      if (reservado()) K.anunciar(RESERVADO);
       const alvo = $(f[0][1]);
       if (alvo) { alvo.focus(); alvo.scrollIntoView({ block: "center", behavior: M.reduzido() ? "auto" : "smooth" }); }
       M.tremer($("#marcar"));
@@ -368,9 +333,11 @@
     const nome = $("#f-nome").value.trim().replace(/\s+/g, " ");
     const ini = C.hm(est.hora);
     const dur = C.DURACAO[est.medico] || 30;
-    const x = horarioEscolhido();
-    const fora = ehDaFila(x) && est.furar;
-    const lista = filaDe(est.medico);
+    /* POST /api/consultas recusa horário oferecido à fila (erro 50012 do banco) */
+    if (C.consultas.some((k) => k.horario === "oferecido" && k.medico === est.medico && k.data === est.dia && k.ini < ini + dur && ini < k.ini + k.dur)) {
+      K.toast({ titulo: RESERVADO, icone: "info" });
+      return;
+    }
     /* o horário livre que estava ali passa a ser desta consulta */
     for (let i = C.consultas.length - 1; i >= 0; i--) {
       const k = C.consultas[i];
@@ -378,18 +345,11 @@
     }
     C.consultas.push({ id: C.novoId(), medico: est.medico, data: est.dia, ini, dur, paciente: nome, status: "confirmada", motivo: $("#f-motivo-consulta").value.trim() });
     C.salvar();
-    if (fora) {
-      K.guardar.foraDaFila({
-        medico: est.medico, dia: est.dia, hora: est.hora, paciente: nome, motivo: est.furar.motivo,
-        por: K.conta.nome, em: D.hoje, as: C.txt(Math.floor(K.agora())), naFila: lista.length, primeiro: lista[0].nome,
-      });
-    }
     const md = K.medico(est.medico);
     mostrarFeito(
       A.folha(est.dia, { bloco: true, menta: true }) +
       '<h2 id="t-feito">Consulta marcada</h2>' +
       "<p><b>" + A.esc(nome) + "</b> com " + md.nome + " (" + D.especialidades[md.esp].nome + "), " + A.extenso(est.dia) + ", às " + est.hora + ". " +
-      (fora ? "Registrado como marcação fora da fila: " + A.esc(est.furar.motivo).toLowerCase() + ". " : "") +
       "Ela já aparece na agenda da recepção e na do médico.</p>" +
       '<div class="feito__acoes"><a class="botao botao--principal" href="clinica.html">Ver a agenda</a>' +
       '<button type="button" class="botao botao--secundario" id="outra">Marcar outra consulta</button></div>'
@@ -409,7 +369,7 @@
     K.anunciar(feito.querySelector("h2").textContent + ". " + feito.querySelector("p").textContent);
     $("#outra").addEventListener("click", () => {
       $("#form").reset();
-      Object.assign(est, { esp: null, medico: null, dia: null, hora: null, mes: 0, furar: null, abrirFurar: false });
+      Object.assign(est, { esp: null, medico: null, dia: null, hora: null, mes: 0 });
       desenharEsp();
       tudo();
       feito.hidden = true;

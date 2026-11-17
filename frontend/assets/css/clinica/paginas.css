@@ -1668,21 +1668,6 @@ a.botao {
 .bloqueio .link-acao {
     color: var(--ambar-tinta);
 }
-.bloqueio__furar {
-    display: grid;
-    gap: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #e6c27a;
-}
-.bloqueio__furar[hidden] {
-    display: none;
-}
-.bloqueio__furar .campo > label {
-    color: var(--tinta);
-}
-.bloqueio__furar .campo__dica {
-    color: var(--ambar-tinta);
-}
 
 /* diálogo da fila: opções em lista */
 .escolhas--lista {
@@ -1696,11 +1681,6 @@ a.botao {
 .pessoa__qualquer {
     font-weight: 700;
     color: var(--menta-tinta);
-}
-.fora-fila {
-    margin-top: 18px;
-    padding-top: 14px;
-    border-top: 1px solid var(--linha);
 }
 
 @media (max-width: 700px) {

@@ -12,7 +12,7 @@ import { useSessao } from '../contexto/SessaoContext';
 import { cadastrar } from '../servicos/autenticacao';
 import { config } from '../servicos/config';
 import { HOJE, brParaIso, mascararData } from '../utilitarios/datas';
-import { normalizarCodigo, validarCadastro } from '../utilitarios/validacao';
+import { mascararCPF, normalizarCodigo, validarCadastro } from '../utilitarios/validacao';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 
@@ -25,7 +25,7 @@ function mascararCodigo(texto) {
 export default function CadastroTela() {
   const { abrirSessao } = useSessao();
   const [form, setForm] = useState({
-    nome: '', email: '', telefone: '', senha: '', confirmar: '', nascimento: '', alergias: '', codigo: '', privacidade: false,
+    nome: '', email: '', telefone: '', cpf: '', senha: '', confirmar: '', nascimento: '', alergias: '', codigo: '', privacidade: false,
   });
   const [erros, setErros] = useState({});
   const [erroGeral, setErroGeral] = useState(null);
@@ -48,6 +48,7 @@ export default function CadastroTela() {
         email: form.email,
         senha: form.senha,
         telefone: form.telefone,
+        cpf: form.cpf,
         nascimento: brParaIso(form.nascimento),
         alergias: form.alergias,
         codigo: form.codigo,
@@ -56,6 +57,7 @@ export default function CadastroTela() {
     } catch (e) {
       if (e.message.includes('e-mail')) setErros({ email: e.message });
       if (e.message.includes('código')) setErros({ codigo: e.message });
+      if (e.message.includes('CPF')) setErros({ cpf: e.message });
       setErroGeral(e.message);
       setEnviando(false);
     }
@@ -84,6 +86,15 @@ export default function CadastroTela() {
           autoComplete="tel"
           textContentType="telephoneNumber"
           placeholder="(11) 91234-5678"
+        />
+        <CampoTexto
+          rotulo="CPF"
+          value={form.cpf}
+          onChangeText={(t) => mudar('cpf')(mascararCPF(t))}
+          erro={erros.cpf}
+          keyboardType="number-pad"
+          placeholder="000.000.000-00"
+          maxLength={14}
         />
         <CampoTexto
           rotulo="Senha"

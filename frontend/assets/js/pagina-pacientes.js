@@ -28,7 +28,20 @@
     r.filas.push({ m, pos: i + 1, desde: p.desde });
     if (p.app) r.app = true;
   }));
+  /* CPF de cada paciente (Pacientes.CPF): o cadastrado (titular ou familiar) ou, para quem veio na carga
+     inicial da agenda, um CPF fictício e válido; nunca repete */
+  const usados = new Set();
+  function cpfDoPaciente(nome) {
+    let cpf = API.cpfDe(nome);
+    if (!cpf) {
+      cpf = API.cpfFicticio(nome);
+      for (let n = 1; usados.has(cpf) || API.cpfEmUso(cpf); n++) cpf = API.cpfFicticio(nome + "#" + n);
+    }
+    usados.add(cpf);
+    return cpf;
+  }
   const pacientes = Array.from(mapa.values()).map((p) => {
+    p.cpf = cpfDoPaciente(p.nome);
     p.consultas.sort(ordemK);
     p.proxima = p.consultas.find((k) => FUTURO.includes(k.status) && k.data >= D.hoje) || null;
     p.passadas = p.consultas.filter((k) => k.status === "atendida" || k.status === "faltou" || k.status === "cancelada");
@@ -57,10 +70,13 @@
   const quando = (k) => K.curtoData(k.data) + " · " + C.txt(k.ini);
   const curtoMedico = (id) => K.medico(id).nome.split(" ").slice(0, 2).join(" ");
 
+  /* busca por nome OU CPF (com ou sem pontos: só os números contam) */
   function filtrados() {
     const f = FILTROS.find((x) => x.id === est.filtro);
     const termo = K.semAcento(est.busca);
-    return pacientes.filter((p) => f.teste(p) && (!termo || p.chave.includes(termo)));
+    const digitos = est.busca.replace(/\D/g, "");
+    const porCPF = digitos.length >= 3 && /^[\d.\-\s]+$/.test(est.busca);
+    return pacientes.filter((p) => f.teste(p) && (!termo || (porCPF ? p.cpf.includes(digitos) : p.chave.includes(termo))));
   }
 
   function desenharFiltros() {
@@ -91,7 +107,7 @@
             '<td class="num" data-rotulo="Consultas">' + p.consultas.length + "</td>" +
             '<td class="num" data-rotulo="Faltas">' + (p.faltas ? p.faltas : '<span class="tabela__traco">0</span>') + "</td></tr>";
         }).join("")
-      : '<tr><td colspan="5"><p class="vazio">Ninguém com esse nome' + (est.filtro !== "todos" ? " neste filtro" : "") + ". Confira a grafia.</p></td></tr>";
+      : '<tr><td colspan="5"><p class="vazio">Ninguém com esse nome ou CPF' + (est.filtro !== "todos" ? " neste filtro" : "") + ". Confira o que foi digitado.</p></td></tr>";
     desenharPaginacao(lista.length, paginas, ini, mostrados.length);
   }
 
@@ -138,6 +154,7 @@
       '<span class="selo selo--' + k.status + '">' + ROTULO[k.status] + "</span>" + (k.presencaConfirmada && k.status === "confirmada" ? ' <span class="tabela__sub">presença confirmada</span>' : "") + "</li>";
     ficha.innerHTML =
       '<div class="ficha__cab"><div><h2 id="t-ficha">' + A.esc(p.nome) + "</h2>" +
+      '<p class="painel__titulo-sub">CPF <span class="num">' + API.formatarCPF(p.cpf) + "</span></p>" +
       (p.app ? '<p class="painel__titulo-sub">Usa o app AgendaPro: os avisos chegam por lá</p>' : "") + "</div></div>" +
       '<dl class="ficha__numeros"><div><dt>Consultas</dt><dd class="num">' + p.consultas.length + '</dd></div><div><dt>Faltas</dt><dd class="num">' + p.faltas +
       '</dd></div><div><dt>Na fila</dt><dd class="num">' + p.filas.length + "</dd></div></dl>" +
@@ -145,7 +162,7 @@
       retornosExamesHTML(p) +
       (p.filas.length
         ? '<p class="ficha__secao">Lista de espera</p><ul class="historico">' + p.filas.map((f) =>
-            '<li><span class="historico__quando">' + f.pos + 'ª posição</span><span class="historico__quem">' + K.medico(f.m).nome + " · desde " + A.extenso(f.desde, false) + "</span>" +
+            '<li><span class="historico__quando">' + 'Posição ' + f.pos + '</span><span class="historico__quem">' + K.medico(f.m).nome + " · desde " + A.extenso(f.desde, false) + "</span>" +
             '<a class="link-acao" href="lista-espera.html#' + f.m + '" style="grid-row:1/span 2;grid-column:2;align-self:center">Ver fila</a></li>').join("") + "</ul>"
         : "") +
       '<p class="ficha__secao">Próximas consultas</p>' +

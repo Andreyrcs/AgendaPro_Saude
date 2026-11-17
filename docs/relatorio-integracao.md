@@ -1,6 +1,6 @@
 # AgendaPro Saúde: funções × endpoints da API
 
-Situação em 10 de novembro de 2026 (revisada: confirmação de presença e faltas). Para cada função de serviço da web e do app: o endpoint que ela
+Situação em 11 de novembro de 2026 (revisada para o banco final `agendapro_saude_sqlserver`: CPF, prevenção, especialidades por clínica, vaga e oferta). Para cada função de serviço da web e do app: o endpoint que ela
 usa ou vai usar e se ele **já existe** em `backend/`.
 
 - **Existe:** o endpoint está em `backend/Controllers`.
@@ -27,8 +27,9 @@ na seção "Status da consulta e estado do horário".
 | `entrar(email, senha)` | `POST /api/auth/login` | **Existe.** Falta devolver `papel`, `clinicaId` e `medicoId` |
 | `sair()` | `POST /api/auth/logout` (ou só apagar o token, com JWT) | Falta |
 | `trocarSenha(atual, nova)` | `PUT /api/usuarios/{id}/senha` | Falta |
-| `cadastrarPaciente(dados)` | `POST /api/pacientes` | **Parcial:** `POST /api/usuarios` existe, mas não guarda telefone, documento, nascimento nem papel |
-| `cadastrarClinica(dados)` | `POST /api/clinicas` | Falta |
+| `cadastrarPaciente(dados)` | `POST /api/pacientes` corpo `{ nome, email, senha, telefone, cpf, nascimento }` (CPF: 11 números, válido e único; erros "CPF inválido." e "Este CPF já está cadastrado.") | **Parcial:** `POST /api/usuarios` existe, mas não guarda telefone, CPF, nascimento nem papel |
+| `cpfEmUso(cpf)` · `guardarCPF(cpf, nome)` · `cpfDe(nome)` | dentro de `POST /api/pacientes` e `POST /api/pacientes/{id}/familiares` (a unicidade é `UQ_Pacientes_CPF`) | Falta |
+| `cadastrarClinica(dados)` | `POST /api/clinicas` (UF: 2 letras maiúsculas, sigla de estado; sem "unidade") | Falta |
 | `atualizarClinica(campos)` | `PUT /api/clinicas/{id}` | Falta |
 | `listarEquipe()` | `GET /api/clinicas/{id}/equipe` | Falta |
 | `cadastrarRecepcionista(dados)` | `POST /api/clinicas/{id}/equipe` | Falta |
@@ -44,7 +45,7 @@ na seção "Status da consulta e estado do horário".
 |---|---|---|
 | `carregar()` (clinica-dados) | `GET /api/clinicas/{id}/agenda?de=&ate=` | Falta |
 | `cancelarConsulta(k)` (clinica-dados) | `DELETE /api/consultas/{id}` | Falta |
-| `oferecerHorario(h, nome)` (clinica-dados) | `POST /api/horarios/{id}/oferecer` | Falta |
+| `oferecerHorario(h, nome)` (clinica-dados; "Oferecer horário" na agenda e na lista de espera) | `POST /api/consultas/{id}/oferecer` (`sp_OferecerVaga`: só em horário com status `VAGA`) | Falta |
 | `ocuparHorario` / `liberarHorario` (clinica-dados) | dentro de `PUT /api/lista-espera/{id}/vaga` | Falta |
 | `registrarFalta(k, motivo)` (clinica-dados; usada por clinica.js "Marcar falta" e medico.js) | `POST /api/consultas/{id}/falta` | Falta |
 | `retirarFalta(id)` (pagina-pacientes.js, falta justificada) | `PUT /api/faltas/{id}/retirar` | Falta |
@@ -53,13 +54,12 @@ na seção "Status da consulta e estado do horário".
 | `horariosLivres()` (clinica-dados, para o paciente) | `GET /api/especialidades/{id}/horarios-livres` (os mesmos horários `livre` da agenda) | Falta |
 | `marcarChegada(k)` (clinica.js) | `PUT /api/consultas/{id}/status` `{ "status": "na_recepcao" }` | Falta |
 | `remarcar(k, …)` (clinica.js) | `PUT /api/consultas/{id}` `{ medico, data, hora }` | Falta |
-| marcar consulta (pagina-nova-consulta.js) | `POST /api/consultas` | Falta |
+| marcar consulta (pagina-nova-consulta.js) | `POST /api/consultas` (horário `OFERECIDA` → "Este horário está reservado para a lista de espera.") | Falta |
 | `guardar.entrouNaFila` / `saiuDaFila` / `voltouParaFila` | `POST /api/lista-espera` · `DELETE /api/lista-espera/{id}` | Falta |
-| `guardar.foraDaFila` | `POST /api/lista-espera/excecoes` | Falta |
-| `guardar.medicoNovo` / `edicaoMedico` | `POST /api/clinicas/{id}/medicos` · `PUT /api/medicos/{id}` | Falta |
+| `guardar.medicoNovo` / `edicaoMedico` · `telefoneDoMedico` / `salvarTelefoneMedico` (api.js) | `POST /api/clinicas/{id}/medicos` · `PUT /api/medicos/{id}` (o telefone do médico é gravado em `Usuarios.Telefone`) | Falta |
 | `guardar.expediente` (pagina-horarios.js) | `PUT /api/medicos/{id}/expediente` | Falta |
-| `guardar.especialidade` | `POST /api/clinicas/{id}/especialidades` | Falta |
-| lista de pacientes (pagina-pacientes.js) | `GET /api/clinicas/{id}/pacientes` | Falta |
+| `guardar.especialidade` (cadastrar e editar, só da própria clínica) | `POST /api/clinicas/{id}/especialidades` (o mesmo nome não repete na clínica: `UQ_Especialidades_Clinica_Nome`) | Falta. A edição não tem rota própria no contrato |
+| lista de pacientes (pagina-pacientes.js; busca por nome ou CPF) | `GET /api/clinicas/{id}/pacientes?busca=` | Falta |
 | `iniciarConsulta` / `finalizarConsulta` / `registrarFaltou` (medico.js) | `PUT /api/consultas/{id}/status` | Falta |
 | retorno com nota (medico.js) | `POST /api/retornos` | Falta |
 
@@ -92,7 +92,7 @@ na seção "Status da consulta e estado do horário".
 | `confirmarPresenca(usuario, id)` | `PUT /api/consultas/{id}/presenca` | Falta |
 | `buscarSituacao(usuario)` | `GET /api/pacientes/{id}/situacao` | Falta |
 | `marcarConsulta(usuario, dados)` | `POST /api/consultas` | Falta |
-| `listarEspecialidades()` · `buscarEspecialidade(id)` | `GET /api/especialidades` · `GET /api/especialidades/{id}` | Falta |
+| `listarEspecialidades()` · `buscarEspecialidade(id)` · `especialidadeNaClinica(usuario, nome)` | `GET /api/especialidades` · `GET /api/especialidades/{id}` (só as da clínica do paciente) | Falta |
 | `listarHorariosLivres(idEsp)` · `primeiroHorario(idEsp)` | `GET /api/especialidades/{id}/horarios-livres` | Falta |
 | `listarFamiliares(usuario)` | `GET /api/pacientes/{id}/familiares` | Falta |
 | `adicionarFamiliar(usuario, dados)` | `POST /api/pacientes/{id}/familiares` | Falta |
@@ -103,7 +103,7 @@ na seção "Status da consulta e estado do horário".
 | `listarAcompanhamento(usuario)` | `GET /api/pacientes/{id}/acompanhamento` | Falta |
 | `listarPrevencao(usuario)` | `GET /api/pacientes/{id}/prevencao` | Falta |
 | `marcarItemPrevencao(usuario, idItem, status, idConsulta?)` | `PUT /api/prevencao/{id}` | Falta |
-| `incluirNaPrevencao(usuario, dados)` · `sugestoesDoMes(mes)` | `POST /api/pacientes/{id}/prevencao` · (sugestões locais) | Falta |
+| `incluirNaPrevencao(usuario, dados)` · `sugestoesDoMes(mes)` | `POST /api/pacientes/{id}/prevencao` `{ mes, pessoa, exame }` · (sugestões = `exames` do mês + gerais, vindos de `GET /api/pacientes/{id}/prevencao`) | Falta |
 | `analisarSintomas(texto, familia)` | — (local de propósito: o alerta de emergência não pode depender da rede) | — |
 
 ## Resumo
@@ -123,13 +123,16 @@ Os campos e as regras completas estão em `aplicativo/docs/aplicativo-integracao
 
 ## Formato de Familiar
 
-`{ id, nome, curto, relacao, nascimento, cor, alergias, titular }` — o mesmo de
-`aplicativo/docs/aplicativo-integracao-api.md`. O sistema não guarda número de documento de saúde do familiar.
+`{ id, nome, curto, cpf, relacao, nascimento, cor, alergias, titular }` — o mesmo de
+`aplicativo/docs/aplicativo-integracao-api.md`.
+
+- `cpf` é `Pacientes.CPF`: obrigatório para titular e familiar, só os 11 números, com os dígitos verificadores
+  certos e único. A tela usa a máscara 000.000.000-00. RG não existe mais em nenhuma tela.
 
 - `relacao` é a coluna `Pacientes.Parentesco`: `Titular` para o dono da conta e, para familiares,
   uma destas opções: `Filho(a)`, `Cônjuge`, `Pai/Mãe`, `Irmão(ã)`, `Outro` (obrigatório).
 - `nascimento` (`AAAA-MM-DD`, coluna `Pacientes.Data_Nascimento`, obrigatória): a idade é calculada por ela
-  nas telas. Não há `idade` nem `genero` no formato.
+  nas telas. Não há `idade` nem `genero` no formato (a fila diz "Você está na posição 3 da fila").
 - `cor` é `Pacientes.Cor` (`#RRGGBB`).
 
 ## Funções novas (comparação com o banco SQL Server)
@@ -153,7 +156,7 @@ A API traduz assim:
 | Tela (web e app) | Banco (`Status_Consulta.Codigo_consulta`) |
 |---|---|
 | `confirmada`, `na_recepcao`, `em_atendimento`, `atendida`, `faltou`, `cancelada` | `CONFIRMADA`, `NA_RECEPCAO`, `EM_ATENDIMENTO`, `ATENDIDA`, `FALTOU`, `CANCELADA` |
-| horário `livre` | `VAGA` |
+| horário `livre` com `vaga: true` (sobra de cancelamento) | `VAGA` (os outros horários livres não têm linha em `Consultas`) |
 | horário `oferecido` | `OFERECIDA` |
 | restrição `normal`, `so_fila`, `so_recepcao` | `Usuarios.Restricao`: `NORMAL`, `SO_FILA`, `SO_RECEPCAO` |
 | exame `pendente`, `realizado` | `Exames.Status`: `PENDENTE`, `REALIZADO` |
@@ -166,8 +169,14 @@ As mesmas funções do app, com os mesmos nomes e mensagens:
 
 | Função | Endpoint | Backend |
 |---|---|---|
-| `sugestoesDoMes(mes)` | — (lista local, igual à do app) | — |
-| `incluirNaPrevencao(d)` | `POST /api/pacientes/{id}/prevencao` | Falta |
+| `sugestoesDoMes(mes)` | — (os `exames` do mês + os gerais) | — |
+| `especialidadeNaClinica(nome)` | — (procura pelo nome nas especialidades da clínica atual) | — |
+| `incluirNaPrevencao(d)` `{ mes, pessoa, exame }` | `POST /api/pacientes/{id}/prevencao` | Falta |
 | `marcarItemPrevencao(id, status, idConsulta?)` | `PUT /api/prevencao/{id}` | Falta |
 
-Formato do item: `{ id, pessoa, titulo, status, nota, esp, consulta? }` (o mesmo do app).
+Formato (o mesmo do app):
+
+- Mês (`Campanhas_Prevencao`, um por mês): `{ id, mes, campanha (Nome, pode ser null), tema (Tema), exames }`.
+- Exame (`Exames_Prevencao`): `{ id, idCampanha (null nas gerais), titulo, nota, especialidade }`. `especialidade` é o NOME (ex.: "Ginecologia").
+- Item (`Pessoa_Prevencao`): `{ id, pessoa, exame, titulo, nota, especialidade, status, consulta? }`. O mesmo exame no mesmo mês para a mesma pessoa é recusado.
+- "Marcar" procura a especialidade pelo nome na clínica atual; sem ela: "Esta clínica não atende essa especialidade."

@@ -20,7 +20,7 @@
 
   function desenharTopo() {
     $("#conta-avatar").textContent = A.iniciais(K.conta.nome);
-    $("#subtitulo").innerHTML = "<b>" + A.esc(K.conta.nome) + "</b> · " + A.esc(K.conta.funcao) + " da " + D.clinica.nome + ", " + D.clinica.unidade;
+    $("#subtitulo").innerHTML = "<b>" + A.esc(K.conta.nome) + "</b> · " + A.esc(K.conta.funcao) + " da " + D.clinica.nome;
   }
 
   /* ─── Erros de campo ─── */
@@ -115,7 +115,7 @@
   /* ─── Acesso ─── */
   $("#acesso").innerHTML =
     "<div><dt>Função</dt><dd>" + A.esc(K.conta.funcao) + "</dd></div>" +
-    "<div><dt>Unidade</dt><dd>" + D.clinica.nome + ", " + D.clinica.unidade + "</dd></div>" +
+    "<div><dt>Clínica</dt><dd>" + D.clinica.nome + "</dd></div>" +
     "<div><dt>Médicos na agenda</dt><dd>" + C.MEDICOS.length + "</dd></div>";
   $("#permissoes").innerHTML = PERMISSOES.map((p) => "<li>" + A.icone("check", "ic-sm") + "<span>" + p + "</span></li>").join("");
 

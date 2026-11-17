@@ -45,7 +45,7 @@
       todos.length + " médicos</button>" +
       '<ul class="contagem__lista" aria-hidden="true">' + todos.map(({ md, agenda }) =>
         "<li>" + A.avatarMedico(md, 28) + "<span><b>" + A.esc(md.nome) + "</b><small>" +
-        (agenda ? "Com agenda nesta unidade" : "Sem horário nesta unidade") + (md.sala ? " · " + A.esc(md.sala) : "") + "</small></span></li>"
+        (agenda ? "Com agenda nesta clínica" : "Sem horário nesta clínica") + (md.sala ? " · " + A.esc(md.sala) : "") + "</small></span></li>"
       ).join("") + "</ul></span>";
   }
 
@@ -55,7 +55,7 @@
     const com = lista.filter((x) => x.n.naAgenda.length);
 
     const aperto = com.slice().sort((a, b) => b.n.fila - a.n.fila || a.n.livres - b.n.livres)[0];
-    $("#subtitulo").innerHTML = "<b>" + com.length + " de " + lista.length + "</b> especialidades com médico na agenda desta unidade." +
+    $("#subtitulo").innerHTML = "<b>" + com.length + " de " + lista.length + "</b> especialidades com médico na agenda desta clínica." +
       (aperto && aperto.n.fila
         ? " Onde mais falta horário: " + aperto.e.nome + ", com " + aperto.n.fila + " pessoas na fila e " + aperto.n.livres + (aperto.n.livres === 1 ? " horário livre" : " horários livres") + " até sábado."
         : "");
@@ -72,27 +72,46 @@
         '<td class="tabela__acao">' + (n.naAgenda.length
           ? '<a class="link-acao" href="nova-consulta.html?esp=' + id + '">Marcar consulta</a>'
           : '<a class="link-acao link-acao--discreto" href="' + (n.semHorario.length ? "horarios.html#" + n.semHorario[0].id : "medicos.html") + '">' +
-            (n.semHorario.length ? "Cadastrar horário" : "Cadastrar médico") + "</a>") + "</td></tr>";
+            (n.semHorario.length ? "Cadastrar horário" : "Cadastrar médico") + "</a>") +
+          ' <button type="button" class="link-acao" data-editar="' + id + '" aria-label="Editar ' + A.esc(e.nome) + '">Editar</button></td></tr>';
     }).join("");
   }
 
-  /* ─── Nova especialidade ─── */
+  /* ─── Nova especialidade e edição (o mesmo diálogo) ───
+     Só as especialidades desta clínica (Especialidades.IdClinica). O nome não se repete na mesma clínica,
+     mas pode existir em outra (UQ_Especialidades_Clinica_Nome). */
   const dlg = $("#dlg-esp");
   const form = $("#form-esp");
-  $("#nova").addEventListener("click", () => {
+  let editando = null;
+  function abrir(id) {
+    editando = id || null;
     form.reset();
     $("#c-nome").classList.remove("campo--erro");
     const e = $("#c-nome .campo__erro");
     if (e) e.remove();
+    $("#t-dlg").textContent = id ? "Editar especialidade" : "Nova especialidade";
+    $("#dlg-ok").textContent = id ? "Salvar alterações" : "Criar especialidade";
+    if (id) {
+      const esp = D.especialidades[id];
+      form.nome.value = esp.nome;
+      form.desc.value = esp.desc || "";
+      form.dur.value = String(esp.duracao || 30);
+    }
     K.abrirDialogo(dlg);
+  }
+  $("#nova").addEventListener("click", () => abrir(null));
+  $("#linhas").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-editar]");
+    if (b) abrir(b.dataset.editar);
   });
   form.addEventListener("submit", (ev) => {
     ev.preventDefault();
     const nome = form.nome.value.trim().replace(/\s+/g, " ");
-    const id = K.semAcento(nome).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    /* id novo leva o código da clínica: o mesmo nome em outra clínica é outra especialidade */
+    const id = editando || C.CLINICA + "-" + K.semAcento(nome).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     let erro = "";
     if (nome.length < 3) erro = "Escreva o nome da especialidade.";
-    else if (Object.values(D.especialidades).some((x) => K.semAcento(x.nome) === K.semAcento(nome))) erro = "Essa especialidade já existe.";
+    else if (Object.keys(D.especialidades).some((k) => k !== editando && K.semAcento(D.especialidades[k].nome) === K.semAcento(nome))) erro = "Essa especialidade já existe nesta clínica.";
     if (erro) {
       const c = $("#c-nome");
       c.classList.add("campo--erro");
@@ -106,6 +125,8 @@
     }
     D.especialidades[id] = { nome: nome.charAt(0).toUpperCase() + nome.slice(1), desc: form.desc.value.trim(), duracao: Number(form.dur.value) || 30 };
     K.guardar.especialidade(id, D.especialidades[id]);
+    /* a duração nova já vale para os médicos dela */
+    D.medicos.forEach((m) => { if (m.esp === id) C.DURACAO[m.id] = D.especialidades[id].duracao; });
     K.fecharDialogo(dlg);
     desenhar();
     const linha = document.querySelector('#linhas tr[data-id="' + id + '"]');
@@ -113,7 +134,9 @@
       linha.scrollIntoView({ block: "nearest", behavior: M.reduzido() ? "auto" : "smooth" });
       if (!M.reduzido()) linha.animate([{ backgroundColor: "#d4f3e6" }, { backgroundColor: "transparent" }], { duration: 1200, easing: "ease" });
     }
-    K.toast({ titulo: D.especialidades[id].nome + " criada", texto: "Cadastre um médico para abrir a agenda.", icone: "heart-pulse" });
+    K.toast(editando
+      ? { titulo: D.especialidades[id].nome + " atualizada", texto: "Vale para esta clínica.", icone: "heart-pulse" }
+      : { titulo: D.especialidades[id].nome + " criada", texto: "Cadastre um médico para abrir a agenda.", icone: "heart-pulse" });
   });
 
   desenhar();

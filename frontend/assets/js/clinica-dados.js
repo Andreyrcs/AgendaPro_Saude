@@ -7,6 +7,8 @@
    Cada item da agenda é UM destes dois:
    - uma consulta:  { status: confirmada | na_recepcao | em_atendimento | atendida | faltou | cancelada, paciente }
    - um horário sem consulta: { status: null, horario: "livre" | "oferecido" }  (oferecido = vaga mandada à lista de espera)
+     "vaga: true" marca o horário livre que sobrou de um cancelamento (status VAGA no banco):
+     só ele pode ser oferecido à lista de espera pela recepção ("Oferecer horário").
    Cancelar: a consulta fica "cancelada" (histórico) e nasce um horário "livre" ou "oferecido" no mesmo lugar. */
 (function () {
   "use strict";
@@ -31,7 +33,7 @@
      Médicos novos, edições (nome, especialidade, telefone, sala), especialidades novas
      e as mudanças na lista de espera (quem entrou, quem saiu). */
   const CHAVE_LOJA = "agendapro.clinica.v2." + CLINICA;
-  const loja = { medicos: [], edicoes: {}, especialidades: {}, fila: [], saiuDaFila: [], foraDaFila: [] };
+  const loja = { medicos: [], edicoes: {}, especialidades: {}, fila: [], saiuDaFila: [] };
   const lerLoja = () => {
     try { Object.assign(loja, { fila: [], saiuDaFila: [] }, JSON.parse(localStorage.getItem(CHAVE_LOJA)) || {}); } catch (e) { /* sem armazenamento */ }
   };
@@ -43,6 +45,9 @@
     const k = (D.consultas || []).concat(D.passadas || []).find((x) => x.medico === md.id && x.sala);
     if (!md.sala && k) md.sala = k.sala;
   });
+  /* especialidades: só as desta clínica (Especialidades.IdClinica) + as que a recepção cadastrou ou editou aqui */
+  const ESP_DA_CLINICA = (D.ESPECIALIDADES_DA_CLINICA || {})[CLINICA] || [];
+  Object.keys(D.especialidades).forEach((id) => { if (!ESP_DA_CLINICA.includes(id)) delete D.especialidades[id]; });
   Object.assign(D.especialidades, loja.especialidades);
   loja.medicos.forEach((md) => { if (!D.medicos.some((x) => x.id === md.id)) D.medicos.push(md); });
   Object.keys(loja.edicoes).forEach((id) => { const md = D.medicos.find((x) => x.id === id); if (md) Object.assign(md, loja.edicoes[id]); });
@@ -81,20 +86,18 @@
       if (i >= 0) loja.saiuDaFila.splice(i, 1); else loja.fila.push(Object.assign({ medico }, p));
       gravarLoja();
     },
-    /* quem marcou fora da fila, quando e por quê */
-    foraDaFila(r) { loja.foraDaFila.push(r); gravarLoja(); },
-    registrosForaDaFila(medico) { return loja.foraDaFila.filter((r) => !medico || r.medico === medico); },
     medicoNovo(md) { loja.medicos.push(md); gravarLoja(); },
     edicaoMedico(id, campos) {
       const novo = loja.medicos.find((x) => x.id === id);
       if (novo) Object.assign(novo, campos); else loja.edicoes[id] = Object.assign(loja.edicoes[id] || {}, campos);
       gravarLoja();
     },
+    /* cadastra ou edita uma especialidade DESTA clínica (POST /api/clinicas/{id}/especialidades) */
     especialidade(id, e) { loja.especialidades[id] = e; gravarLoja(); },
     tudoDeVolta() { try { localStorage.removeItem(CHAVE_LOJA); localStorage.removeItem(CHAVE); } catch (e) { /* sem armazenamento */ } },
     temAlteracoes() {
       return loja.medicos.length + Object.keys(loja.edicoes).length + Object.keys(loja.especialidades).length +
-        loja.fila.length + loja.saiuDaFila.length + loja.foraDaFila.length > 0;
+        loja.fila.length + loja.saiuDaFila.length > 0;
     },
   };
 
@@ -212,10 +215,12 @@
     const lista = [];
     let seq = 4800;
     const agora = minutoAgora();
-    const add = (medico, dia, ini, dur, paciente, status, horario) => {
+    /* vaga = horário livre que sobrou de um cancelamento, quando ninguém estava na fila (status VAGA) */
+    const add = (medico, dia, ini, dur, paciente, status, horario, vaga) => {
       seq += 1;
       const k = { id: "k" + seq, medico, data: dia, ini, dur, paciente: paciente || null, status: status || null, gerada: true };
       if (horario) k.horario = horario;
+      if (vaga) k.vaga = true;
       lista.push(k);
     };
     const semente = CLINICA.split("").reduce((s, c) => s + c.charCodeAt(0), 0);
@@ -230,7 +235,7 @@
         if (dia === hoje && CLINICA === "ipe" && HOJE_IPE[m] && data(dia).getDay() !== 6) {
           HOJE_IPE[m].forEach(([h, dur, pac, s]) => {
             const ini = hm(h);
-            if (s === "livre") add(m, dia, ini, dur, null, null, "livre");
+            if (s === "livre") add(m, dia, ini, dur, null, null, "livre", true);
             else add(m, dia, ini, dur, pac, statusPeloRelogio(ini, dur, s, agora));
           });
           return;
@@ -246,7 +251,7 @@
           } else if (r < ocup * 0.92 * fator) {
             add(m, dia, t, dur, nome, dia === hoje ? statusPeloRelogio(t, dur, null, agora) : "confirmada");
           } else if (longe <= 21 && r < ocup && (dia > hoje || t > agora)) {
-            add(m, dia, t, dur, null, null, "livre");
+            add(m, dia, t, dur, null, null, "livre", r > ocup * 0.97);
           }
         }
       });
@@ -320,19 +325,22 @@
   const ehConsulta = (k) => !k.horario && !!k.status;
   const ativa = (k) => horarioDe(k) !== null;
 
-  /* Cancela: a consulta vira "cancelada" e o horário dela volta como "livre" no mesmo lugar.
-     Devolve o horário novo, para quem chamou oferecer à lista de espera se quiser. */
+  /* Cancela: a consulta vira "cancelada" e o horário dela volta como "livre" no mesmo lugar, marcado como vaga
+     (sobra de cancelamento). Devolve o horário novo, para quem chamou oferecer à 1ª pessoa da fila. */
   function cancelarConsulta(k, motivo) {
     k.status = "cancelada";
     k.canceladaEm = new Date().toISOString();
     if (motivo) k.motivoCancelamento = motivo;
-    const h = { id: novoId(), medico: k.medico, data: k.data, ini: k.ini, dur: k.dur, paciente: null, status: null, horario: "livre" };
+    const h = { id: novoId(), medico: k.medico, data: k.data, ini: k.ini, dur: k.dur, paciente: null, status: null, horario: "livre", vaga: true };
     consultas.push(h);
     salvar();
     return h;
   }
-  /* Um horário livre passa a ser oferecido à 1ª pessoa da fila */
+  /* Só a vaga (sobra de cancelamento) que ainda não passou pode ser oferecida à lista de espera */
+  const podeOferecer = (h) => !!h && h.horario === "livre" && !!h.vaga && futuro(h);
+  /* POST /api/consultas/{id}/oferecer — a vaga passa a ser oferecida à 1ª pessoa da fila */
   function oferecerHorario(h, nome) {
+    if (!podeOferecer(h)) throw new Error("Vaga não encontrada ou não está disponível.");
     h.horario = "oferecido";
     h.paciente = nome;
     h.oferecidoEm = new Date().toISOString();
@@ -342,14 +350,16 @@
   function ocuparHorario(h, nome) {
     delete h.horario;
     delete h.oferecidoEm;
+    delete h.vaga;
     delete h.gerada; /* agora é uma consulta marcada por uma pessoa */
     h.paciente = nome;
     h.status = "confirmada";
     salvar();
   }
-  /* A pessoa recusou ou o prazo passou: o horário volta a ficar livre */
+  /* A pessoa recusou ou o prazo passou: o horário volta a ser vaga (livre, pode ser oferecido de novo) */
   function liberarHorario(h) {
     h.horario = "livre";
+    h.vaga = true;
     h.paciente = null;
     delete h.oferecidoEm;
     salvar();
@@ -552,7 +562,7 @@
     CLINICA, MEDICOS, DURACAO, INICIO, FIM, ABRE_MESES, ABRE_ATE, EXPEDIENTE, almocoDe, noAlmoco,
     consultas, expediente, salvar, apagar, novoId, guardar, aoMudar,
     confirmarPresenca, registrarFalta, retirarFalta, faltasDe, historicoFaltasDe, restricaoDe, horariosLivres,
-    horarioDe, ehConsulta, ativa, cancelarConsulta, oferecerHorario, ocuparHorario, liberarHorario,
+    horarioDe, ehConsulta, ativa, cancelarConsulta, podeOferecer, oferecerHorario, ocuparHorario, liberarHorario,
     vagaOferecida, responderVaga, sincronizarEspera, marcarConsulta, cancelarPeloPaciente, consultaDoPaciente,
     minutoAgora, hm, txt, iso, data, somaDias,
   };

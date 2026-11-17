@@ -155,38 +155,6 @@ body {
     text-align: center;
 }
 
-/* Seletor de tipo de documento (CPF ou RG) */
-.doc-tipo-grupo {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.doc-tipo-opcao {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border: 1.5px solid var(--linha);
-    border-radius: 999px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--tinta-2);
-    cursor: pointer;
-    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
-}
-
-.doc-tipo-opcao input {
-    margin: 0;
-    accent-color: var(--noite);
-}
-
-.doc-tipo-opcao:has(input:checked) {
-    border-color: var(--noite);
-    background: var(--gelo);
-    color: var(--noite);
-}
-
 /* Wrapper para senha com botão ver/ocultar */
 .campo__senha-wrap {
     position: relative;

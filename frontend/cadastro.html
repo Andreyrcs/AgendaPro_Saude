@@ -123,47 +123,24 @@
                             />
                             
                         </div>
-                        <!-- Documento: CPF ou RG (escolha um) -->
+                        <!-- CPF (obrigatório e único: Pacientes.CPF) -->
                         <div class="campo">
-                            <span class="campo__rotulo" id="rotulo-documento"
-                                >Documento</span
-                            >
-                            <div
-                                class="doc-tipo-grupo"
-                                role="radiogroup"
-                                aria-labelledby="rotulo-documento"
-                            >
-                                <label class="doc-tipo-opcao">
-                                    <input
-                                        type="radio"
-                                        name="doc-tipo"
-                                        value="cpf"
-                                        checked
-                                    />
-                                    <span>CPF</span>
-                                </label>
-                                <label class="doc-tipo-opcao">
-                                    <input
-                                        type="radio"
-                                        name="doc-tipo"
-                                        value="rg"
-                                    />
-                                    <span>RG</span>
-                                </label>
-                            </div>
+                            <label class="campo__rotulo" for="cpf">CPF</label>
                             <input
                                 class="campo__entrada"
-                                id="documento"
-                                name="documento"
+                                id="cpf"
+                                name="cpf"
                                 type="text"
                                 inputmode="numeric"
                                 placeholder="000.000.000-00"
+                                maxlength="14"
                                 autocomplete="off"
                                 required
+                                aria-describedby="erro-cpf"
                             />
                             <span
                                 class="campo__erro"
-                                id="erro-documento"
+                                id="erro-cpf"
                                 aria-live="polite"
                             ></span>
                         </div>
@@ -408,10 +385,7 @@
 
                 var nomeEl = document.getElementById('nome');
                 var emailEl = document.getElementById('email');
-                var documentoEl = document.getElementById('documento');
-                var docTipoRadios = document.querySelectorAll(
-                    'input[name="doc-tipo"]',
-                );
+                var cpfEl = document.getElementById('cpf');
                 var senhaEl = document.getElementById('senha');
                 var confirmarEl = document.getElementById('confirmar');
                 var termosEl = document.getElementById('termos');
@@ -460,70 +434,10 @@
                 setupVerSenha('btn-ver-senha', 'senha');
                 setupVerSenha('btn-ver-confirmar', 'confirmar');
 
-                /* ─── Tipo de documento: CPF ou RG ─── */
-                /* "0" marca onde entra cada dígito; o resto é inserido como está */
-                var MASCARAS_DOCUMENTO = {
-                    cpf: '000.000.000-00',
-                    rg: '00.000.000-0',
-                };
-
-                function tipoDocumentoSelecionado() {
-                    var marcado = document.querySelector(
-                        'input[name="doc-tipo"]:checked',
-                    );
-                    return marcado ? marcado.value : 'cpf';
-                }
-
-                /* Só deixa dígito passar e já formata com pontos e traço
-                   enquanto a pessoa digita — não dá pra "colar" letra ou
-                   símbolo e isso passar para a validação do envio. */
-                function aplicarMascara(valor, padrao) {
-                    var digitos = valor.replace(/\D/g, '');
-                    var resultado = '';
-                    var i = 0;
-                    for (
-                        var p = 0;
-                        p < padrao.length && i < digitos.length;
-                        p++
-                    ) {
-                        if (padrao[p] === '0') {
-                            resultado += digitos[i];
-                            i++;
-                        } else {
-                            resultado += padrao[p];
-                        }
-                    }
-                    return resultado;
-                }
-
-                function mascararDocumento() {
-                    var padrao =
-                        MASCARAS_DOCUMENTO[tipoDocumentoSelecionado()];
-                    documentoEl.value = aplicarMascara(
-                        documentoEl.value,
-                        padrao,
-                    );
-                }
-
-                function atualizarCampoDocumento() {
-                    var tipo = tipoDocumentoSelecionado();
-                    documentoEl.placeholder =
-                        tipo === 'cpf' ? '000.000.000-00' : '00.000.000-0';
-                    documentoEl.setAttribute(
-                        'maxlength',
-                        String(MASCARAS_DOCUMENTO[tipo].length),
-                    );
-                    documentoEl.value = '';
-                    documentoEl.classList.remove('campo__entrada--erro');
-                    document.getElementById('erro-documento').textContent =
-                        '';
-                }
-
-                documentoEl.addEventListener('input', mascararDocumento);
-                docTipoRadios.forEach(function (radio) {
-                    radio.addEventListener('change', atualizarCampoDocumento);
+                /* ─── CPF: máscara 000.000.000-00 que só aceita números (api.js) ─── */
+                cpfEl.addEventListener('input', function () {
+                    cpfEl.value = window.API.formatarCPF(cpfEl.value);
                 });
-                atualizarCampoDocumento();
 
                 /* ─── Validação ─── */
                 function limparErros() {
@@ -584,35 +498,9 @@
                         valido = false;
                     }
 
-                    var tipoDocumento = tipoDocumentoSelecionado();
-                    var documento = documentoEl.value.trim();
-                    var documentoDigitos = documento.replace(/\D/g, '');
-
-                    if (!documento) {
-                        mostrarErroCampo(
-                            'documento',
-                            tipoDocumento === 'cpf'
-                                ? 'Informe seu CPF.'
-                                : 'Informe seu RG.',
-                        );
-                        valido = false;
-                    } else if (
-                        tipoDocumento === 'cpf' &&
-                        documentoDigitos.length !== 11
-                    ) {
-                        mostrarErroCampo(
-                            'documento',
-                            'O CPF precisa ter 11 dígitos.',
-                        );
-                        valido = false;
-                    } else if (
-                        tipoDocumento === 'rg' &&
-                        documentoDigitos.length < 4
-                    ) {
-                        mostrarErroCampo(
-                            'documento',
-                            'Informe um RG válido.',
-                        );
+                    /* CPF: 11 dígitos com os dois dígitos verificadores certos */
+                    if (!window.API.validarCPF(cpfEl.value)) {
+                        mostrarErroCampo('cpf', window.API.ERRO_CPF);
                         valido = false;
                     }
 
@@ -672,7 +560,7 @@
                         email: emailEl.value.trim(),
                         senha: senhaEl.value,
                         telefone: document.getElementById('telefone').value.trim(),
-                        documento: documentoEl.value.trim(),
+                        cpf: cpfEl.value.replace(/\D/g, ''),
                         nascimento: (document.getElementById('nascimento') || {}).value || '',
                     })
                         .then(function () {
@@ -681,13 +569,16 @@
                         .catch(function (e) {
                             btnCadastrar.classList.remove('btn--carregando');
                             btnCadastrar.textContent = 'Criar conta';
-                            mostrarErroCampo('email', e.message);
+                            /* cada erro aparece no campo dele */
+                            var campo = /CPF/.test(e.message) ? 'cpf' : /senha/i.test(e.message) ? 'senha' : 'email';
+                            mostrarErroCampo(campo, e.message);
+                            document.getElementById(campo).focus();
                             anunciar(e.message);
                         });
                 });
 
                 /* ─── Limpar erros ao digitar ─── */
-                [nomeEl, emailEl, documentoEl, senhaEl, confirmarEl].forEach(function (el) {
+                [nomeEl, emailEl, cpfEl, senhaEl, confirmarEl].forEach(function (el) {
                     el.addEventListener('input', function () {
                         el.classList.remove('campo__entrada--erro');
                         var erroEl = document.getElementById('erro-' + el.id);
