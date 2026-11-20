@@ -1,14 +1,19 @@
+using AgendaPro.Api.Repositorios;
+using AgendaPro.Api.Servicos;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// 1. Registrar os serviços (ANTES do Build)
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddSingleton<IFabricaConexao, FabricaConexao>();
+builder.Services.AddScoped<IEspecialidadeRepositorio, EspecialidadeRepositorio>();
+builder.Services.AddScoped<IEspecialidadeServico, EspecialidadeServico>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 2. Montar o caminho das requisições (DEPOIS do Build)
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -19,7 +24,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
