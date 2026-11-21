@@ -1,5 +1,5 @@
 ﻿using Dapper;
-
+using AgendaPro.Api.Modelos;
 namespace AgendaPro.Api.Repositorios;
 
 public class UsuarioRepositorio : IUsuarioRepositorio
@@ -18,5 +18,16 @@ public class UsuarioRepositorio : IUsuarioRepositorio
         using var conexao = _fabrica.CriarConexao();
         var quantidade = await conexao.ExecuteScalarAsync<int>(sql, new { Email = email });
         return quantidade > 0;
+    }
+
+    public async Task<Usuario?> BuscarAtivoPorEmailAsync(string email)
+    {
+        const string sql = @"
+            SELECT Id_Usuario AS Id, Email, SenhaHash, Papel, Nome, Telefone, IdClinica, Ativo
+            FROM Usuarios
+            WHERE Email = @Email AND Ativo = 1;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QuerySingleOrDefaultAsync<Usuario>(sql, new { Email = email });
     }
 }
