@@ -12,6 +12,9 @@ Só entra no código o que estiver na documentação ou no SQL. Ordem das fontes
 
 1. `backend/docs/especificacao-api.md` (documentação oficial do back-end) e o script do banco
    (Apêndice Q, já aplicado no banco `AgendaPro_Saude`).
+   Documento final completo: docs_/AgendaPro-Saude.pdf. Consulte-o para o que não estiver em especificacao-api.md,
+   principalmente as seções 8.1 a 8.3 e os Apêndices K (telas do app), L (funções do app e endpoints),
+   O (modelo lógico) e P (decisões do modelo físico).
 2. **Quando os dois não definirem um detalhe** (nome de campo no JSON, texto de mensagem, valor de um campo),
    siga o que o front do grupo já espera: o código em `frontend/assets/js/` e `aplicativo/src/` e os contratos
    `docs/relatorio-integracao.md`, `aplicativo/docs/aplicativo-integracao-api.md`, `docs/banco-x-telas.md`.
@@ -43,6 +46,8 @@ No plano de cada etapa, indique a **fonte** de cada regra (seção, apêndice, t
 - Atenção aos nomes reais: tabela `Clinica` (singular), colunas `Id_Usuario`, `Nome_paciente`, `Data_Nascimento`,
   `Nome_Espec` etc. Use `AS` no SELECT para casar com as propriedades dos modelos.
 - Collation do banco é case-insensitive: comparações de texto não diferenciam maiúsculas de minúsculas.
+- Para gravar pelo `sqlcmd` em tabelas com índice filtrado (Lista_Espera, Clinica), use `-I`
+  (QUOTED_IDENTIFIER ON); sem ele, o UPDATE falha com o erro 1934. A API (SqlClient) já usa ON.
 
 ## Tecnologia (Apêndice M)
 
@@ -78,6 +83,12 @@ No plano de cada etapa, indique a **fonte** de cada regra (seção, apêndice, t
 - **Controllers:** `[ApiController]` e herdam de **`ApiControllerBase`** (todos, inclusive o `AuthController`).
   A `ApiControllerBase` oferece `IdUsuarioLogado` (sub), `PapelLogado` (role), `ClinicaLogada` (clinica, `int?`)
   e `MedicoLogado` (medico, `int?`). Use-as; nunca leia identidade do corpo ou da query.
+  Para passar ao serviço, cada controller monta `UsuarioLogado` (Dtos/) com essas quatro propriedades.
+- **Serviço → Forbid():** quando o serviço devolve `null` (ou `false`), quem pediu não pode usar aquele dado
+  (outra clínica, outro médico, clínica sem vínculo) e o controller responde `Forbid()`. 404, 400 e o 403 com
+  mensagem da família são lançados pelo serviço com `ErroApi`. Acesso à clínica: `IAcessoServico`.
+- **Dados de várias tabelas:** o repositório usa o multi-mapeamento do Dapper sobre os modelos e devolve uma
+  tupla (`ConsultaCompleta`, `FilaCompleta`, declaradas com `global using` nas interfaces dos repositórios).
 - **Permissões:** `[Authorize(Roles = "...")]` com os perfis do Apêndice C em minúsculas
   (`paciente`, `medico`, `recepcao`, `dono`; "Todos" = os quatro). Públicas: `[AllowAnonymous]`.
 - **Erros:** o serviço lança `ErroApi(statusCode, mensagem)`; o `ErroMiddleware` responde `{ "mensagem": "..." }`
@@ -93,8 +104,10 @@ No plano de cada etapa, indique a **fonte** de cada regra (seção, apêndice, t
 - **Texto digitado:** a API repete o tratamento que a tela já faz: e-mail `Trim().ToLowerInvariant()`,
   nome `Trim()`, código da clínica `Trim().ToUpperInvariant()`, UF `Trim().ToUpperInvariant()`.
   Da clínica (api.js): CNPJ gravado formatado `00.000.000/0000-00`, montado a partir dos 14 números
-  (`ValidadorCnpj.Formatar`, também usado para conferir se já existe); telefone como `formatarTelefone`
-  (`(00) 0000-0000` com 10 ou mais números; com menos, como foi digitado). Não acrescente outros tratamentos.
+  (`ValidadorCnpj.Formatar`, também usado para conferir se já existe); telefone da clínica e do médico como
+  `formatarTelefone` (`FormatadorTexto.Telefone`: `(00) 0000-0000` com 10 ou mais números; com menos, como foi
+  digitado). CRM `Trim().ToUpperInvariant()` (`pagina-medicos.js:155`). Horas com `FormatadorTexto.Hora`.
+  Não acrescente outros tratamentos.
 - **CPF e CNPJ:** dígitos verificadores e recusa de números com todos os dígitos iguais
   (`validarCPF` e `validarCNPJ` em api.js), em `ValidadorCpf` e `ValidadorCnpj`.
 
@@ -131,15 +144,18 @@ No plano de cada etapa, indique a **fonte** de cada regra (seção, apêndice, t
 |---|---|
 | `POST /api/auth/login` | Pronta: JWT com claims do Apêndice F, resposta do Apêndice E |
 | `POST /api/pacientes` | Pronta: conta + titular + vínculo opcional por `codigo` na mesma transação |
-| `GET /api/clinicas/{id}/especialidades` | Pronta, com `[Authorize]` (falta o filtro da clínica da regra 3) |
-| `POST /api/clinicas` | Feita, **falta teste no Swagger e commit**: clínica + conta `DONO` na mesma transação, código `AAA-0000` como `gerarCodigo` (api.js), 201 sem token |
-| `PUT /api/usuarios/{id}/senha` | Feita, **falta teste no Swagger e commit**: confere a senha atual, 204 sem corpo |
+| `GET /api/clinicas/{id}/especialidades` | Pronta; **Lote A** acrescentou o filtro da clínica (equipe) e o vínculo (paciente), e a resposta passou a usar `duracao` |
+| `POST /api/clinicas` | Pronta: clínica + conta `DONO` na mesma transação, código `AAA-0000` como `gerarCodigo` (api.js), 201 sem token |
+| `PUT /api/usuarios/{id}/senha` | Pronta: confere a senha atual, 204 sem corpo |
+| **Lote A, etapa 1** (especialidades e horários): `GET /api/especialidades/{id}`, `POST /api/clinicas/{id}/especialidades`, `GET`/`POST /api/clinicas/{id}/medicos`, `PUT /api/medicos/{id}`, `PUT /api/medicos/{id}/expediente`, `GET /api/especialidades/{id}/horarios-livres` | Prontas (testadas no Swagger) |
+| **Lote A, etapa 2** (consultas): `GET`/`PUT`/`DELETE /api/consultas/{id}`, `POST /api/consultas`, `PUT /api/consultas/{id}/presenca`, `GET /api/pacientes/{id}/consultas` | Prontas (testadas no Swagger) |
+| **Lote A, etapa 3** (lista de espera): `GET /api/pacientes/{id}/lista-espera`, `GET /api/clinicas/{id}/lista-espera`, `POST /api/lista-espera`, `DELETE /api/lista-espera/{id}`, `PUT /api/lista-espera/{id}/vaga`, `POST /api/consultas/{id}/oferecer`, `ExpiracaoOfertasServico` | Prontas (testadas no Swagger) |
 
 Também prontos: `ErroMiddleware`, `RespostaValidacao`, `ValidadorCpf`, `ValidadorCnpj`, JwtBearer (assinatura,
 emissor, validade), `ApiControllerBase`, botão Authorize do Swagger.
 
-Faltam (Apêndice T): Especialidades e horários, Consultas, Lista de espera, Área da clínica, Área do médico, Acompanhamento e prevenção, Segurança
-(limite de login, CORS, HTTPS) e `ExpiracaoOfertasServico`.
+Faltam (Apêndice T): Área da clínica, Área do médico, Acompanhamento e prevenção, Segurança
+(limite de login, CORS, HTTPS).
 
 Dados de teste no banco: Clínica Ipê (id 1, código `IPE-4821`) com 3 especialidades; pacientes Ana, Bruno,
 Carla (vinculada à clínica 1) e Diego, todos com senha `senha1234`.
@@ -178,3 +194,20 @@ Carla (vinculada à clínica 1) e Diego, todos com senha `senha1234`.
     "Este e-mail já tem uma conta. Use outro ou entre com ele.".
 13. Cadastros simultâneos com o mesmo CNPJ, e-mail ou código sorteado: o índice único do banco recusa e sai 500.
     **Não tratar** (decidido com o usuário).
+14. **Vínculo do paciente com a clínica (dedução, não regra escrita):** o paciente só vê especialidades e horários
+    e só agenda ou entra na fila numa clínica vinculada à conta (`Paciente_Clinica`; sem vínculo → `Forbid()`).
+    A recepção só marca ou põe na fila quem tem a conta vinculada (senão 404 "Paciente não encontrado.").
+    Deduzido da seção 5.5 (clínica privada só é encontrada pelo código) e do Apêndice C ("pacientes vinculados
+    à clínica"). Decidido com o usuário.
+15. Erro 50013: a procedure diz "Por enquanto, você pode agendar só pela lista de espera."; o app espera
+    "Por enquanto, só dá para entrar na lista de espera.". **Repassar o texto da procedure** (regra 5), como na
+    pendência 6 (que é o erro 50012).
+16. Uma fila por conta (regra do app, `espera.js:57-59`): vale também quando a recepção põe a pessoa na fila,
+    com o mesmo texto "Você já está numa lista de espera. Saia dela antes de entrar em outra.".
+17. Recusar a vaga: o contrato do app diz que o paciente "continua na fila"; a `sp_RecusarOferta` marca `EXPIRADA`
+    (a pessoa sai) e oferece ao próximo. **Vale a procedure** (Apêndice R).
+18. Lote A, decisões do usuário: dono incluído nas rotas de consulta e fila (Apêndice G); médico vê só as próprias
+    consultas; expediente no formato da tela (`semana`, `sabado`, `almoco` em HH:MM; almoço que não encosta no dia
+    vira NULL, almoço que corta o dia → 400); horários livres como `clinica-dados.js` (até hoje + 2 meses);
+    "Vou" só a partir da véspera; pediatria só até 18 anos (contrato do app); senha provisória do médico com
+    `RandomNumberGenerator`; motivo da vaga aceita "Vaga da lista de espera".

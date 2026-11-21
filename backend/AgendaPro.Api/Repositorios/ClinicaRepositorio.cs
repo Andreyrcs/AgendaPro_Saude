@@ -29,6 +29,16 @@ public class ClinicaRepositorio : IClinicaRepositorio
         return quantidade > 0;
     }
 
+    // Paciente_Clinica: a conta do paciente está vinculada à clínica?
+    public async Task<bool> ContaVinculadaAsync(int idConta, int idClinica)
+    {
+        const string sql = "SELECT COUNT(1) FROM Paciente_Clinica WHERE IdUsuario = @IdConta AND IdClinica = @IdClinica;";
+
+        using var conexao = _fabrica.CriarConexao();
+        var quantidade = await conexao.ExecuteScalarAsync<int>(sql, new { IdConta = idConta, IdClinica = idClinica });
+        return quantidade > 0;
+    }
+
     public async Task<(int IdClinica, int IdUsuario)> CriarComDonoAsync(Clinica clinica, Usuario dono)
     {
         const string sqlClinica = @"

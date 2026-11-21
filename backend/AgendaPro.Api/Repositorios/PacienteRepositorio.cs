@@ -21,6 +21,18 @@ public class PacienteRepositorio : IPacienteRepositorio
         return quantidade > 0;
     }
 
+    public async Task<Paciente?> BuscarPorIdAsync(int idPaciente)
+    {
+        const string sql = @"
+            SELECT Id_Paciente AS Id, IdUsuario, Nome_paciente AS Nome, CPF AS Cpf,
+                   Data_Nascimento AS DataNascimento, Alergias, Parentesco
+            FROM Pacientes
+            WHERE Id_Paciente = @Id;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QuerySingleOrDefaultAsync<Paciente>(sql, new { Id = idPaciente });
+    }
+
     public async Task<(int IdUsuario, int IdPaciente)> CriarContaComTitularAsync(Usuario usuario, Paciente titular, int? idClinica)
     {
         const string sqlUsuario = @"

@@ -15,10 +15,45 @@ public class EspecialidadesController : ApiControllerBase
         _servico = servico;
     }
 
+    private UsuarioLogado Logado => new(IdUsuarioLogado, PapelLogado, ClinicaLogada, MedicoLogado);
+
     [Authorize(Roles = "paciente,medico,recepcao,dono")]
     [HttpGet("api/clinicas/{idClinica:int}/especialidades")]
     public async Task<ActionResult<IEnumerable<EspecialidadeResposta>>> ListarPorClinica(int idClinica)
     {
-        return Ok(await _servico.ListarPorClinicaAsync(idClinica));
+        var resposta = await _servico.ListarPorClinicaAsync(idClinica, Logado);
+        if (resposta is null)
+            return Forbid();
+        return Ok(resposta);
+    }
+
+    [Authorize(Roles = "paciente,medico,recepcao,dono")]
+    [HttpGet("api/especialidades/{id:int}")]
+    public async Task<ActionResult<EspecialidadeResposta>> Obter(int id)
+    {
+        var resposta = await _servico.ObterAsync(id, Logado);
+        if (resposta is null)
+            return Forbid();
+        return Ok(resposta);
+    }
+
+    [Authorize(Roles = "recepcao,dono")]
+    [HttpPost("api/clinicas/{idClinica:int}/especialidades")]
+    public async Task<ActionResult<EspecialidadeResposta>> Cadastrar(int idClinica, CadastroEspecialidadeRequisicao dados)
+    {
+        var resposta = await _servico.CadastrarAsync(idClinica, dados, Logado);
+        if (resposta is null)
+            return Forbid();
+        return StatusCode(StatusCodes.Status201Created, resposta);
+    }
+
+    [Authorize(Roles = "paciente,recepcao,dono")]
+    [HttpGet("api/especialidades/{id:int}/horarios-livres")]
+    public async Task<ActionResult<IEnumerable<HorariosLivresResposta>>> HorariosLivres(int id)
+    {
+        var resposta = await _servico.HorariosLivresAsync(id, Logado);
+        if (resposta is null)
+            return Forbid();
+        return Ok(resposta);
     }
 }

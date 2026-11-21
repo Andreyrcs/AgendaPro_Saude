@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.RegularExpressions;
 using AgendaPro.Api.Dtos;
 using AgendaPro.Api.Middlewares;
@@ -53,7 +52,7 @@ public class ClinicaServico : IClinicaServico
         if (!Ufs.Contains(uf))
             throw new ErroApi(StatusCodes.Status400BadRequest, "Use a sigla do estado em 2 letras maiúsculas, como SP.");
 
-        var telefone = FormatarTelefone(c.Telefone);
+        var telefone = FormatadorTexto.Telefone(c.Telefone);
         if (telefone?.Length > 20)
             throw new ErroApi(StatusCodes.Status400BadRequest, "O telefone pode ter até 20 caracteres.");
 
@@ -90,26 +89,11 @@ public class ClinicaServico : IClinicaServico
             new DonoCadastradoResposta(idUsuario, nomeDono, email, "dono"));
     }
 
-    // Como formatarTelefone (api.js): com 10 ou mais números vira (00) 0000-0000;
-    // com menos, fica como foi digitado
-    private static string? FormatarTelefone(string? telefone)
-    {
-        if (string.IsNullOrWhiteSpace(telefone))
-            return null;
-
-        var valor = telefone.Trim();
-        var t = new string(valor.Where(char.IsDigit).ToArray());
-        if (t.Length < 10)
-            return valor;
-
-        return "(" + t[..2] + ") " + t[2..^4] + "-" + t[^4..];
-    }
-
     // Como gerarCodigo (api.js): 3 letras da primeira palavra "forte" do nome, sem acento,
     // completadas com X, mais um número de 1000 a 9999; sorteia de novo se o código já existir
     private async Task<string> GerarCodigoAsync(string nome)
     {
-        var semAcento = SemAcento(nome);
+        var semAcento = FormatadorTexto.SemAcento(nome);
 
         var palavra = Regex.Split(semAcento, "[^a-z]+")
             .FirstOrDefault(p => p != "" && !PalavrasFracas.Contains(p));
@@ -127,12 +111,5 @@ public class ClinicaServico : IClinicaServico
         } while (await _clinicas.BuscarIdPorCodigoAsync(codigo) is not null);
 
         return codigo;
-    }
-
-    // Como semAcento (api.js): minúsculas e sem os acentos
-    private static string SemAcento(string texto)
-    {
-        var decomposto = texto.ToLowerInvariant().Normalize(NormalizationForm.FormD);
-        return new string(decomposto.Where(ch => ch < '̀' || ch > 'ͯ').ToArray());
     }
 }

@@ -1,6 +1,1 @@
 @AgendaPro.Api_HostAddress = http://localhost:5064
-
-GET {{AgendaPro.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

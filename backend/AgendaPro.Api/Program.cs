@@ -1,6 +1,7 @@
 using AgendaPro.Api.Repositorios;
 using AgendaPro.Api.Servicos;
 using AgendaPro.Api.Middlewares;
+using AgendaPro.Api.Tarefas;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -49,6 +50,14 @@ builder.Services.AddSingleton<ITokenServico, TokenServico>();
 builder.Services.AddScoped<IAuthServico, AuthServico>();
 builder.Services.AddScoped<IClinicaRepositorio, ClinicaRepositorio>();
 builder.Services.AddScoped<IClinicaServico, ClinicaServico>();
+builder.Services.AddScoped<IAcessoServico, AcessoServico>();
+builder.Services.AddScoped<IHorarioRepositorio, HorarioRepositorio>();
+builder.Services.AddScoped<IMedicoServico, MedicoServico>();
+builder.Services.AddScoped<IConsultaRepositorio, ConsultaRepositorio>();
+builder.Services.AddScoped<IConsultaServico, ConsultaServico>();
+builder.Services.AddScoped<IListaEsperaRepositorio, ListaEsperaRepositorio>();
+builder.Services.AddScoped<IListaEsperaServico, ListaEsperaServico>();
+builder.Services.AddHostedService<ExpiracaoOfertasServico>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opcoes =>
     {
