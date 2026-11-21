@@ -48,6 +48,7 @@ builder.Services.AddScoped<IMedicoRepositorio, MedicoRepositorio>();
 builder.Services.AddSingleton<ITokenServico, TokenServico>();
 builder.Services.AddScoped<IAuthServico, AuthServico>();
 builder.Services.AddScoped<IClinicaRepositorio, ClinicaRepositorio>();
+builder.Services.AddScoped<IClinicaServico, ClinicaServico>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opcoes =>
     {

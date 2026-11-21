@@ -36,4 +36,17 @@ public class AuthServico : IAuthServico
         return new LoginResposta(token, expiraEm,
             new UsuarioLogadoResposta(usuario.Id, usuario.Nome, usuario.Email, papel, usuario.IdClinica, idMedico));
     }
+
+    public async Task TrocarSenhaAsync(int idUsuario, TrocaSenhaRequisicao dados)
+    {
+        // Conta desativada depois do login (o token ainda vale, mas a conta não)
+        var usuario = await _usuarios.BuscarAtivoPorIdAsync(idUsuario)
+            ?? throw new ErroApi(StatusCodes.Status401Unauthorized, "Entre de novo para trocar a senha.");
+
+        if (!BCrypt.Net.BCrypt.Verify(dados.SenhaAtual, usuario.SenhaHash))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "A senha atual não confere.");
+
+        var novoHash = BCrypt.Net.BCrypt.HashPassword(dados.NovaSenha, workFactor: 12);
+        await _usuarios.AtualizarSenhaAsync(usuario.Id, novoHash);
+    }
 }

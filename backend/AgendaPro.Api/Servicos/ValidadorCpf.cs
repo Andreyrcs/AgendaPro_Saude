@@ -6,7 +6,8 @@ public static class ValidadorCpf
 
     public static bool Valido(string cpf)
     {
-        if (cpf.Length != 11)
+        // 11 números, não todos iguais (validarCPF em frontend/assets/js/api.js)
+        if (cpf.Length != 11 || cpf.Distinct().Count() == 1)
             return false;
 
         var soma = 0;

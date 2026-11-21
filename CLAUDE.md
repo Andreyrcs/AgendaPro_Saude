@@ -16,9 +16,12 @@ Só entra no código o que estiver na documentação ou no SQL. Ordem das fontes
    siga o que o front do grupo já espera: o código em `frontend/assets/js/` e `aplicativo/src/` e os contratos
    `docs/relatorio-integracao.md`, `aplicativo/docs/aplicativo-integracao-api.md`, `docs/banco-x-telas.md`.
    Em conflito com a especificação, **a especificação vence** (ver Pendências).
+   No front web, as regras e mensagens de `frontend/assets/js/api.js` **valem** (é a API simulada do front);
+   as regras que só as telas conferem (`cadastro-clinica.js`, `pagina-conta.js` etc.: mínimo de letras,
+   nome e sobrenome, formato do e-mail, senha com letras e números) **não** são repetidas na API.
 3. Se nem a documentação, nem o SQL, nem o front definirem, **pare e pergunte**. Não decida sozinho.
 
-Exemplos do que **não** fazer sem fonte: validações extras (formato de e-mail, CPF com dígitos iguais),
+Exemplos do que **não** fazer sem fonte: validações extras (formato de e-mail, regras que só a tela confere),
 campos a mais na resposta, pastas ou classes que não estão no Apêndice N, configurações "de boa prática"
 (audience no JWT, truques contra ataque de tempo), mensagens novas onde o front já tem uma.
 
@@ -72,31 +75,40 @@ No plano de cada etapa, indique a **fonte** de cada regra (seção, apêndice, t
   (o Dapper não converte `DateOnly`/`TimeOnly`).
 - **DTOs** (`Dtos/`): requisições como classe com DataAnnotations; respostas como `record`. Datas de entrada como
   `DateOnly?` (convertidas com `ToDateTime(TimeOnly.MinValue)`). O hash da senha nunca sai da API.
-- **Controllers:** `[ApiController]` e herdam de **`ApiControllerBase`** (exceto `AuthController`, que é anterior ao login).
+- **Controllers:** `[ApiController]` e herdam de **`ApiControllerBase`** (todos, inclusive o `AuthController`).
   A `ApiControllerBase` oferece `IdUsuarioLogado` (sub), `PapelLogado` (role), `ClinicaLogada` (clinica, `int?`)
   e `MedicoLogado` (medico, `int?`). Use-as; nunca leia identidade do corpo ou da query.
 - **Permissões:** `[Authorize(Roles = "...")]` com os perfis do Apêndice C em minúsculas
   (`paciente`, `medico`, `recepcao`, `dono`; "Todos" = os quatro). Públicas: `[AllowAnonymous]`.
 - **Erros:** o serviço lança `ErroApi(statusCode, mensagem)`; o `ErroMiddleware` responde `{ "mensagem": "..." }`
   (classe `RespostaErro`). Validação de DTO cai em `RespostaValidacao.Criar`. Controllers não usam try/catch.
-- **Status de sucesso:** 200 com `Ok(...)`; criação com `StatusCode(StatusCodes.Status201Created, resposta)`.
+- **Status de sucesso:** 200 com `Ok(...)`; criação com `StatusCode(StatusCodes.Status201Created, resposta)`;
+  204 com `NoContent()` quando o front não espera nada de volta (ex.: troca de senha).
+- **403:** `Forbid()` no controller, **sem corpo** (igual ao 403 do `[Authorize]`), para `{id}` de outra conta
+  e para outra clínica. Só o 403 de familiar de outra conta leva mensagem (regra 2).
 - **Registro no `Program.cs`:** sempre **antes** de `builder.Build()`. Repositórios e serviços `AddScoped`;
   classes sem estado por requisição (`FabricaConexao`, `TokenServico`) `AddSingleton`.
 - **Configuração:** ler com `IConfiguration` no construtor (como `FabricaConexao` e `TokenServico`), com
   `?? throw new InvalidOperationException(...)` quando obrigatória.
 - **Texto digitado:** a API repete o tratamento que a tela já faz: e-mail `Trim().ToLowerInvariant()`,
-  nome `Trim()`, código da clínica `Trim().ToUpperInvariant()`. Não acrescente outros tratamentos.
+  nome `Trim()`, código da clínica `Trim().ToUpperInvariant()`, UF `Trim().ToUpperInvariant()`.
+  Da clínica (api.js): CNPJ gravado formatado `00.000.000/0000-00`, montado a partir dos 14 números
+  (`ValidadorCnpj.Formatar`, também usado para conferir se já existe); telefone como `formatarTelefone`
+  (`(00) 0000-0000` com 10 ou mais números; com menos, como foi digitado). Não acrescente outros tratamentos.
+- **CPF e CNPJ:** dígitos verificadores e recusa de números com todos os dígitos iguais
+  (`validarCPF` e `validarCNPJ` em api.js), em `ValidadorCpf` e `ValidadorCnpj`.
 
 ## Regras obrigatórias
 
 1. **Identidade vem do token, nunca da requisição.** Id do usuário, perfil, clínica e médico saem das claims
    (`sub`, `role`, `clinica`, `medico`). Ignore qualquer `idUsuarioLogado` enviado no corpo ou na query.
    Parâmetros de procedure como `@IdUsuario`, `@PelaRecepcao` e `@PeloPaciente` são preenchidos pelo token.
-2. Rotas `/api/pacientes/{id}/...`: `{id}` é o id da conta (usuário) do titular; se for diferente de `IdUsuarioLogado` → 403.
+2. Rotas `/api/pacientes/{id}/...` e `/api/usuarios/{id}/...`: `{id}` é o id da conta (usuário); se for diferente
+   de `IdUsuarioLogado` → `Forbid()` (403 sem corpo).
    Familiar, consulta ou entrada da fila que não pertença à conta → 403 "Você só pode gerenciar a sua família.".
 3. **Filtro da clínica (seção 5.4):** em toda rota usada pela equipe (dono, recepção, médico) com `{id}` de clínica
-   ou dado de uma clínica, comparar com `ClinicaLogada`; outra clínica → 403. Cada conta da equipe tem uma única
-   clínica (`Usuarios.IdClinica`). O texto dessa resposta 403 não está definido: **pergunte** antes de implementar.
+   ou dado de uma clínica, comparar com `ClinicaLogada`; outra clínica → `Forbid()` (403 sem corpo). Cada conta da
+   equipe tem uma única clínica (`Usuarios.IdClinica`).
 4. Só `POST /api/auth/login`, `POST /api/pacientes` e `POST /api/clinicas` são `[AllowAnonymous]`.
 5. **Erros do banco:** `SqlException` 50001–50041 pelo Quadro 5.1 (404: 50001, 50002, 50020, 50031, 50033, 50041;
    demais → 400), texto da procedure repassado sem alterar. Erro inesperado → 500 "Não foi possível concluir agora.
@@ -120,12 +132,13 @@ No plano de cada etapa, indique a **fonte** de cada regra (seção, apêndice, t
 | `POST /api/auth/login` | Pronta: JWT com claims do Apêndice F, resposta do Apêndice E |
 | `POST /api/pacientes` | Pronta: conta + titular + vínculo opcional por `codigo` na mesma transação |
 | `GET /api/clinicas/{id}/especialidades` | Pronta, com `[Authorize]` (falta o filtro da clínica da regra 3) |
+| `POST /api/clinicas` | Feita, **falta teste no Swagger e commit**: clínica + conta `DONO` na mesma transação, código `AAA-0000` como `gerarCodigo` (api.js), 201 sem token |
+| `PUT /api/usuarios/{id}/senha` | Feita, **falta teste no Swagger e commit**: confere a senha atual, 204 sem corpo |
 
-Também prontos: `ErroMiddleware`, `RespostaValidacao`, `ValidadorCpf`, JwtBearer (assinatura, emissor, validade),
-`ApiControllerBase`, botão Authorize do Swagger.
+Também prontos: `ErroMiddleware`, `RespostaValidacao`, `ValidadorCpf`, `ValidadorCnpj`, JwtBearer (assinatura,
+emissor, validade), `ApiControllerBase`, botão Authorize do Swagger.
 
-Faltam (Apêndice T): restante da Autenticação (`POST /api/clinicas`, `PUT /api/usuarios/{id}/senha`), Especialidades
-e horários, Consultas, Lista de espera, Área da clínica, Área do médico, Acompanhamento e prevenção, Segurança
+Faltam (Apêndice T): Especialidades e horários, Consultas, Lista de espera, Área da clínica, Área do médico, Acompanhamento e prevenção, Segurança
 (limite de login, CORS, HTTPS) e `ExpiracaoOfertasServico`.
 
 Dados de teste no banco: Clínica Ipê (id 1, código `IPE-4821`) com 3 especialidades; pacientes Ana, Bruno,
@@ -161,3 +174,7 @@ Carla (vinculada à clínica 1) e Diego, todos com senha `senha1234`.
    e seguir o mesmo tom nos novos (frase curta, simples, com ponto).
 10. Parentesco do titular: `"Titular"` (valor usado pelo front).
 11. Equipe em várias clínicas: não suportado pelo modelo (`Usuarios.IdClinica` único). Não implementar.
+12. E-mail repetido (api.js): no paciente "Este e-mail já tem uma conta. Entre com ele ou use outro."; na clínica
+    "Este e-mail já tem uma conta. Use outro ou entre com ele.".
+13. Cadastros simultâneos com o mesmo CNPJ, e-mail ou código sorteado: o índice único do banco recusa e sai 500.
+    **Não tratar** (decidido com o usuário).

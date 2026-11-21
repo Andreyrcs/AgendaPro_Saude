@@ -30,4 +30,23 @@ public class UsuarioRepositorio : IUsuarioRepositorio
         using var conexao = _fabrica.CriarConexao();
         return await conexao.QuerySingleOrDefaultAsync<Usuario>(sql, new { Email = email });
     }
+
+    public async Task<Usuario?> BuscarAtivoPorIdAsync(int id)
+    {
+        const string sql = @"
+            SELECT Id_Usuario AS Id, Email, SenhaHash, Papel, Nome, Telefone, IdClinica, Ativo
+            FROM Usuarios
+            WHERE Id_Usuario = @Id AND Ativo = 1;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QuerySingleOrDefaultAsync<Usuario>(sql, new { Id = id });
+    }
+
+    public async Task AtualizarSenhaAsync(int id, string senhaHash)
+    {
+        const string sql = "UPDATE Usuarios SET SenhaHash = @SenhaHash WHERE Id_Usuario = @Id;";
+
+        using var conexao = _fabrica.CriarConexao();
+        await conexao.ExecuteAsync(sql, new { Id = id, SenhaHash = senhaHash });
+    }
 }

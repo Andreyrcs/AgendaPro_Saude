@@ -33,7 +33,7 @@ public class PacienteServico : IPacienteServico
         var nome = dados.Nome.Trim();
 
         if (await _usuarios.EmailExisteAsync(email))
-            throw new ErroApi(StatusCodes.Status400BadRequest, "Este e-mail já está cadastrado.");
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Este e-mail já tem uma conta. Entre com ele ou use outro.");
 
         if (await _pacientes.CpfExisteAsync(cpf))
             throw new ErroApi(StatusCodes.Status400BadRequest, "Este CPF já está cadastrado.");
