@@ -1,11 +1,12 @@
 ﻿using AgendaPro.Api.Dtos;
 using AgendaPro.Api.Servicos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AgendaPro.Api.Controllers;
 
 [ApiController]
-public class PacientesController : ControllerBase
+public class PacientesController : ApiControllerBase
 {
     private readonly IPacienteServico _servico;
 
@@ -14,6 +15,7 @@ public class PacientesController : ControllerBase
         _servico = servico;
     }
 
+    [AllowAnonymous]
     [HttpPost("api/pacientes")]
     public async Task<ActionResult<PacienteCadastradoResposta>> Cadastrar(CadastroPacienteRequisicao dados)
     {
