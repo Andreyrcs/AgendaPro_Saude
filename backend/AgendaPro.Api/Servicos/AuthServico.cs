@@ -21,7 +21,7 @@ public class AuthServico : IAuthServico
 
     public async Task<LoginResposta> EntrarAsync(LoginRequisicao dados)
     {
-        var usuario = await _usuarios.BuscarAtivoPorEmailAsync(dados.Email);
+        var usuario = await _usuarios.BuscarAtivoPorEmailAsync(dados.Email.Trim().ToLowerInvariant());
 
         if (usuario is null || !BCrypt.Net.BCrypt.Verify(dados.Senha, usuario.SenhaHash))
             throw new ErroApi(StatusCodes.Status401Unauthorized, MensagemFalha);

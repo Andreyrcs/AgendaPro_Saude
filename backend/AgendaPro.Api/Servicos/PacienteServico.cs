@@ -26,8 +26,10 @@ public class PacienteServico : IPacienteServico
         if (nascimento > DateOnly.FromDateTime(DateTime.Today))
             throw new ErroApi(StatusCodes.Status400BadRequest, "A data de nascimento não pode ser no futuro.");
 
-        var email = dados.Email.Trim().ToLowerInvariant();
-        if (await _usuarios.EmailExisteAsync(email))
+        var email = dados.Email.Trim().ToLowerInvariant();  
+        var nome = dados.Nome.Trim();                          
+
+        if (await _usuarios.EmailExisteAsync(email))           
             throw new ErroApi(StatusCodes.Status400BadRequest, "Este e-mail já está cadastrado.");
 
         if (await _pacientes.CpfExisteAsync(cpf))
@@ -35,23 +37,24 @@ public class PacienteServico : IPacienteServico
 
         var usuario = new Usuario
         {
-            Email = email,
+            Email = email,                                     
             SenhaHash = BCrypt.Net.BCrypt.HashPassword(dados.Senha, workFactor: 12),
             Papel = "PACIENTE",
-            Nome = dados.Nome.Trim(),
-            Telefone = string.IsNullOrWhiteSpace(dados.Telefone) ? null : dados.Telefone.Trim(),
+            Nome = nome,                                       
+            Telefone = dados.Telefone,
             Ativo = true
         };
 
         var titular = new Paciente
         {
-            Nome = usuario.Nome,
+            Nome = nome,                                       // ← nome
             Cpf = cpf,
             DataNascimento = nascimento.ToDateTime(TimeOnly.MinValue),
+            Alergias = dados.Alergias,
             Parentesco = "Titular"
         };
 
         var (idUsuario, idPaciente) = await _pacientes.CriarContaComTitularAsync(usuario, titular);
-        return new PacienteCadastradoResposta(idUsuario, idPaciente, titular.Nome, email);
+        return new PacienteCadastradoResposta(idUsuario, idPaciente, titular.Nome, usuario.Email);
     }
 }

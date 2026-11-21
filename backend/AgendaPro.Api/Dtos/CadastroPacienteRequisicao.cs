@@ -9,7 +9,6 @@ public class CadastroPacienteRequisicao
     public string Nome { get; set; } = "";
 
     [Required(ErrorMessage = "Informe o e-mail.")]
-    [EmailAddress(ErrorMessage = "Informe um e-mail válido.")]
     [StringLength(150, ErrorMessage = "O e-mail pode ter até 150 caracteres.")]
     public string Email { get; set; } = "";
 
@@ -25,4 +24,6 @@ public class CadastroPacienteRequisicao
 
     [Required(ErrorMessage = "Informe a data de nascimento.")]
     public DateOnly? Nascimento { get; set; }
+
+    public string? Alergias { get; set; }
 }
