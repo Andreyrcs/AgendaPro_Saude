@@ -26,4 +26,6 @@ public class CadastroPacienteRequisicao
     public DateOnly? Nascimento { get; set; }
 
     public string? Alergias { get; set; }
+
+    public string? Codigo { get; set; }
 }

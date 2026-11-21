@@ -21,6 +21,7 @@ builder.Services.AddScoped<IPacienteServico, PacienteServico>();
 builder.Services.AddScoped<IMedicoRepositorio, MedicoRepositorio>();
 builder.Services.AddSingleton<ITokenServico, TokenServico>();
 builder.Services.AddScoped<IAuthServico, AuthServico>();
+builder.Services.AddScoped<IClinicaRepositorio, ClinicaRepositorio>();
 
 var app = builder.Build();
 app.UseMiddleware<ErroMiddleware>();

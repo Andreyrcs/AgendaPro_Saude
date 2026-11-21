@@ -21,7 +21,7 @@ public class PacienteRepositorio : IPacienteRepositorio
         return quantidade > 0;
     }
 
-    public async Task<(int IdUsuario, int IdPaciente)> CriarContaComTitularAsync(Usuario usuario, Paciente titular)
+    public async Task<(int IdUsuario, int IdPaciente)> CriarContaComTitularAsync(Usuario usuario, Paciente titular, int? idClinica)
     {
         const string sqlUsuario = @"
             INSERT INTO Usuarios (Email, SenhaHash, Papel, Nome, Telefone)
@@ -33,6 +33,10 @@ public class PacienteRepositorio : IPacienteRepositorio
             OUTPUT INSERTED.Id_Paciente
             VALUES (@IdUsuario, @Nome, @Cpf, @DataNascimento, @Alergias, @Parentesco);";
 
+        const string sqlVinculo = @"
+            INSERT INTO Paciente_Clinica (IdUsuario, IdClinica)
+            VALUES (@IdUsuario, @IdClinica);";
+
         using var conexao = _fabrica.CriarConexao();
         conexao.Open();
         using var transacao = conexao.BeginTransaction();
@@ -41,6 +45,9 @@ public class PacienteRepositorio : IPacienteRepositorio
 
         titular.IdUsuario = idUsuario;
         var idPaciente = await conexao.QuerySingleAsync<int>(sqlPaciente, titular, transacao);
+
+        if (idClinica.HasValue)
+            await conexao.ExecuteAsync(sqlVinculo, new { IdUsuario = idUsuario, IdClinica = idClinica.Value }, transacao);
 
         transacao.Commit();
         return (idUsuario, idPaciente);
