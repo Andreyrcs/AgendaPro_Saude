@@ -5,12 +5,19 @@ using AgendaPro.Api.Middlewares;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Registrar os serviços (ANTES do Build)
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(opcoes =>
+    {
+        opcoes.InvalidModelStateResponseFactory = RespostaValidacao.Criar;
+    });
 builder.Services.AddOpenApi();
 
 builder.Services.AddSingleton<IFabricaConexao, FabricaConexao>();
 builder.Services.AddScoped<IEspecialidadeRepositorio, EspecialidadeRepositorio>();
 builder.Services.AddScoped<IEspecialidadeServico, EspecialidadeServico>();
+builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+builder.Services.AddScoped<IPacienteRepositorio, PacienteRepositorio>();
+builder.Services.AddScoped<IPacienteServico, PacienteServico>();
 
 var app = builder.Build();
 app.UseMiddleware<ErroMiddleware>();
