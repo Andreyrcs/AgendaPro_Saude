@@ -1,19 +1,28 @@
 # AgendaPro Saúde: regras do back-end
 
 Este repositório é o PIM IV do grupo (sistema de agendamento de consultas). Nesta sessão, o trabalho é
-**somente o back-end**: a API REST em `backend/`. Front-end web e aplicativo são de outros integrantes.
+**somente o back-end**: a API REST em `backend/AgendaPro.Api/`. Front-end web e aplicativo são de outros integrantes.
 
-## Fonte da verdade
+O usuário precisa **defender este código na banca**. Ele construiu à mão a base do projeto e vai revisar
+cada plano antes da execução. Explique de forma simples o que cada arquivo novo faz e de onde vem cada regra.
 
-- `backend/docs/especificacao-api.md` é a documentação oficial do back-end (rotas, perfis, erros, token,
-  camadas, pastas, tecnologias). Siga à risca: mesmos caminhos de rota, nomes de classes e pastas.
-- Banco: SQL Server Express, instância `.\SQLEXPRESS`, banco `AgendaPro_Saude`, já criado pelo script
-  oficial. Para nomes exatos de tabelas, colunas, parâmetros das procedures e códigos de erro, consulte o
-  banco (`sqlcmd -S .\SQLEXPRESS -E -C -d AgendaPro_Saude -Q "..."`), por exemplo `sp_helptext 'sp_AgendarConsulta'`.
-- Formato dos campos JSON que a especificação não detalha: siga os contratos dos colegas
-  (`docs/relatorio-integracao.md`, `aplicativo/docs/aplicativo-integracao-api.md`, `docs/banco-x-telas.md`).
-  Em conflito com a especificação, **a especificação vence** (ver Pendências).
-- Se algo precisar fugir da especificação, **pare e pergunte** antes de implementar.
+## Regra número 1: não inventar
+
+Só entra no código o que estiver na documentação ou no SQL. Ordem das fontes:
+
+1. `backend/docs/especificacao-api.md` (documentação oficial do back-end) e o script do banco
+   (Apêndice Q, já aplicado no banco `AgendaPro_Saude`).
+2. **Quando os dois não definirem um detalhe** (nome de campo no JSON, texto de mensagem, valor de um campo),
+   siga o que o front do grupo já espera: o código em `frontend/assets/js/` e `aplicativo/src/` e os contratos
+   `docs/relatorio-integracao.md`, `aplicativo/docs/aplicativo-integracao-api.md`, `docs/banco-x-telas.md`.
+   Em conflito com a especificação, **a especificação vence** (ver Pendências).
+3. Se nem a documentação, nem o SQL, nem o front definirem, **pare e pergunte**. Não decida sozinho.
+
+Exemplos do que **não** fazer sem fonte: validações extras (formato de e-mail, CPF com dígitos iguais),
+campos a mais na resposta, pastas ou classes que não estão no Apêndice N, configurações "de boa prática"
+(audience no JWT, truques contra ataque de tempo), mensagens novas onde o front já tem uma.
+
+No plano de cada etapa, indique a **fonte** de cada regra (seção, apêndice, tabela do SQL ou arquivo do front).
 
 ## Escopo de edição
 
@@ -21,65 +30,134 @@ Este repositório é o PIM IV do grupo (sistema de agendamento de consultas). Ne
 - **Nunca edite** `frontend/`, `aplicativo/`, `docs/` (pasta da raiz) nem `.claude/`. Pode ler para consultar.
 - Nunca altere o banco (tabelas, procedures, triggers). A API só lê e grava dados e chama procedures.
   Inserir dados de teste é permitido só quando o usuário pedir.
+- **Não altere o que já está pronto e testado** (ver "Estado atual") sem apresentar o motivo e pedir aprovação.
+
+## Banco de dados
+
+- SQL Server Express, instância `.\SQLEXPRESS`, banco `AgendaPro_Saude`.
+- Para nomes exatos de tabelas, colunas, parâmetros das procedures e códigos de erro, consulte o banco:
+  `sqlcmd -S .\SQLEXPRESS -E -C -d AgendaPro_Saude -Q "..."`, por exemplo `sp_helptext 'sp_AgendarConsulta'`.
+- Atenção aos nomes reais: tabela `Clinica` (singular), colunas `Id_Usuario`, `Nome_paciente`, `Data_Nascimento`,
+  `Nome_Espec` etc. Use `AS` no SELECT para casar com as propriedades dos modelos.
+- Collation do banco é case-insensitive: comparações de texto não diferenciam maiúsculas de minúsculas.
 
 ## Tecnologia (Apêndice M)
 
-- .NET 10, ASP.NET Core Web API com **controllers** (não minimal APIs). Projeto em `backend/AgendaPro.Api.csproj`,
+- .NET 10, ASP.NET Core Web API com **controllers** (não minimal APIs).
+  Projeto em `backend/AgendaPro.Api/AgendaPro.Api.csproj`, solução `backend/AgendaPro.Api/AgendaPro.Api.slnx`,
   namespace raiz `AgendaPro.Api`.
 - Acesso a dados: **Dapper** + `Microsoft.Data.SqlClient`. **Não usar Entity Framework.**
 - Senhas: `BCrypt.Net-Next`, fator de custo 12.
 - Autenticação: `Microsoft.AspNetCore.Authentication.JwtBearer`, assinatura HMAC-SHA256.
-- Documentação e testes: Swagger/OpenAPI, com botão **Authorize** para colar o token JWT.
+- Swagger: `Microsoft.AspNetCore.OpenApi` (`/openapi/v1.json`) + `Swashbuckle.AspNetCore.SwaggerUI` em `/swagger`,
+  só em Development, com botão **Authorize** já configurado.
+- Não instale pacotes fora do Apêndice M sem pedir.
 
 ## Arquitetura (seção 7.1 e Apêndice N)
 
 - Pastas: `Controllers/`, `Servicos/`, `Repositorios/`, `Modelos/`, `Dtos/`, `Middlewares/`, `Tarefas/`.
+  Não crie outras pastas.
 - Camadas: Controller → Serviço (interface + classe) → Repositório (interface + classe) → banco.
-  Só os repositórios acessam o banco. Injeção de dependência pelo construtor.
-- `ApiControllerBase`: classe base dos controllers; lê do token o id do usuário, o perfil, a clínica e o médico.
+  Só os repositórios acessam o banco. Uma interface e uma classe **por assunto** (`IClinicaRepositorio`,
+  `IMedicoRepositorio`...). Injeção de dependência pelo construtor, sempre recebendo a **interface**.
 - `ExpiracaoOfertasServico` (em `Tarefas/`): hosted service que chama `sp_ExpirarOfertasVencidas` a cada minuto.
-- Nomes previstos na documentação: `IConsultaRepositorio`, `IConsultaServico`, `ApiControllerBase`,
-  `ExpiracaoOfertasServico`. Siga o mesmo padrão para os demais assuntos (ex.: `IPacienteServico`).
+
+## Padrões já construídos (siga exatamente)
+
+- **Conexão:** `IFabricaConexao.CriarConexao()` (classe `FabricaConexao`, Singleton). Cada método de repositório
+  abre a sua conexão com `using var conexao = _fabrica.CriarConexao();`.
+- **Transação** (gravações em mais de uma tabela): `conexao.Open()`, `using var transacao = conexao.BeginTransaction()`,
+  passar `transacao` em cada comando do Dapper e `transacao.Commit()` no fim. Exemplo: `PacienteRepositorio.CriarContaComTitularAsync`.
+- **Modelos** (`Modelos/`): só as colunas da tabela, nada a mais. Datas como `DateTime`, horas como `TimeSpan`
+  (o Dapper não converte `DateOnly`/`TimeOnly`).
+- **DTOs** (`Dtos/`): requisições como classe com DataAnnotations; respostas como `record`. Datas de entrada como
+  `DateOnly?` (convertidas com `ToDateTime(TimeOnly.MinValue)`). O hash da senha nunca sai da API.
+- **Controllers:** `[ApiController]` e herdam de **`ApiControllerBase`** (exceto `AuthController`, que é anterior ao login).
+  A `ApiControllerBase` oferece `IdUsuarioLogado` (sub), `PapelLogado` (role), `ClinicaLogada` (clinica, `int?`)
+  e `MedicoLogado` (medico, `int?`). Use-as; nunca leia identidade do corpo ou da query.
+- **Permissões:** `[Authorize(Roles = "...")]` com os perfis do Apêndice C em minúsculas
+  (`paciente`, `medico`, `recepcao`, `dono`; "Todos" = os quatro). Públicas: `[AllowAnonymous]`.
+- **Erros:** o serviço lança `ErroApi(statusCode, mensagem)`; o `ErroMiddleware` responde `{ "mensagem": "..." }`
+  (classe `RespostaErro`). Validação de DTO cai em `RespostaValidacao.Criar`. Controllers não usam try/catch.
+- **Status de sucesso:** 200 com `Ok(...)`; criação com `StatusCode(StatusCodes.Status201Created, resposta)`.
+- **Registro no `Program.cs`:** sempre **antes** de `builder.Build()`. Repositórios e serviços `AddScoped`;
+  classes sem estado por requisição (`FabricaConexao`, `TokenServico`) `AddSingleton`.
+- **Configuração:** ler com `IConfiguration` no construtor (como `FabricaConexao` e `TokenServico`), com
+  `?? throw new InvalidOperationException(...)` quando obrigatória.
+- **Texto digitado:** a API repete o tratamento que a tela já faz: e-mail `Trim().ToLowerInvariant()`,
+  nome `Trim()`, código da clínica `Trim().ToUpperInvariant()`. Não acrescente outros tratamentos.
 
 ## Regras obrigatórias
 
 1. **Identidade vem do token, nunca da requisição.** Id do usuário, perfil, clínica e médico saem das claims
    (`sub`, `role`, `clinica`, `medico`). Ignore qualquer `idUsuarioLogado` enviado no corpo ou na query.
    Parâmetros de procedure como `@IdUsuario`, `@PelaRecepcao` e `@PeloPaciente` são preenchidos pelo token.
-2. Rotas `/api/pacientes/{id}/...`: `{id}` é o id da conta (usuário) do titular; se for diferente do token → 403.
+2. Rotas `/api/pacientes/{id}/...`: `{id}` é o id da conta (usuário) do titular; se for diferente de `IdUsuarioLogado` → 403.
    Familiar, consulta ou entrada da fila que não pertença à conta → 403 "Você só pode gerenciar a sua família.".
-   Equipe (dono, recepção, médico): toda consulta filtrada pela clínica do token; outra clínica → 403.
-3. Permissões por rota com `[Authorize(Roles = "...")]`, conforme a coluna "Perfis" do Apêndice C.
-   Só `POST /api/auth/login`, `POST /api/pacientes` e `POST /api/clinicas` são `[AllowAnonymous]`.
-4. **Erros**: sempre `{ "mensagem": "..." }`. Um middleware converte `SqlException` com número 50001–50041
-   pelo Quadro 5.1 (404: 50001, 50002, 50020, 50031, 50033, 50041; demais → 400) e repassa o texto da
-   procedure sem alterar. Erro inesperado → 500 "Não foi possível concluir agora. Tente de novo." e detalhe só no log.
-5. Login: mesma mensagem para e-mail inexistente e senha errada, 401 "E-mail ou senha incorretos".
+3. **Filtro da clínica (seção 5.4):** em toda rota usada pela equipe (dono, recepção, médico) com `{id}` de clínica
+   ou dado de uma clínica, comparar com `ClinicaLogada`; outra clínica → 403. Cada conta da equipe tem uma única
+   clínica (`Usuarios.IdClinica`). O texto dessa resposta 403 não está definido: **pergunte** antes de implementar.
+4. Só `POST /api/auth/login`, `POST /api/pacientes` e `POST /api/clinicas` são `[AllowAnonymous]`.
+5. **Erros do banco:** `SqlException` 50001–50041 pelo Quadro 5.1 (404: 50001, 50002, 50020, 50031, 50033, 50041;
+   demais → 400), texto da procedure repassado sem alterar. Erro inesperado → 500 "Não foi possível concluir agora.
+   Tente de novo." e detalhe só no log. Regras que o banco já confere com UNIQUE/CHECK e que o usuário pode violar
+   (e-mail, CPF, nascimento) são conferidas antes no serviço, para responder 400 com mensagem clara.
+6. Login: 401 "E-mail ou senha incorretos" (sem ponto) para e-mail inexistente, conta inativa e senha errada.
    Limite de 5 tentativas por minuto por IP → 429 "Muitas tentativas. Aguarde um minuto e tente de novo.".
-6. Token: 8 horas para equipe, 30 dias para paciente. Nunca colocar senha ou dado de saúde no token.
-7. SQL sempre parametrizado (Dapper). Nunca montar SQL concatenando texto do usuário.
-8. JSON em camelCase; datas `AAAA-MM-DD`; horas `HH:MM`. Status traduzidos pelo Apêndice D na camada de serviços.
-9. Validação repetida no servidor (DTOs com atributos de validação), com as mesmas mensagens das telas.
-10. Segredos (string de conexão e chave do JWT) **fora do código**: `dotnet user-secrets` no desenvolvimento.
-    `appsettings.json` só com configurações sem segredo. Logs nunca registram senha, token ou dado de saúde.
+7. Token: validade no `appsettings.json` (`Jwt:HorasValidadeEquipe` = 8, `Jwt:DiasValidadePaciente` = 30),
+   emissor `Jwt:Emissor`, chave `Jwt:Chave` nos user-secrets. Sem audience. Nunca senha ou dado de saúde no token.
+8. SQL sempre parametrizado (Dapper). Nunca montar SQL concatenando texto do usuário.
+9. JSON em camelCase; datas `AAAA-MM-DD`; horas `HH:MM`. Status traduzidos pelo Apêndice D na camada de serviços.
+10. Segredos (string de conexão e chave do JWT) **fora do código**, em user-secrets. Logs nunca registram senha,
+    token ou dado de saúde.
 11. CORS: liberar só as origens da aplicação web, lidas da configuração (`Cors:Origens`).
+12. HTTPS com redirecionamento e HSTS só fora de Development (publicação em nuvem, seção 5.4).
+
+## Estado atual (pronto, testado e commitado)
+
+| Rota | Situação |
+|---|---|
+| `POST /api/auth/login` | Pronta: JWT com claims do Apêndice F, resposta do Apêndice E |
+| `POST /api/pacientes` | Pronta: conta + titular + vínculo opcional por `codigo` na mesma transação |
+| `GET /api/clinicas/{id}/especialidades` | Pronta, com `[Authorize]` (falta o filtro da clínica da regra 3) |
+
+Também prontos: `ErroMiddleware`, `RespostaValidacao`, `ValidadorCpf`, JwtBearer (assinatura, emissor, validade),
+`ApiControllerBase`, botão Authorize do Swagger.
+
+Faltam (Apêndice T): restante da Autenticação (`POST /api/clinicas`, `PUT /api/usuarios/{id}/senha`), Especialidades
+e horários, Consultas, Lista de espera, Área da clínica, Área do médico, Acompanhamento e prevenção, Segurança
+(limite de login, CORS, HTTPS) e `ExpiracaoOfertasServico`.
+
+Dados de teste no banco: Clínica Ipê (id 1, código `IPE-4821`) com 3 especialidades; pacientes Ana, Bruno,
+Carla (vinculada à clínica 1) e Diego, todos com senha `senha1234`.
 
 ## Fluxo de trabalho
 
-- Uma etapa por vez, na ordem do Apêndice T. Antes de codar, apresente o plano da etapa e espere aprovação.
-- Ao terminar: `dotnet build` sem erros, rodar a API, testar as rotas da etapa e listar o que testar no Swagger.
-- Commit só com arquivos do back-end: `git add backend CLAUDE.md`. Nunca `git add .` ou `git add -A`.
-  Mensagem em português, curta, descrevendo a etapa. Não faça `git push` sem o usuário pedir.
-- Explique de forma simples o que cada arquivo novo faz: o usuário precisa defender o projeto na banca.
+- Uma etapa por vez, na ordem do Apêndice T. **Antes de codar, apresente o plano da etapa** (arquivos, rotas,
+  perfis, regras e a fonte de cada uma) **e espere aprovação.**
+- Ao terminar: `dotnet build` sem erros e a lista do que testar no Swagger, com os corpos de exemplo e o resultado
+  esperado de cada teste (sucesso, 400, 401, 403, 404).
+- Commit só com arquivos do back-end: `git add backend CLAUDE.md` a partir da raiz. Nunca `git add .` na raiz
+  nem `git add -A`. Confira o `git status` antes: nenhum arquivo gerado por engano (ex.: `Interface.cs`).
+  Mensagem em português, curta, descrevendo a etapa. **Não faça commit nem `git push` sem o usuário pedir.**
 
-## Pendências (decidir depois; até lá, seguir a especificação)
+## Pendências (decididas ou a decidir; até lá, seguir a especificação)
 
 1. CPF repetido: contrato dos colegas usa 409; especificação usa 400. **Usar 400** com "Este CPF já está cadastrado.".
 2. Edição de especialidade: a web edita, mas não há rota na especificação. **Não criar rota.**
 3. Lista de especialidades do app: contrato usa `GET /api/especialidades`; especificação usa
    `GET /api/clinicas/{id}/especialidades`. **Seguir a especificação.**
-4. Cadastro do app: contrato chama `POST /api/usuarios` + `POST /api/pacientes`; especificação só
+4. Cadastro do app: chama `POST /api/usuarios` e depois `POST /api/pacientes`; especificação só tem
    `POST /api/pacientes`, que cria a conta e o titular. **Seguir a especificação.**
 5. `idUsuarioLogado` ainda aparece no contrato: **ignorar** (regra 1).
 6. Mensagem do erro 50012: a procedure diz "Horário reservado para oferta da lista de espera."; a tela espera
-   "Este horário está reservado para a lista de espera.". **Repassar o texto da procedure** (regra 4).
+   "Este horário está reservado para a lista de espera.". **Repassar o texto da procedure** (regra 5).
+7. Código da clínica no cadastro: implementado como o Apêndice C pede (campo opcional `codigo`; inexistente → 404
+   "Não achamos uma clínica com esse código. Confira com a recepção." e nada é gravado). Os fronts vinculam pelas
+   rotas separadas `GET /api/clinicas/codigo/{codigo}` e `POST /api/pacientes/{id}/clinicas`.
+8. `POST /api/pacientes/{id}/clinicas`: a web envia o id da clínica e o app envia `{ codigo }`. **Decidir com o
+   usuário** ao construir a rota.
+9. Textos de validação sem definição no documento ("CPF inválido.", "Informe o nome." etc.): **manter** os atuais
+   e seguir o mesmo tom nos novos (frase curta, simples, com ponto).
+10. Parentesco do titular: `"Titular"` (valor usado pelo front).
+11. Equipe em várias clínicas: não suportado pelo modelo (`Usuarios.IdClinica` único). Não implementar.
