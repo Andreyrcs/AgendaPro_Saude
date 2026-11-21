@@ -1,5 +1,6 @@
 using AgendaPro.Api.Repositorios;
 using AgendaPro.Api.Servicos;
+using AgendaPro.Api.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,7 @@ builder.Services.AddScoped<IEspecialidadeRepositorio, EspecialidadeRepositorio>(
 builder.Services.AddScoped<IEspecialidadeServico, EspecialidadeServico>();
 
 var app = builder.Build();
+app.UseMiddleware<ErroMiddleware>();
 
 // 2. Montar o caminho das requisições (DEPOIS do Build)
 if (app.Environment.IsDevelopment())
