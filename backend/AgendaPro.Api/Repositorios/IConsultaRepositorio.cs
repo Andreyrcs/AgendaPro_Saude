@@ -16,8 +16,9 @@ public interface IConsultaRepositorio
     Task<ConsultaCompleta?> BuscarAsync(int id);
     Task<IEnumerable<ConsultaCompleta>> ListarPorContaAsync(int idConta);
 
-    // Ids das consultas marcadas a partir de um item de prevenção (Pessoa_Prevencao.IdConsulta)
-    Task<IEnumerable<int>> FiltrarDePrevencaoAsync(IEnumerable<int> idsConsultas);
+    // Das consultas pedidas, as marcadas a partir de um item de prevenção (Pessoa_Prevencao.IdConsulta),
+    // com o título do exame do item (para o "tipo" e o "titulo")
+    Task<IEnumerable<PrevencaoDaConsulta>> FiltrarDePrevencaoAsync(IEnumerable<int> idsConsultas);
 
     // Consultas que ocupam horário: todas, menos CANCELADA e VAGA (OFERECIDA também ocupa)
     Task<IEnumerable<Consulta>> ListarOcupadasAsync(IEnumerable<int> idsMedicos, DateTime de, DateTime ate);
@@ -45,8 +46,8 @@ public interface IConsultaRepositorio
     // Histórico do médico: as consultas dele que têm paciente, da mais recente para a mais antiga
     Task<IEnumerable<ConsultaCompleta>> ListarComPacienteDoMedicoAsync(int idMedico);
 
-    // Ids das consultas da clínica marcadas a partir de um item de prevenção (para o "tipo")
-    Task<IEnumerable<int>> ListarIdsDePrevencaoDaClinicaAsync(int idClinica);
+    // Consultas da clínica marcadas a partir de um item de prevenção, com o título (para o "tipo" e o "titulo")
+    Task<IEnumerable<PrevencaoDaConsulta>> ListarDePrevencaoDaClinicaAsync(int idClinica);
 
     // Troca o status só se o atual ainda for um dos esperados; devolve false se nada mudou
     Task<bool> MudarStatusAsync(int idConsulta, IEnumerable<string> codigosAtuais, string codigoNovo);

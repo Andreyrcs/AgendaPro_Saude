@@ -9,20 +9,20 @@ public class PacienteServico : IPacienteServico
 {
     private readonly IUsuarioRepositorio _usuarios;
     private readonly IPacienteRepositorio _pacientes;
-    private readonly IClinicaRepositorio _clinicas;                                     //
+    private readonly IClinicaRepositorio _clinicas;
     private readonly IConsultaRepositorio _consultas;
     private readonly IListaEsperaRepositorio _fila;
     private readonly IFaltaRepositorio _faltas;
     private readonly IAcompanhamentoRepositorio _acompanhamento;
 
     public PacienteServico(IUsuarioRepositorio usuarios, IPacienteRepositorio pacientes,
-        IClinicaRepositorio clinicas,                                                    //
+        IClinicaRepositorio clinicas,
         IConsultaRepositorio consultas, IListaEsperaRepositorio fila, IFaltaRepositorio faltas,
         IAcompanhamentoRepositorio acompanhamento)
     {
         _usuarios = usuarios;
         _pacientes = pacientes;
-        _clinicas = clinicas;                                                            //
+        _clinicas = clinicas;
         _consultas = consultas;
         _fila = fila;
         _faltas = faltas;
@@ -48,14 +48,14 @@ public class PacienteServico : IPacienteServico
         if (await _pacientes.CpfExisteAsync(cpf))
             throw new ErroApi(StatusCodes.Status400BadRequest, "Este CPF já está cadastrado.");
 
-        int? idClinica = null;                                                           // ←
-        if (!string.IsNullOrWhiteSpace(dados.Codigo))                                    // ←
-        {                                                                                // ←
-            var codigo = dados.Codigo.Trim().ToUpperInvariant();                         // ←
-            idClinica = await _clinicas.BuscarIdPorCodigoAsync(codigo)                   // ←
-                ?? throw new ErroApi(StatusCodes.Status404NotFound,                      // ←
-                    "Não achamos uma clínica com esse código. Confira com a recepção."); // ←
-        }                                                                                // ←
+        int? idClinica = null;
+        if (!string.IsNullOrWhiteSpace(dados.Codigo))
+        {
+            var codigo = dados.Codigo.Trim().ToUpperInvariant();
+            idClinica = await _clinicas.BuscarIdPorCodigoAsync(codigo)
+                ?? throw new ErroApi(StatusCodes.Status404NotFound,
+                    "Não achamos uma clínica com esse código. Confira com a recepção.");
+        }
 
         var usuario = new Usuario
         {
@@ -76,7 +76,7 @@ public class PacienteServico : IPacienteServico
             Parentesco = "Titular"
         };
 
-        var (idUsuario, idPaciente) = await _pacientes.CriarContaComTitularAsync(usuario, titular, idClinica);  // ←
+        var (idUsuario, idPaciente) = await _pacientes.CriarContaComTitularAsync(usuario, titular, idClinica);
         return new PacienteCadastradoResposta(idUsuario, idPaciente, titular.Nome, usuario.Email);
     }
 
@@ -150,7 +150,7 @@ public class PacienteServico : IPacienteServico
 
         var pessoas = await _pacientes.ListarDaClinicaAsync(idClinica, nome, cpf);
         var consultas = (await _consultas.ListarComPacienteDaClinicaAsync(idClinica)).ToList();
-        var prevencao = (await _consultas.ListarIdsDePrevencaoDaClinicaAsync(idClinica)).ToHashSet();
+        var prevencao = ConsultaServico.Titulos(await _consultas.ListarDePrevencaoDaClinicaAsync(idClinica));
         var faltas = (await _faltas.ListarNaoRetiradasDaClinicaAsync(idClinica)).ToList();
         var filas = (await _fila.ListarAtivasDaClinicaAsync(idClinica)).ToList();
         var retornos = (await _acompanhamento.ListarRetornosDaClinicaAsync(idClinica)).ToList();
@@ -165,7 +165,7 @@ public class PacienteServico : IPacienteServico
             p.IdUsuario,
             faltas.Count(f => f.IdPaciente == p.Id),
             consultas.Where(c => c.Paciente!.Id == p.Id)
-                .Select(c => ConsultaServico.Resposta(c, prevencao.Contains(c.Consulta.Id)))
+                .Select(c => ConsultaServico.Resposta(c, prevencao))
                 .ToList(),
             filas.Where(e => e.Paciente.Id == p.Id)
                 .Select(e => new FilaDaPessoaResposta(e.Entrada.Id, e.Entrada.Posicao,

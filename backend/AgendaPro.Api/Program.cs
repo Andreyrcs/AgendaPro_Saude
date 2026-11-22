@@ -107,6 +107,11 @@ builder.Services.AddRateLimiter(opcoes =>
             new RespostaErro("Muitas tentativas. Aguarde um minuto e tente de novo."), cancelamento);
     };
 });
+// Mesmas configurações que o TokenServico usa para assinar o token
+var chaveJwt = builder.Configuration["Jwt:Chave"]
+    ?? throw new InvalidOperationException("A chave 'Jwt:Chave' não foi configurada.");
+var emissorJwt = builder.Configuration["Jwt:Emissor"]
+    ?? throw new InvalidOperationException("O emissor 'Jwt:Emissor' não foi configurado.");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opcoes =>
     {
@@ -114,10 +119,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         opcoes.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Chave"]!)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(chaveJwt)),
             ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Emissor"],
+            ValidIssuer = emissorJwt,
             ValidateAudience = false,
             ValidateLifetime = true,
             RoleClaimType = "role"

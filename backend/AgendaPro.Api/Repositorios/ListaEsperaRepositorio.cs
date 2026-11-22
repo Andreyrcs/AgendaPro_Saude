@@ -11,7 +11,7 @@ public class ListaEsperaRepositorio : IListaEsperaRepositorio
         SELECT L.Id_Lista AS Id, L.IdPaciente, L.IdMedico, L.Posicao, L.DataEntrada, L.UsaApp, L.StatusOferta,
                L.IdConsultaOfertada, L.OfertadaEm,
                P.Id_Paciente AS Id, P.IdUsuario, P.Nome_paciente AS Nome, P.CPF AS Cpf,
-               P.Data_Nascimento AS DataNascimento, P.Alergias, P.Parentesco,
+               P.Data_Nascimento AS DataNascimento, P.Alergias, P.Parentesco, P.Cor,
                U.Id_Usuario AS Id, U.Email, U.Papel, U.Nome, U.Telefone, U.IdClinica, U.Ativo,
                M.Id_Medico AS Id, M.IdUsuario, M.IdEspecialidade, M.IdClinica, M.Nome, M.CRM AS Crm, M.Sala,
                E.Id_Especialidade AS Id, E.IdClinica, E.Nome_Espec AS Nome, E.DuracaoPadrao,

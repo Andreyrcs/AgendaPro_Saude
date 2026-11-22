@@ -2,6 +2,7 @@
 
 API REST do AgendaPro Saúde em ASP.NET Core (.NET 10), com Dapper e SQL Server.
 A documentação oficial das rotas está em [docs/especificacao-api.md](docs/especificacao-api.md).
+O que a web e o app precisam ajustar para usar a API está em [docs/ajustes-front.md](docs/ajustes-front.md).
 
 ## Como rodar
 
@@ -109,6 +110,9 @@ da especificação. Onde os dois divergem, a API segue a especificação:
 10. **Textos de erro do banco** saem como a procedure escreve. Por exemplo, "Horário reservado para oferta da lista
     de espera." e "Por enquanto, você pode agendar só pela lista de espera.".
 11. **Sair:** não há `POST /api/auth/logout`. Para sair, a tela apaga o token.
+
+A lista completa dos ajustes do front, com a fonte e a gravidade de cada um, está em
+[docs/ajustes-front.md](docs/ajustes-front.md).
 
 ## Respostas de erro
 

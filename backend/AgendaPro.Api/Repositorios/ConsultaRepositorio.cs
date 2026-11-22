@@ -11,7 +11,7 @@ public class ConsultaRepositorio : IConsultaRepositorio
         SELECT C.Id_Consulta AS Id, C.IdPaciente, C.IdMedico, C.DataConsulta, C.HoraInicio, C.HoraFim, C.IdStatus,
                C.Sala, C.Motivo, C.CriadoEm, C.PresencaConfirmada, C.ConfirmadaEm, C.CanceladaEm,
                P.Id_Paciente AS Id, P.IdUsuario, P.Nome_paciente AS Nome, P.CPF AS Cpf,
-               P.Data_Nascimento AS DataNascimento, P.Alergias, P.Parentesco,
+               P.Data_Nascimento AS DataNascimento, P.Alergias, P.Parentesco, P.Cor,
                M.Id_Medico AS Id, M.IdUsuario, M.IdEspecialidade, M.IdClinica, M.Nome, M.CRM AS Crm, M.Sala,
                E.Id_Especialidade AS Id, E.IdClinica, E.Nome_Espec AS Nome, E.DuracaoPadrao,
                S.Id_Status AS Id, S.Codigo_consulta AS Codigo, S.Descricao_consulta AS Descricao
@@ -51,12 +51,18 @@ public class ConsultaRepositorio : IConsultaRepositorio
         return await ListarCompletas(conexao, SelectCompleto + " WHERE P.IdUsuario = @IdConta;", new { IdConta = idConta });
     }
 
-    public async Task<IEnumerable<int>> FiltrarDePrevencaoAsync(IEnumerable<int> idsConsultas)
+    // Uma consulta pode estar ligada a mais de um item: fica o primeiro título em ordem alfabética
+    public async Task<IEnumerable<PrevencaoDaConsulta>> FiltrarDePrevencaoAsync(IEnumerable<int> idsConsultas)
     {
-        const string sql = "SELECT DISTINCT IdConsulta FROM Pessoa_Prevencao WHERE IdConsulta IN @Ids;";
+        const string sql = @"
+            SELECT PP.IdConsulta, MIN(X.Titulo) AS Titulo
+            FROM Pessoa_Prevencao PP
+            INNER JOIN Exames_Prevencao X ON X.Id_ExamePrevencao = PP.IdExamePrevencao
+            WHERE PP.IdConsulta IN @Ids
+            GROUP BY PP.IdConsulta;";
 
         using var conexao = _fabrica.CriarConexao();
-        return await conexao.QueryAsync<int>(sql, new { Ids = idsConsultas });
+        return await conexao.QueryAsync<PrevencaoDaConsulta>(sql, new { Ids = idsConsultas });
     }
 
     public async Task<IEnumerable<Consulta>> ListarOcupadasAsync(IEnumerable<int> idsMedicos, DateTime de, DateTime ate)
@@ -203,17 +209,19 @@ public class ConsultaRepositorio : IConsultaRepositorio
     }
 
     // Sem lista de ids no IN: uma clínica pode ter mais consultas que o limite de parâmetros do SQL Server
-    public async Task<IEnumerable<int>> ListarIdsDePrevencaoDaClinicaAsync(int idClinica)
+    public async Task<IEnumerable<PrevencaoDaConsulta>> ListarDePrevencaoDaClinicaAsync(int idClinica)
     {
         const string sql = @"
-            SELECT DISTINCT PP.IdConsulta
+            SELECT PP.IdConsulta, MIN(X.Titulo) AS Titulo
             FROM Pessoa_Prevencao PP
+            INNER JOIN Exames_Prevencao X ON X.Id_ExamePrevencao = PP.IdExamePrevencao
             INNER JOIN Consultas C ON C.Id_Consulta = PP.IdConsulta
             INNER JOIN Medicos M ON M.Id_Medico = C.IdMedico
-            WHERE M.IdClinica = @IdClinica;";
+            WHERE M.IdClinica = @IdClinica
+            GROUP BY PP.IdConsulta;";
 
         using var conexao = _fabrica.CriarConexao();
-        return await conexao.QueryAsync<int>(sql, new { IdClinica = idClinica });
+        return await conexao.QueryAsync<PrevencaoDaConsulta>(sql, new { IdClinica = idClinica });
     }
 
     // Chegada, início e fim do atendimento não têm procedure. O WHERE confere o status atual,

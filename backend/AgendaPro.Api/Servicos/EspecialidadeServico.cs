@@ -117,7 +117,7 @@ public class EspecialidadeServico : IEspecialidadeServico
                     dias.Add(new DiaLivreResposta(DateOnly.FromDateTime(dia), horas));
             }
 
-            resposta.Add(new HorariosLivresResposta(new MedicoResumoResposta(medico.Id, medico.Nome), dias));
+            resposta.Add(new HorariosLivresResposta(new MedicoSalaResposta(medico.Id, medico.Nome, medico.Sala), dias));
         }
 
         return resposta;

@@ -154,8 +154,8 @@ public class ListaEsperaServico : IListaEsperaServico
             e.Entrada.Posicao,
             naFila,
             DateOnly.FromDateTime(e.Entrada.DataEntrada),
-            new PessoaResumoResposta(e.Paciente.Id, e.Paciente.Nome),
-            new MedicoResumoResposta(e.Medico.Id, e.Medico.Nome),
+            PacienteServico.Familiar(e.Paciente),
+            new MedicoSalaResposta(e.Medico.Id, e.Medico.Nome, e.Medico.Sala),
             new EspecialidadeResumoResposta(e.Especialidade.Id, e.Especialidade.Nome),
             Vaga(e, minutos));
     }

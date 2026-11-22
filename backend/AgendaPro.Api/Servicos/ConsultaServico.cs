@@ -33,8 +33,8 @@ public class ConsultaServico : IConsultaServico
         if (!PodeVer(consulta, logado))
             return null;
 
-        var prevencao = await _consultas.FiltrarDePrevencaoAsync([id]);
-        return Resposta(consulta, prevencao.Contains(id));
+        var prevencao = Titulos(await _consultas.FiltrarDePrevencaoAsync([id]));
+        return Resposta(consulta, prevencao);
     }
 
     // Próximas: confirmadas de hoje em diante, da mais cedo para a mais tarde.
@@ -42,18 +42,18 @@ public class ConsultaServico : IConsultaServico
     public async Task<ConsultasDaContaResposta> ListarDaContaAsync(int idConta)
     {
         var consultas = (await _consultas.ListarPorContaAsync(idConta)).ToList();
-        var prevencao = (await _consultas.FiltrarDePrevencaoAsync(consultas.Select(c => c.Consulta.Id))).ToHashSet();
+        var prevencao = Titulos(await _consultas.FiltrarDePrevencaoAsync(consultas.Select(c => c.Consulta.Id)));
 
         var hoje = DateTime.Today;
         bool EhProxima(ConsultaCompleta c) => c.Status.Codigo == "CONFIRMADA" && c.Consulta.DataConsulta >= hoje;
 
         var proximas = consultas.Where(EhProxima)
             .OrderBy(c => c.Consulta.DataConsulta).ThenBy(c => c.Consulta.HoraInicio)
-            .Select(c => Resposta(c, prevencao.Contains(c.Consulta.Id))).ToList();
+            .Select(c => Resposta(c, prevencao)).ToList();
 
         var passadas = consultas.Where(c => !EhProxima(c))
             .OrderByDescending(c => c.Consulta.DataConsulta).ThenByDescending(c => c.Consulta.HoraInicio)
-            .Select(c => Resposta(c, prevencao.Contains(c.Consulta.Id))).ToList();
+            .Select(c => Resposta(c, prevencao)).ToList();
 
         return new ConsultasDaContaResposta(proximas, passadas);
     }
@@ -159,9 +159,9 @@ public class ConsultaServico : IConsultaServico
 
         var consultas = await _consultas.ListarDaClinicaAsync(idClinica,
             de.ToDateTime(TimeOnly.MinValue), ate.ToDateTime(TimeOnly.MinValue));
-        var prevencao = (await _consultas.ListarIdsDePrevencaoDaClinicaAsync(idClinica)).ToHashSet();
+        var prevencao = Titulos(await _consultas.ListarDePrevencaoDaClinicaAsync(idClinica));
 
-        return consultas.Select(c => Resposta(c, prevencao.Contains(c.Consulta.Id))).ToList();
+        return consultas.Select(c => Resposta(c, prevencao)).ToList();
     }
 
     // Agenda do médico (Apêndice C): as linhas dele no dia, como a agenda da clínica (a tela filtra),
@@ -175,13 +175,13 @@ public class ConsultaServico : IConsultaServico
         var data = dia.Data!.Value.ToDateTime(TimeOnly.MinValue);
         var doDia = await _consultas.ListarDoMedicoAsync(idMedico, data);
         var historico = await _consultas.ListarComPacienteDoMedicoAsync(idMedico);
-        var prevencao = (await _consultas.ListarIdsDePrevencaoDaClinicaAsync(logado.IdClinica!.Value)).ToHashSet();
+        var prevencao = Titulos(await _consultas.ListarDePrevencaoDaClinicaAsync(logado.IdClinica!.Value));
         var exames = await _acompanhamento.ListarExamesDoMedicoAsync(idMedico);
         var retornos = await _acompanhamento.ListarRetornosDoMedicoAsync(idMedico);
 
         return new AgendaMedicoResposta(
-            doDia.Select(c => Resposta(c, prevencao.Contains(c.Consulta.Id))).ToList(),
-            historico.Select(c => Resposta(c, prevencao.Contains(c.Consulta.Id))).ToList(),
+            doDia.Select(c => Resposta(c, prevencao)).ToList(),
+            historico.Select(c => Resposta(c, prevencao)).ToList(),
             exames.Select(AcompanhamentoServico.RespostaExame).ToList(),
             retornos.Select(AcompanhamentoServico.RespostaRetorno).ToList());
     }
@@ -276,17 +276,26 @@ public class ConsultaServico : IConsultaServico
         await _medicos.BuscarPorIdAsync(id)
         ?? throw new ErroApi(StatusCodes.Status404NotFound, "Médico não encontrado.");
 
-    // Usado também pela tela de pacientes (PacienteServico), para as consultas saírem no mesmo formato
-    internal static ConsultaResposta Resposta(ConsultaCompleta c, bool prevencao) =>
-        new(c.Consulta.Id,
+    // Id da consulta → título do item de prevenção ligado a ela
+    internal static Dictionary<int, string> Titulos(IEnumerable<PrevencaoDaConsulta> itens) =>
+        itens.ToDictionary(p => p.IdConsulta, p => p.Titulo);
+
+    // Usado também pela tela de pacientes (PacienteServico), para as consultas saírem no mesmo formato.
+    // Consulta ligada a um item de prevenção: "tipo": "prevencao" e o título do item; as outras: "consulta" e null.
+    internal static ConsultaResposta Resposta(ConsultaCompleta c, IReadOnlyDictionary<int, string> prevencao)
+    {
+        var titulo = prevencao.GetValueOrDefault(c.Consulta.Id);
+        return new(c.Consulta.Id,
             DateOnly.FromDateTime(c.Consulta.DataConsulta),
             FormatadorTexto.Hora(c.Consulta.HoraInicio),
             c.Consulta.Sala,
             TradutorStatus.DaConsulta(c.Status.Codigo),
             c.Consulta.Motivo,
-            prevencao ? "prevencao" : "consulta",
+            titulo is null ? "consulta" : "prevencao",
+            titulo,
             c.Consulta.PresencaConfirmada == true,
-            c.Paciente is null ? null : new PessoaResumoResposta(c.Paciente.Id, c.Paciente.Nome),
-            new MedicoResumoResposta(c.Medico.Id, c.Medico.Nome),
+            c.Paciente is null ? null : PacienteServico.Familiar(c.Paciente),
+            new MedicoSalaResposta(c.Medico.Id, c.Medico.Nome, c.Medico.Sala),
             new EspecialidadeResumoResposta(c.Especialidade.Id, c.Especialidade.Nome));
+    }
 }
