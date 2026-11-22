@@ -46,6 +46,17 @@ builder.Services.AddOpenApi(opcoes =>
         return Task.CompletedTask;
     });
 });
+// CORS (Apêndice H): só as páginas da aplicação web podem chamar a API pelo navegador.
+// As origens ficam em Cors:Origens no appsettings.json.
+var origensWeb = builder.Configuration.GetSection("Cors:Origens").Get<string[]>()
+    ?? throw new InvalidOperationException("Configure Cors:Origens no appsettings.json.");
+builder.Services.AddCors(opcoes =>
+{
+    opcoes.AddDefaultPolicy(politica => politica
+        .WithOrigins(origensWeb)
+        .AllowAnyHeader()
+        .AllowAnyMethod());
+});
 builder.Services.AddSingleton<IFabricaConexao, FabricaConexao>();
 builder.Services.AddScoped<IEspecialidadeRepositorio, EspecialidadeRepositorio>();
 builder.Services.AddScoped<IEspecialidadeServico, EspecialidadeServico>();
@@ -110,6 +121,9 @@ if (app.Environment.IsDevelopment())
         opcoes.SwaggerEndpoint("/openapi/v1.json", "AgendaPro Saúde API");
     });
 }
+// Antes da autenticação: o navegador manda o OPTIONS (pré-voo) sem token,
+// e as respostas de erro (401, 403, 400) também precisam do cabeçalho do CORS
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
