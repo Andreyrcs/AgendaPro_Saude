@@ -26,4 +26,39 @@ public static class TradutorStatus
     };
 
     public static string DaRestricao(string codigo) => Restricao[codigo];
+
+    // Exame (Exames.Status)
+    private static readonly Dictionary<string, string> Exame = new()
+    {
+        ["PENDENTE"] = "pendente",
+        ["REALIZADO"] = "realizado"
+    };
+
+    public static string DoExame(string codigo) => Exame[codigo];
+
+    // Caminho contrário (valor da tela → código do banco); null = valor que não está no Apêndice D
+    public static string? ParaExame(string valor) => Exame.FirstOrDefault(par => par.Value == valor).Key;
+
+    // Retorno (Retornos.Status)
+    private static readonly Dictionary<string, string> Retorno = new()
+    {
+        ["ENCAMINHADO"] = "encaminhado",
+        ["AGENDADO"] = "agendado",
+        ["REALIZADO"] = "realizado",
+        ["CANCELADO"] = "cancelado"
+    };
+
+    public static string DoRetorno(string codigo) => Retorno[codigo];
+
+    // Item de prevenção (Pessoa_Prevencao.Status)
+    private static readonly Dictionary<string, string> Prevencao = new()
+    {
+        ["NAO_AGENDADO"] = "pendente",
+        ["AGENDADO"] = "agendado",
+        ["REALIZADO"] = "feito"
+    };
+
+    public static string DaPrevencao(string codigo) => Prevencao[codigo];
+
+    public static string? ParaPrevencao(string valor) => Prevencao.FirstOrDefault(par => par.Value == valor).Key;
 }

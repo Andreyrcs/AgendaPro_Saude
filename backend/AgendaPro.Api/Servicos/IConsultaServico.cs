@@ -17,6 +17,9 @@ public interface IConsultaServico
 
     Task<IEnumerable<ConsultaResposta>?> AgendaDaClinicaAsync(int idClinica, PeriodoAgendaRequisicao periodo, UsuarioLogado logado);
 
+    // null = agenda de outro médico: Forbid()
+    Task<AgendaMedicoResposta?> AgendaDoMedicoAsync(int idMedico, AgendaMedicoRequisicao dia, UsuarioLogado logado);
+
     // Chegada, desfazer a chegada, início e fim do atendimento (Apêndice I). null = sem permissão: Forbid()
     Task<ConsultaResposta?> MudarStatusAsync(int id, StatusRequisicao dados, UsuarioLogado logado);
 }

@@ -84,6 +84,17 @@ public class ConsultasController : ApiControllerBase
         return Ok(resposta);
     }
 
+    // {id} = Medicos.Id_Medico; precisa ser o médico do token (claim medico)
+    [Authorize(Roles = "medico")]
+    [HttpGet("api/medicos/{id:int}/agenda")]
+    public async Task<ActionResult<AgendaMedicoResposta>> AgendaDoMedico(int id, [FromQuery] AgendaMedicoRequisicao dia)
+    {
+        var resposta = await _servico.AgendaDoMedicoAsync(id, dia, Logado);
+        if (resposta is null)
+            return Forbid();
+        return Ok(resposta);
+    }
+
     // Dono incluído (Apêndice G: tudo o que a recepção faz)
     [Authorize(Roles = "recepcao,dono,medico")]
     [HttpPut("api/consultas/{id:int}/status")]

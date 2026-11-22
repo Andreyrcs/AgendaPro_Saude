@@ -39,6 +39,12 @@ public interface IConsultaRepositorio
     // Ficha dos pacientes: todas as consultas da clínica que têm paciente (inclusive as canceladas)
     Task<IEnumerable<ConsultaCompleta>> ListarComPacienteDaClinicaAsync(int idClinica);
 
+    // Agenda do médico: todas as linhas dele num dia (como a agenda da clínica)
+    Task<IEnumerable<ConsultaCompleta>> ListarDoMedicoAsync(int idMedico, DateTime data);
+
+    // Histórico do médico: as consultas dele que têm paciente, da mais recente para a mais antiga
+    Task<IEnumerable<ConsultaCompleta>> ListarComPacienteDoMedicoAsync(int idMedico);
+
     // Ids das consultas da clínica marcadas a partir de um item de prevenção (para o "tipo")
     Task<IEnumerable<int>> ListarIdsDePrevencaoDaClinicaAsync(int idClinica);
 

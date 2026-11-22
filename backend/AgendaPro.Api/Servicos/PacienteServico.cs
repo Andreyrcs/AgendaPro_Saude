@@ -13,10 +13,12 @@ public class PacienteServico : IPacienteServico
     private readonly IConsultaRepositorio _consultas;
     private readonly IListaEsperaRepositorio _fila;
     private readonly IFaltaRepositorio _faltas;
+    private readonly IAcompanhamentoRepositorio _acompanhamento;
 
     public PacienteServico(IUsuarioRepositorio usuarios, IPacienteRepositorio pacientes,
         IClinicaRepositorio clinicas,                                                    //
-        IConsultaRepositorio consultas, IListaEsperaRepositorio fila, IFaltaRepositorio faltas)
+        IConsultaRepositorio consultas, IListaEsperaRepositorio fila, IFaltaRepositorio faltas,
+        IAcompanhamentoRepositorio acompanhamento)
     {
         _usuarios = usuarios;
         _pacientes = pacientes;
@@ -24,6 +26,7 @@ public class PacienteServico : IPacienteServico
         _consultas = consultas;
         _fila = fila;
         _faltas = faltas;
+        _acompanhamento = acompanhamento;
     }
 
     public async Task<PacienteCadastradoResposta> CadastrarAsync(CadastroPacienteRequisicao dados)
@@ -150,6 +153,8 @@ public class PacienteServico : IPacienteServico
         var prevencao = (await _consultas.ListarIdsDePrevencaoDaClinicaAsync(idClinica)).ToHashSet();
         var faltas = (await _faltas.ListarNaoRetiradasDaClinicaAsync(idClinica)).ToList();
         var filas = (await _fila.ListarAtivasDaClinicaAsync(idClinica)).ToList();
+        var retornos = (await _acompanhamento.ListarRetornosDaClinicaAsync(idClinica)).ToList();
+        var exames = (await _acompanhamento.ListarExamesDaClinicaAsync(idClinica)).ToList();
 
         var lista = pessoas.Select(p => new PacienteDaClinicaResposta(
             p.Id,
@@ -166,7 +171,9 @@ public class PacienteServico : IPacienteServico
                 .Select(e => new FilaDaPessoaResposta(e.Entrada.Id, e.Entrada.Posicao,
                     new MedicoResumoResposta(e.Medico.Id, e.Medico.Nome),
                     DateOnly.FromDateTime(e.Entrada.DataEntrada), e.Entrada.UsaApp))
-                .ToList()));
+                .ToList(),
+            retornos.Where(r => r.Paciente.Id == p.Id).Select(AcompanhamentoServico.RespostaRetorno).ToList(),
+            exames.Where(x => x.Paciente.Id == p.Id).Select(AcompanhamentoServico.RespostaExame).ToList()));
 
         var hoje = DateOnly.FromDateTime(DateTime.Today);
         return filtro switch
@@ -178,8 +185,9 @@ public class PacienteServico : IPacienteServico
         };
     }
 
-    // curto = primeiro nome (primeiroNome em aplicativo/src/utilitarios/texto.js)
-    private static FamiliarResposta Familiar(Paciente p) =>
+    // curto = primeiro nome (primeiroNome em aplicativo/src/utilitarios/texto.js).
+    // Usado também pelo acompanhamento e pela prevenção, para a pessoa sair no mesmo formato.
+    internal static FamiliarResposta Familiar(Paciente p) =>
         new(p.Id, p.Nome, p.Nome.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "",
             p.Cpf, p.Parentesco, DateOnly.FromDateTime(p.DataNascimento), p.Cor, p.Alergias,
             p.Parentesco == "Titular");

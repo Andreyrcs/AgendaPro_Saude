@@ -181,6 +181,27 @@ public class ConsultaRepositorio : IConsultaRepositorio
         return await ListarCompletas(conexao, sql, new { IdClinica = idClinica });
     }
 
+    public async Task<IEnumerable<ConsultaCompleta>> ListarDoMedicoAsync(int idMedico, DateTime data)
+    {
+        const string sql = SelectCompleto + @"
+            WHERE C.IdMedico = @IdMedico AND C.DataConsulta = @Data
+            ORDER BY C.HoraInicio;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await ListarCompletas(conexao, sql, new { IdMedico = idMedico, Data = data });
+    }
+
+    // Mesma ordem de medico.js:1026 (data e hora, da mais recente para a mais antiga)
+    public async Task<IEnumerable<ConsultaCompleta>> ListarComPacienteDoMedicoAsync(int idMedico)
+    {
+        const string sql = SelectCompleto + @"
+            WHERE C.IdMedico = @IdMedico AND C.IdPaciente IS NOT NULL
+            ORDER BY C.DataConsulta DESC, C.HoraInicio DESC;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await ListarCompletas(conexao, sql, new { IdMedico = idMedico });
+    }
+
     // Sem lista de ids no IN: uma clínica pode ter mais consultas que o limite de parâmetros do SQL Server
     public async Task<IEnumerable<int>> ListarIdsDePrevencaoDaClinicaAsync(int idClinica)
     {

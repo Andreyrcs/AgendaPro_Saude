@@ -1,8 +1,10 @@
+using AgendaPro.Api.Dtos;
 using AgendaPro.Api.Repositorios;
 using AgendaPro.Api.Servicos;
 using AgendaPro.Api.Middlewares;
 using AgendaPro.Api.Tarefas;
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -77,7 +79,34 @@ builder.Services.AddScoped<IListaEsperaRepositorio, ListaEsperaRepositorio>();
 builder.Services.AddScoped<IListaEsperaServico, ListaEsperaServico>();
 builder.Services.AddScoped<IFaltaRepositorio, FaltaRepositorio>();
 builder.Services.AddScoped<IFaltaServico, FaltaServico>();
+builder.Services.AddScoped<IAcompanhamentoRepositorio, AcompanhamentoRepositorio>();
+builder.Services.AddScoped<IAcompanhamentoServico, AcompanhamentoServico>();
+builder.Services.AddScoped<IPrevencaoRepositorio, PrevencaoRepositorio>();
+builder.Services.AddScoped<IPrevencaoServico, PrevencaoServico>();
+builder.Services.AddScoped<INotificacaoRepositorio, NotificacaoRepositorio>();
+builder.Services.AddScoped<INotificacaoServico, NotificacaoServico>();
 builder.Services.AddHostedService<ExpiracaoOfertasServico>();
+
+// Limite de tentativas de login (Apêndice H e seção 5.4): 5 por minuto para cada IP.
+// Conta todo pedido de login, certo ou errado. O 6º no mesmo minuto recebe 429 (Quadro 5.1).
+builder.Services.AddRateLimiter(opcoes =>
+{
+    opcoes.AddPolicy("login", contexto => RateLimitPartition.GetFixedWindowLimiter(
+        contexto.Connection.RemoteIpAddress?.ToString() ?? "sem-ip",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+
+    opcoes.OnRejected = async (contexto, cancelamento) =>
+    {
+        contexto.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await contexto.HttpContext.Response.WriteAsJsonAsync(
+            new RespostaErro("Muitas tentativas. Aguarde um minuto e tente de novo."), cancelamento);
+    };
+});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opcoes =>
     {
@@ -121,9 +150,18 @@ if (app.Environment.IsDevelopment())
         opcoes.SwaggerEndpoint("/openapi/v1.json", "AgendaPro Saúde API");
     });
 }
+else
+{
+    // Publicação em nuvem (seção 5.4 e Apêndice H): HTTPS com redirecionamento e HSTS.
+    // Na apresentação local (Development) a API continua em HTTP na rede da equipe.
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
 // Antes da autenticação: o navegador manda o OPTIONS (pré-voo) sem token,
 // e as respostas de erro (401, 403, 400) também precisam do cabeçalho do CORS
 app.UseCors();
+// Depois do CORS, para o 429 também levar o cabeçalho do CORS
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

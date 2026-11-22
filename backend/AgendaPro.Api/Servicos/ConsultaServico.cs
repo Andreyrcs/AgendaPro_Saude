@@ -14,15 +14,17 @@ public class ConsultaServico : IConsultaServico
     private readonly IMedicoRepositorio _medicos;
     private readonly IEspecialidadeRepositorio _especialidades;
     private readonly IClinicaRepositorio _clinicas;
+    private readonly IAcompanhamentoRepositorio _acompanhamento;
 
     public ConsultaServico(IConsultaRepositorio consultas, IPacienteRepositorio pacientes, IMedicoRepositorio medicos,
-        IEspecialidadeRepositorio especialidades, IClinicaRepositorio clinicas)
+        IEspecialidadeRepositorio especialidades, IClinicaRepositorio clinicas, IAcompanhamentoRepositorio acompanhamento)
     {
         _consultas = consultas;
         _pacientes = pacientes;
         _medicos = medicos;
         _especialidades = especialidades;
         _clinicas = clinicas;
+        _acompanhamento = acompanhamento;
     }
 
     public async Task<ConsultaResposta?> ObterAsync(int id, UsuarioLogado logado)
@@ -160,6 +162,28 @@ public class ConsultaServico : IConsultaServico
         var prevencao = (await _consultas.ListarIdsDePrevencaoDaClinicaAsync(idClinica)).ToHashSet();
 
         return consultas.Select(c => Resposta(c, prevencao.Contains(c.Consulta.Id))).ToList();
+    }
+
+    // Agenda do médico (Apêndice C): as linhas dele no dia, como a agenda da clínica (a tela filtra),
+    // o histórico (todas as consultas dele com paciente: medico.js:201-203) e os exames e retornos
+    // que o detalhe da consulta mostra (medico.js:747-791). Só o próprio médico (Apêndice F, claim medico).
+    public async Task<AgendaMedicoResposta?> AgendaDoMedicoAsync(int idMedico, AgendaMedicoRequisicao dia, UsuarioLogado logado)
+    {
+        if (logado.IdMedico != idMedico)
+            return null;
+
+        var data = dia.Data!.Value.ToDateTime(TimeOnly.MinValue);
+        var doDia = await _consultas.ListarDoMedicoAsync(idMedico, data);
+        var historico = await _consultas.ListarComPacienteDoMedicoAsync(idMedico);
+        var prevencao = (await _consultas.ListarIdsDePrevencaoDaClinicaAsync(logado.IdClinica!.Value)).ToHashSet();
+        var exames = await _acompanhamento.ListarExamesDoMedicoAsync(idMedico);
+        var retornos = await _acompanhamento.ListarRetornosDoMedicoAsync(idMedico);
+
+        return new AgendaMedicoResposta(
+            doDia.Select(c => Resposta(c, prevencao.Contains(c.Consulta.Id))).ToList(),
+            historico.Select(c => Resposta(c, prevencao.Contains(c.Consulta.Id))).ToList(),
+            exames.Select(AcompanhamentoServico.RespostaExame).ToList(),
+            retornos.Select(AcompanhamentoServico.RespostaRetorno).ToList());
     }
 
     // Apêndice I: quem pode pedir cada status e de qual status a consulta precisa partir.
