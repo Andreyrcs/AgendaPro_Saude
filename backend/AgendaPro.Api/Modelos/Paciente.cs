@@ -9,4 +9,5 @@ public class Paciente
     public DateTime DataNascimento { get; set; }
     public string? Alergias { get; set; }
     public string Parentesco { get; set; } = "";
+    public string Cor { get; set; } = "";
 }

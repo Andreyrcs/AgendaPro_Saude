@@ -14,4 +14,9 @@ public interface IConsultaServico
 
     // "Vou" devolve a consulta; "Não vou" devolve o resultado do cancelamento
     Task<object> ResponderPresencaAsync(int id, PresencaRequisicao dados, UsuarioLogado logado);
+
+    Task<IEnumerable<ConsultaResposta>?> AgendaDaClinicaAsync(int idClinica, PeriodoAgendaRequisicao periodo, UsuarioLogado logado);
+
+    // Chegada, desfazer a chegada, início e fim do atendimento (Apêndice I). null = sem permissão: Forbid()
+    Task<ConsultaResposta?> MudarStatusAsync(int id, StatusRequisicao dados, UsuarioLogado logado);
 }

@@ -72,4 +72,26 @@ public class ConsultasController : ApiControllerBase
     {
         return Ok(await _servico.ResponderPresencaAsync(id, dados, Logado));
     }
+
+    [Authorize(Roles = "recepcao,dono")]
+    [HttpGet("api/clinicas/{idClinica:int}/agenda")]
+    public async Task<ActionResult<IEnumerable<ConsultaResposta>>> AgendaDaClinica(int idClinica,
+        [FromQuery] PeriodoAgendaRequisicao periodo)
+    {
+        var resposta = await _servico.AgendaDaClinicaAsync(idClinica, periodo, Logado);
+        if (resposta is null)
+            return Forbid();
+        return Ok(resposta);
+    }
+
+    // Dono incluído (Apêndice G: tudo o que a recepção faz)
+    [Authorize(Roles = "recepcao,dono,medico")]
+    [HttpPut("api/consultas/{id:int}/status")]
+    public async Task<ActionResult<ConsultaResposta>> MudarStatus(int id, StatusRequisicao dados)
+    {
+        var resposta = await _servico.MudarStatusAsync(id, dados, Logado);
+        if (resposta is null)
+            return Forbid();
+        return Ok(resposta);
+    }
 }

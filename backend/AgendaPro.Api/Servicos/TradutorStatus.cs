@@ -16,4 +16,14 @@ public static class TradutorStatus
     };
 
     public static string DaConsulta(string codigo) => Consulta[codigo];
+
+    // Restrição por faltas (Usuarios.Restricao e vw_SituacaoConta)
+    private static readonly Dictionary<string, string> Restricao = new()
+    {
+        ["NORMAL"] = "normal",
+        ["SO_FILA"] = "so_fila",
+        ["SO_RECEPCAO"] = "so_recepcao"
+    };
+
+    public static string DaRestricao(string codigo) => Restricao[codigo];
 }

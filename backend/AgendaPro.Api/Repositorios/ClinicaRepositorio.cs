@@ -64,4 +64,68 @@ public class ClinicaRepositorio : IClinicaRepositorio
         transacao.Commit();
         return (idClinica, idUsuario);
     }
+
+    private const string SelectClinica = @"
+        SELECT C.Id_Clinica AS Id, C.Nome_Clinica AS Nome, C.Endereco, C.Telefone, C.CNPJ AS Cnpj,
+               C.Cidade, C.UF AS Uf, C.Codigo, C.Publica
+        FROM Clinica C";
+
+    public async Task<Clinica?> BuscarPorIdAsync(int id)
+    {
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QuerySingleOrDefaultAsync<Clinica>(SelectClinica + " WHERE C.Id_Clinica = @Id;", new { Id = id });
+    }
+
+    public async Task<Clinica?> BuscarPorCodigoAsync(string codigo)
+    {
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QuerySingleOrDefaultAsync<Clinica>(SelectClinica + " WHERE C.Codigo = @Codigo;",
+            new { Codigo = codigo });
+    }
+
+    // O banco é Latin1_General_CI_AS (diferencia acento); o COLLATE ..._CI_AI faz "clinica" achar "Clínica",
+    // como o semAcento de buscarClinicas (frontend/assets/js/api.js)
+    public async Task<IEnumerable<Clinica>> BuscarPublicasAsync(string busca)
+    {
+        const string sql = SelectClinica + @"
+            WHERE C.Publica = 1
+              AND (@Busca = ''
+                   OR C.Nome_Clinica COLLATE Latin1_General_CI_AI LIKE '%' + @Busca + '%'
+                   OR C.Cidade COLLATE Latin1_General_CI_AI LIKE '%' + @Busca + '%')
+            ORDER BY C.Nome_Clinica;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QueryAsync<Clinica>(sql, new { Busca = busca });
+    }
+
+    public async Task<IEnumerable<Clinica>> ListarDaContaAsync(int idConta)
+    {
+        const string sql = SelectClinica + @"
+            INNER JOIN Paciente_Clinica PC ON PC.IdClinica = C.Id_Clinica
+            WHERE PC.IdUsuario = @IdConta
+            ORDER BY PC.VinculadoEm;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QueryAsync<Clinica>(sql, new { IdConta = idConta });
+    }
+
+    public async Task VincularContaAsync(int idConta, int idClinica)
+    {
+        const string sql = "INSERT INTO Paciente_Clinica (IdUsuario, IdClinica) VALUES (@IdConta, @IdClinica);";
+
+        using var conexao = _fabrica.CriarConexao();
+        await conexao.ExecuteAsync(sql, new { IdConta = idConta, IdClinica = idClinica });
+    }
+
+    public async Task AtualizarAsync(Clinica clinica)
+    {
+        const string sql = @"
+            UPDATE Clinica
+            SET Nome_Clinica = @Nome, Endereco = @Endereco, Telefone = @Telefone,
+                Cidade = @Cidade, UF = @Uf, Publica = @Publica
+            WHERE Id_Clinica = @Id;";
+
+        using var conexao = _fabrica.CriarConexao();
+        await conexao.ExecuteAsync(sql, clinica);
+    }
 }

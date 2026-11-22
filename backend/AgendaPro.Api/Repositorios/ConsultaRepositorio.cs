@@ -160,4 +160,55 @@ public class ConsultaRepositorio : IConsultaRepositorio
         using var conexao = _fabrica.CriarConexao();
         return await conexao.QuerySingleAsync<(bool, bool)>(sql, consulta);
     }
+
+    public async Task<IEnumerable<ConsultaCompleta>> ListarDaClinicaAsync(int idClinica, DateTime de, DateTime ate)
+    {
+        const string sql = SelectCompleto + @"
+            WHERE M.IdClinica = @IdClinica AND C.DataConsulta BETWEEN @De AND @Ate
+            ORDER BY C.DataConsulta, C.HoraInicio, M.Nome;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await ListarCompletas(conexao, sql, new { IdClinica = idClinica, De = de, Ate = ate });
+    }
+
+    public async Task<IEnumerable<ConsultaCompleta>> ListarComPacienteDaClinicaAsync(int idClinica)
+    {
+        const string sql = SelectCompleto + @"
+            WHERE M.IdClinica = @IdClinica AND C.IdPaciente IS NOT NULL
+            ORDER BY C.DataConsulta, C.HoraInicio;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await ListarCompletas(conexao, sql, new { IdClinica = idClinica });
+    }
+
+    // Sem lista de ids no IN: uma clínica pode ter mais consultas que o limite de parâmetros do SQL Server
+    public async Task<IEnumerable<int>> ListarIdsDePrevencaoDaClinicaAsync(int idClinica)
+    {
+        const string sql = @"
+            SELECT DISTINCT PP.IdConsulta
+            FROM Pessoa_Prevencao PP
+            INNER JOIN Consultas C ON C.Id_Consulta = PP.IdConsulta
+            INNER JOIN Medicos M ON M.Id_Medico = C.IdMedico
+            WHERE M.IdClinica = @IdClinica;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QueryAsync<int>(sql, new { IdClinica = idClinica });
+    }
+
+    // Chegada, início e fim do atendimento não têm procedure. O WHERE confere o status atual,
+    // então duas pessoas não mudam a mesma consulta ao mesmo tempo. Os triggers de Consultas
+    // só agem em FALTOU e CANCELADA, que não passam por aqui.
+    public async Task<bool> MudarStatusAsync(int idConsulta, IEnumerable<string> codigosAtuais, string codigoNovo)
+    {
+        const string sql = @"
+            UPDATE C SET IdStatus = N.Id_Status
+            FROM Consultas C
+            INNER JOIN Status_Consulta A ON A.Id_Status = C.IdStatus
+            CROSS JOIN Status_Consulta N
+            WHERE C.Id_Consulta = @Id AND A.Codigo_consulta IN @Atuais AND N.Codigo_consulta = @Novo;";
+
+        using var conexao = _fabrica.CriarConexao();
+        var linhas = await conexao.ExecuteAsync(sql, new { Id = idConsulta, Atuais = codigosAtuais, Novo = codigoNovo });
+        return linhas > 0;
+    }
 }

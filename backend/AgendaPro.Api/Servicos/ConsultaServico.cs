@@ -143,6 +143,64 @@ public class ConsultaServico : IConsultaServico
         return await ResultadoAsync(consulta.Consulta);
     }
 
+    // Agenda da clínica (Apêndice C): consultas de qualquer status, vagas ("livre") e ofertas ("oferecido")
+    public async Task<IEnumerable<ConsultaResposta>?> AgendaDaClinicaAsync(int idClinica, PeriodoAgendaRequisicao periodo,
+        UsuarioLogado logado)
+    {
+        if (logado.IdClinica != idClinica)
+            return null;
+
+        var de = periodo.De!.Value;
+        var ate = periodo.Ate!.Value;
+        if (ate < de)
+            throw new ErroApi(StatusCodes.Status400BadRequest, "O fim do período precisa ser depois do começo.");
+
+        var consultas = await _consultas.ListarDaClinicaAsync(idClinica,
+            de.ToDateTime(TimeOnly.MinValue), ate.ToDateTime(TimeOnly.MinValue));
+        var prevencao = (await _consultas.ListarIdsDePrevencaoDaClinicaAsync(idClinica)).ToHashSet();
+
+        return consultas.Select(c => Resposta(c, prevencao.Contains(c.Consulta.Id))).ToList();
+    }
+
+    // Apêndice I: quem pode pedir cada status e de qual status a consulta precisa partir.
+    // "Recepção" vale também para o dono (Apêndice G).
+    private record RegraStatus(string Novo, string[] Atuais, bool Recepcao, bool Medico, string Erro);
+
+    private static readonly Dictionary<string, RegraStatus> RegrasStatus = new()
+    {
+        ["na_recepcao"] = new("NA_RECEPCAO", ["CONFIRMADA"], Recepcao: true, Medico: false,
+            "Só dá para registrar a chegada de consulta confirmada."),
+        ["confirmada"] = new("CONFIRMADA", ["NA_RECEPCAO"], Recepcao: true, Medico: false,
+            "Só dá para desfazer a chegada de quem está na recepção."),
+        ["em_atendimento"] = new("EM_ATENDIMENTO", ["NA_RECEPCAO"], Recepcao: true, Medico: true,
+            "Só dá para iniciar o atendimento de quem está na recepção."),
+        ["atendida"] = new("ATENDIDA", ["CONFIRMADA", "NA_RECEPCAO", "EM_ATENDIMENTO"], Recepcao: false, Medico: true,
+            "Esta consulta não pode mais ser finalizada.")
+    };
+
+    public async Task<ConsultaResposta?> MudarStatusAsync(int id, StatusRequisicao dados, UsuarioLogado logado)
+    {
+        var consulta = await BuscarOuFalharAsync(id);
+
+        // O médico mexe só nas próprias consultas; a equipe, só nas da clínica
+        var dele = logado.EhMedico ? consulta.Medico.Id == logado.IdMedico : consulta.Medico.IdClinica == logado.IdClinica;
+        if (!dele)
+            return null;
+
+        // faltou e cancelada têm rotas próprias (POST /falta e DELETE)
+        if (!RegrasStatus.TryGetValue(dados.Status, out var regra))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Status inválido.");
+
+        // Perfil que não faz essa ação (ex.: recepção finalizando o atendimento)
+        if (logado.EhMedico ? !regra.Medico : !regra.Recepcao)
+            return null;
+
+        if (!await _consultas.MudarStatusAsync(id, regra.Atuais, regra.Novo))
+            throw new ErroApi(StatusCodes.Status400BadRequest, regra.Erro);
+
+        return await ObterAsync(id, logado);
+    }
+
     private async Task<CancelamentoResposta> ResultadoAsync(Consulta consulta)
     {
         var (falta, oferecido) = await _consultas.ResultadoCancelamentoAsync(consulta);
@@ -194,7 +252,8 @@ public class ConsultaServico : IConsultaServico
         await _medicos.BuscarPorIdAsync(id)
         ?? throw new ErroApi(StatusCodes.Status404NotFound, "Médico não encontrado.");
 
-    private static ConsultaResposta Resposta(ConsultaCompleta c, bool prevencao) =>
+    // Usado também pela tela de pacientes (PacienteServico), para as consultas saírem no mesmo formato
+    internal static ConsultaResposta Resposta(ConsultaCompleta c, bool prevencao) =>
         new(c.Consulta.Id,
             DateOnly.FromDateTime(c.Consulta.DataConsulta),
             FormatadorTexto.Hora(c.Consulta.HoraInicio),

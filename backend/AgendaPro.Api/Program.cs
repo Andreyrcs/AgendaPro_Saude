@@ -11,7 +11,14 @@ using Microsoft.OpenApi;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Registrar os serviços (ANTES do Build)
-builder.Services.AddControllers()
+builder.Services.AddControllers(opcoes =>
+    {
+        // Valor da query que não dá para ler (ex.: ?paciente=abc ou ?de=amanha): a mesma mensagem
+        // do JSON em formato errado (RespostaValidacao), em vez do texto em inglês do ASP.NET
+        opcoes.ModelBindingMessageProvider.SetAttemptedValueIsInvalidAccessor((_, _) => "Confira o formato dos dados enviados.");
+        opcoes.ModelBindingMessageProvider.SetValueIsInvalidAccessor(_ => "Confira o formato dos dados enviados.");
+        opcoes.ModelBindingMessageProvider.SetNonPropertyAttemptedValueIsInvalidAccessor(_ => "Confira o formato dos dados enviados.");
+    })
     .ConfigureApiBehaviorOptions(opcoes =>
     {
         opcoes.InvalidModelStateResponseFactory = RespostaValidacao.Criar;
@@ -57,6 +64,8 @@ builder.Services.AddScoped<IConsultaRepositorio, ConsultaRepositorio>();
 builder.Services.AddScoped<IConsultaServico, ConsultaServico>();
 builder.Services.AddScoped<IListaEsperaRepositorio, ListaEsperaRepositorio>();
 builder.Services.AddScoped<IListaEsperaServico, ListaEsperaServico>();
+builder.Services.AddScoped<IFaltaRepositorio, FaltaRepositorio>();
+builder.Services.AddScoped<IFaltaServico, FaltaServico>();
 builder.Services.AddHostedService<ExpiracaoOfertasServico>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opcoes =>
@@ -72,6 +81,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = false,
             ValidateLifetime = true,
             RoleClaimType = "role"
+        };
+
+        // Depois de conferir assinatura, emissor e validade: a conta ainda está ativa?
+        // A recepcionista removida da equipe perde o acesso na hora (pagina-equipe.js:121), com 401.
+        opcoes.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async contexto =>
+            {
+                var usuarios = contexto.HttpContext.RequestServices.GetRequiredService<IUsuarioRepositorio>();
+                var sub = contexto.Principal?.FindFirst("sub")?.Value;
+
+                if (!int.TryParse(sub, out var idUsuario) || !await usuarios.EstaAtivoAsync(idUsuario))
+                    contexto.Fail("Conta desativada.");
+            }
         };
     });
 

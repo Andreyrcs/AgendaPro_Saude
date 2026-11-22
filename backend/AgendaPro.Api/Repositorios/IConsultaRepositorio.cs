@@ -32,4 +32,16 @@ public interface IConsultaRepositorio
 
     // Depois de cancelar: o trigger gravou falta? O horário foi oferecido à fila?
     Task<(bool Falta, bool OferecidoAFila)> ResultadoCancelamentoAsync(Consulta consulta);
+
+    // Agenda da clínica: todas as linhas do período (consultas de qualquer status, vagas e ofertas)
+    Task<IEnumerable<ConsultaCompleta>> ListarDaClinicaAsync(int idClinica, DateTime de, DateTime ate);
+
+    // Ficha dos pacientes: todas as consultas da clínica que têm paciente (inclusive as canceladas)
+    Task<IEnumerable<ConsultaCompleta>> ListarComPacienteDaClinicaAsync(int idClinica);
+
+    // Ids das consultas da clínica marcadas a partir de um item de prevenção (para o "tipo")
+    Task<IEnumerable<int>> ListarIdsDePrevencaoDaClinicaAsync(int idClinica);
+
+    // Troca o status só se o atual ainda for um dos esperados; devolve false se nada mudou
+    Task<bool> MudarStatusAsync(int idConsulta, IEnumerable<string> codigosAtuais, string codigoNovo);
 }

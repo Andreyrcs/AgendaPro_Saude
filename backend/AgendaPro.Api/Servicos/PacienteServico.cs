@@ -10,13 +10,20 @@ public class PacienteServico : IPacienteServico
     private readonly IUsuarioRepositorio _usuarios;
     private readonly IPacienteRepositorio _pacientes;
     private readonly IClinicaRepositorio _clinicas;                                     //
+    private readonly IConsultaRepositorio _consultas;
+    private readonly IListaEsperaRepositorio _fila;
+    private readonly IFaltaRepositorio _faltas;
 
     public PacienteServico(IUsuarioRepositorio usuarios, IPacienteRepositorio pacientes,
-        IClinicaRepositorio clinicas)                                                    // 
+        IClinicaRepositorio clinicas,                                                    //
+        IConsultaRepositorio consultas, IListaEsperaRepositorio fila, IFaltaRepositorio faltas)
     {
         _usuarios = usuarios;
         _pacientes = pacientes;
-        _clinicas = clinicas;                                                            // 
+        _clinicas = clinicas;                                                            //
+        _consultas = consultas;
+        _fila = fila;
+        _faltas = faltas;
     }
 
     public async Task<PacienteCadastradoResposta> CadastrarAsync(CadastroPacienteRequisicao dados)
@@ -69,4 +76,111 @@ public class PacienteServico : IPacienteServico
         var (idUsuario, idPaciente) = await _pacientes.CriarContaComTitularAsync(usuario, titular, idClinica);  // ←
         return new PacienteCadastradoResposta(idUsuario, idPaciente, titular.Nome, usuario.Email);
     }
+
+    // Opções de parentesco do familiar (relatorio-integracao.md:133; paciente-servicos.js:148).
+    // "Titular" fica de fora: só o dono da conta é titular.
+    private static readonly HashSet<string> Parentescos = new() { "Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro" };
+
+    // Ids dos filtros da tela de pacientes (pagina-pacientes.js:62-66)
+    private static readonly HashSet<string> Filtros = new() { "hoje", "fila", "faltas" };
+
+    public async Task<IEnumerable<FamiliarResposta>> ListarFamiliaresAsync(int idConta)
+    {
+        var pessoas = await _pacientes.ListarDaContaAsync(idConta);
+        return pessoas.Select(Familiar).ToList();
+    }
+
+    // Mesmas regras do titular para CPF e nascimento (seção 5.4; pendência 1 do CLAUDE.md: CPF repetido é 400)
+    public async Task<FamiliarResposta> AdicionarFamiliarAsync(int idConta, FamiliarRequisicao dados)
+    {
+        var cpf = ValidadorCpf.SoNumeros(dados.Cpf);
+        if (!ValidadorCpf.Valido(cpf))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "CPF inválido.");
+
+        if (!Parentescos.Contains(dados.Relacao))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Escolha o parentesco.");
+
+        var nascimento = dados.Nascimento!.Value;
+        if (nascimento > DateOnly.FromDateTime(DateTime.Today))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "A data de nascimento não pode ser no futuro.");
+
+        if (await _pacientes.CpfExisteAsync(cpf))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Este CPF já está cadastrado.");
+
+        var familiar = new Paciente
+        {
+            IdUsuario = idConta,
+            Nome = dados.Nome.Trim(),
+            Cpf = cpf,
+            DataNascimento = nascimento.ToDateTime(TimeOnly.MinValue),
+            Alergias = dados.Alergias,
+            Parentesco = dados.Relacao,
+            Cor = dados.Cor ?? ""   // vazio = a cor padrão do banco
+        };
+
+        var id = await _pacientes.CriarFamiliarAsync(familiar);
+        return Familiar((await _pacientes.BuscarPorIdAsync(id))!);
+    }
+
+    // Seção 5.5: busca por nome ou CPF, filtros e a ficha com consultas, faltas e fila.
+    // Só pessoas das contas vinculadas à clínica (Apêndice C); consultas, faltas e filas só desta clínica.
+    public async Task<IEnumerable<PacienteDaClinicaResposta>?> ListarDaClinicaAsync(int idClinica, string? busca,
+        string? filtro, UsuarioLogado logado)
+    {
+        if (logado.IdClinica != idClinica)
+            return null;
+
+        if (!string.IsNullOrEmpty(filtro) && !Filtros.Contains(filtro))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Use um destes filtros: hoje, fila ou faltas.");
+
+        // Como pagina-pacientes.js:79-84: 3 ou mais números, só com números e pontuação, é busca por CPF
+        string? nome = null, cpf = null;
+        var termo = busca?.Trim() ?? "";
+        if (termo != "")
+        {
+            var digitos = ValidadorCpf.SoNumeros(termo);
+            if (digitos.Length >= 3 && termo.All(ch => char.IsDigit(ch) || ch is '.' or '-' || char.IsWhiteSpace(ch)))
+                cpf = digitos;
+            else
+                nome = termo;
+        }
+
+        var pessoas = await _pacientes.ListarDaClinicaAsync(idClinica, nome, cpf);
+        var consultas = (await _consultas.ListarComPacienteDaClinicaAsync(idClinica)).ToList();
+        var prevencao = (await _consultas.ListarIdsDePrevencaoDaClinicaAsync(idClinica)).ToHashSet();
+        var faltas = (await _faltas.ListarNaoRetiradasDaClinicaAsync(idClinica)).ToList();
+        var filas = (await _fila.ListarAtivasDaClinicaAsync(idClinica)).ToList();
+
+        var lista = pessoas.Select(p => new PacienteDaClinicaResposta(
+            p.Id,
+            p.Nome,
+            p.Cpf,
+            DateOnly.FromDateTime(p.DataNascimento),
+            p.Parentesco,
+            p.IdUsuario,
+            faltas.Count(f => f.IdPaciente == p.Id),
+            consultas.Where(c => c.Paciente!.Id == p.Id)
+                .Select(c => ConsultaServico.Resposta(c, prevencao.Contains(c.Consulta.Id)))
+                .ToList(),
+            filas.Where(e => e.Paciente.Id == p.Id)
+                .Select(e => new FilaDaPessoaResposta(e.Entrada.Id, e.Entrada.Posicao,
+                    new MedicoResumoResposta(e.Medico.Id, e.Medico.Nome),
+                    DateOnly.FromDateTime(e.Entrada.DataEntrada), e.Entrada.UsaApp))
+                .ToList()));
+
+        var hoje = DateOnly.FromDateTime(DateTime.Today);
+        return filtro switch
+        {
+            "hoje" => lista.Where(p => p.Consultas.Any(c => c.Data == hoje)).ToList(),
+            "fila" => lista.Where(p => p.Filas.Any()).ToList(),
+            "faltas" => lista.Where(p => p.Faltas > 0).ToList(),
+            _ => lista.ToList()
+        };
+    }
+
+    // curto = primeiro nome (primeiroNome em aplicativo/src/utilitarios/texto.js)
+    private static FamiliarResposta Familiar(Paciente p) =>
+        new(p.Id, p.Nome, p.Nome.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "",
+            p.Cpf, p.Parentesco, DateOnly.FromDateTime(p.DataNascimento), p.Cor, p.Alergias,
+            p.Parentesco == "Titular");
 }

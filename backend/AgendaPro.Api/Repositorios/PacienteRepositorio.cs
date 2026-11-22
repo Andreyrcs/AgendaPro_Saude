@@ -25,7 +25,7 @@ public class PacienteRepositorio : IPacienteRepositorio
     {
         const string sql = @"
             SELECT Id_Paciente AS Id, IdUsuario, Nome_paciente AS Nome, CPF AS Cpf,
-                   Data_Nascimento AS DataNascimento, Alergias, Parentesco
+                   Data_Nascimento AS DataNascimento, Alergias, Parentesco, Cor
             FROM Pacientes
             WHERE Id_Paciente = @Id;";
 
@@ -63,5 +63,49 @@ public class PacienteRepositorio : IPacienteRepositorio
 
         transacao.Commit();
         return (idUsuario, idPaciente);
+    }
+
+    private const string SelectPaciente = @"
+        SELECT P.Id_Paciente AS Id, P.IdUsuario, P.Nome_paciente AS Nome, P.CPF AS Cpf,
+               P.Data_Nascimento AS DataNascimento, P.Alergias, P.Parentesco, P.Cor
+        FROM Pacientes P";
+
+    public async Task<IEnumerable<Paciente>> ListarDaContaAsync(int idConta)
+    {
+        const string sql = SelectPaciente + @"
+            WHERE P.IdUsuario = @IdConta
+            ORDER BY CASE WHEN P.Parentesco = 'Titular' THEN 0 ELSE 1 END, P.Id_Paciente;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QueryAsync<Paciente>(sql, new { IdConta = idConta });
+    }
+
+    public async Task<int> CriarFamiliarAsync(Paciente familiar)
+    {
+        const string sqlComCor = @"
+            INSERT INTO Pacientes (IdUsuario, Nome_paciente, CPF, Data_Nascimento, Alergias, Parentesco, Cor)
+            OUTPUT INSERTED.Id_Paciente
+            VALUES (@IdUsuario, @Nome, @Cpf, @DataNascimento, @Alergias, @Parentesco, @Cor);";
+
+        const string sqlSemCor = @"
+            INSERT INTO Pacientes (IdUsuario, Nome_paciente, CPF, Data_Nascimento, Alergias, Parentesco)
+            OUTPUT INSERTED.Id_Paciente
+            VALUES (@IdUsuario, @Nome, @Cpf, @DataNascimento, @Alergias, @Parentesco);";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QuerySingleAsync<int>(string.IsNullOrEmpty(familiar.Cor) ? sqlSemCor : sqlComCor, familiar);
+    }
+
+    // COLLATE ..._CI_AI: o nome é procurado sem diferenciar acento (semAcento de pagina-pacientes.js)
+    public async Task<IEnumerable<Paciente>> ListarDaClinicaAsync(int idClinica, string? nome, string? cpf)
+    {
+        const string sql = SelectPaciente + @"
+            INNER JOIN Paciente_Clinica PC ON PC.IdUsuario = P.IdUsuario AND PC.IdClinica = @IdClinica
+            WHERE (@Nome IS NULL OR P.Nome_paciente COLLATE Latin1_General_CI_AI LIKE '%' + @Nome + '%')
+              AND (@Cpf IS NULL OR P.CPF LIKE '%' + @Cpf + '%')
+            ORDER BY P.Nome_paciente;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QueryAsync<Paciente>(sql, new { IdClinica = idClinica, Nome = nome, Cpf = cpf });
     }
 }
