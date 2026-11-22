@@ -67,8 +67,11 @@ Todos os dados são fictícios.
 | `diego@email.com` | `senha1234` | Paciente (com dois familiares) | Vinculado às 1, 2 e 3 |
 | `eva575609@teste.com` | `senha1234` | Paciente | — |
 | `fabio575609@teste.com` | `senha1234` | Paciente | — |
-| `dono@clinicajacaranda.com.br` | peça a quem roda a API | Dono | 2 |
+| `dono@clinicajacaranda.com.br` | `nova1234` | Dono | 2 |
 | `rita.recepcao@clinicajacaranda.com.br` | `xpass373` | Recepção | 2 |
+| `medum575609@teste.com` | `khued611` | Médico | 2 |
+| `meddois575609@teste.com` | `zafdq923` | Médico | 2 |
+| `medped575609@teste.com` | `rvcsy224` | Médico (pediatria) | 2 |
 | `medrecep@teste.com` | `afjef908` | Médico | 2 |
 | `donob@teste.com` | `senha1234` | Dono | 3 |
 
