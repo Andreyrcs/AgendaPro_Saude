@@ -42,9 +42,9 @@
         const D = op.D;
         const estado =
             op.estado; /* { mes, filtro, foco } — sobrevive à navegação */
-        const pessoa = (id) => D.pessoas.find((p) => p.id === id);
-        const medico = (id) => D.medicos.find((m) => m.id === id);
-        const esp = (id) => D.especialidades[id];
+        const pessoa = (id) => D.pessoas.find((p) => String(p.id) === String(id)); /* ids da API: números; do HTML: texto */
+        const medico = (id) => D.medicos.find((m) => String(m.id) === String(id)) || { nome: '', esp: null };
+        const esp = (id) => D.especialidades[id] || { nome: '' };
         const hoje = D.hoje;
 
         let ocupado = false; /* uma virada por vez */
@@ -94,7 +94,7 @@
                 });
             });
             const e = D.espera;
-            if (e && e.oferta && !e.resolvida) {
+            if (e && e.oferta && e.vaga) {
                 const m = medico(e.medico);
                 lista.push({
                     tipo: 'oferecido',
@@ -122,15 +122,15 @@
             return mapa;
         }
         const passaFiltro = (ev) =>
-            estado.filtro === 'todos' || ev.pessoa === estado.filtro;
+            estado.filtro === 'todos' || String(ev.pessoa) === String(estado.filtro);
         const feriado = (dia) => (D.feriados || []).find((f) => f.data === dia);
         const nomeDe = (id) => {
             const p = pessoa(id);
-            return p.id === D.titular ? 'Você' : p.curto;
+            return String(p.id) === String(D.titular) ? 'Você' : p.curto;
         };
         const paraQuem = (id) => {
             const p = pessoa(id);
-            return p.id === D.titular ? 'você' : p.tratamento;
+            return String(p.id) === String(D.titular) ? 'você' : p.tratamento;
         };
 
         raiz.innerHTML =
@@ -205,7 +205,7 @@
                     .map(
                         (p) =>
                             '<button type="button" class="cal-pessoa" aria-pressed="' +
-                            (estado.filtro === p.id) +
+                            (String(estado.filtro) === String(p.id)) +
                             '" data-filtro="' +
                             p.id +
                             '" aria-label="' +
@@ -213,7 +213,7 @@
                             '">' +
                             A.avatar(p, 44) +
                             '<span>' +
-                            nomeDe(p.id) +
+                            A.esc(nomeDe(p.id)) +
                             '</span></button>',
                     )
                     .join('');
@@ -406,17 +406,17 @@
                         TIPOS[ev.tipo].rotulo +
                         '</span>' +
                         '<span class="cda-item__titulo">' +
-                        ev.titulo +
+                        A.esc(ev.titulo) +
                         '</span>' +
                         '<span class="cda-item__sub">' +
                         (ev.hora
                             ? '<span class="num">' + ev.hora + '</span> · '
                             : '') +
-                        ev.sub +
+                        A.esc(ev.sub) +
                         '</span>' +
                         '<span class="pessoa-chip">' +
                         A.avatar(p, 28) +
-                        nomeDe(p.id) +
+                        A.esc(nomeDe(p.id)) +
                         '</span>' +
                         '</span>' +
                         (ev.href ? I('chevron-right', 'item__seta') : '') +
@@ -438,9 +438,9 @@
                                 I('calendar-heart') +
                                 'Prevenção</span>' +
                                 '<p class="prev-item__titulo" style="margin-top:6px">' +
-                                it.titulo +
+                                A.esc(it.titulo) +
                                 '</p><p class="prev-item__nota">Ainda sem data · ' +
-                                it.nota +
+                                A.esc(it.nota) +
                                 '</p></div></div>',
                         )
                         .join('') +
@@ -451,7 +451,7 @@
                 '<p class="cartao">Nada marcado neste mês' +
                     (estado.filtro === 'todos'
                         ? ''
-                        : ' para ' + paraQuem(estado.filtro)) +
+                        : ' para ' + A.esc(paraQuem(estado.filtro))) +
                     '.</p>';
         }
 
@@ -499,7 +499,7 @@
                 id === 'todos'
                     ? 'Mostrando a família inteira'
                     : 'Mostrando só ' +
-                          (id === D.titular
+                          (String(id) === String(D.titular)
                               ? 'os seus compromissos'
                               : 'os compromissos de ' + pessoa(id).curto),
             );
@@ -526,7 +526,7 @@
                 '</h3>' +
                 '<p class="cda-cabeca__sub">' +
                 (dia === hoje ? 'Hoje · ' : '') +
-                (f ? 'Feriado: ' + f.nome + ' · ' : '') +
+                (f ? 'Feriado: ' + A.esc(f.nome) + ' · ' : '') +
                 quantos +
                 '</p></div>' +
                 '<button type="button" class="botao-icone pressionavel" data-fechar-dia aria-label="Voltar ao mês">' +
@@ -550,12 +550,12 @@
                             selo +
                             '</span>' +
                             '<span class="cda-item__titulo">' +
-                            ev.titulo +
+                            A.esc(ev.titulo) +
                             '</span>' +
                             '<span class="cda-item__sub">' +
-                            ev.sub +
+                            A.esc(ev.sub) +
                             ' · para ' +
-                            paraQuem(p.id) +
+                            A.esc(paraQuem(p.id)) +
                             '</span>';
                         if (ev.tipo === 'oferecido') {
                             return (
@@ -585,7 +585,7 @@
                           : 'Nada marcado ' +
                             (estado.filtro === 'todos'
                                 ? ''
-                                : 'para ' + paraQuem(estado.filtro) + ' ') +
+                                : 'para ' + A.esc(paraQuem(estado.filtro)) + ' ') +
                             'neste dia.') +
                       '</p>' +
                       (f || dia < hoje

@@ -1,4 +1,6 @@
-(function () {
+/* AgendaPro Saúde — área do paciente no computador. Dados e ações pela API (paciente-servicos.js); a tela só
+   começa depois que os dados chegam. Todo texto que vem da API passa por A.esc() antes de entrar no HTML. */
+window.PACIENTE.iniciar(function () {
     'use strict';
 
     const D = window.DADOS;
@@ -46,11 +48,16 @@
         else delete raiz.dataset.movimento;
     }
 
-    const pessoa = (id) => D.pessoas.find((p) => p.id === id);
-    const medico = (id) => D.medicos.find((m) => A.mesmoId(m.id, id));
-    const esp = (id) => D.especialidades[id];
+    const pessoa = (id) => D.pessoas.find((p) => A.mesmoId(p.id, id));
+    const medico = (id) => D.medicos.find((m) => A.mesmoId(m.id, id)) || { id, nome: '', esp: null, cor: '#e2ecf0' };
+    const esp = (id) => D.especialidades[id] || { nome: '', desc: '' };
     const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-    const nomeCurto = (p) => (p.id === D.titular ? 'Você' : p.curto);
+    const nomeCurto = (p) => (A.mesmoId(p.id, D.titular) ? 'Você' : p.curto);
+    const ehTitular = (p) => !!p && A.mesmoId(p.id, D.titular);
+    /* especialidade pelo NOME (o id muda de clínica para clínica): clínica geral e pediatria */
+    const semAcento = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+    const espPeloNome = (nome) => Object.keys(D.especialidades).find((k) => semAcento(D.especialidades[k].nome) === nome);
+    const espPadraoPara = (p) => (p && p.idade !== null && p.idade < 18 && espPeloNome('pediatria')) || espPeloNome('clinica geral') || Object.keys(D.especialidades)[0] || '';
     const ordenar = (lista) =>
         lista
             .slice()
@@ -64,9 +71,9 @@
         return (
             '<div class="titulo-pagina">' +
             '<h1 tabindex="-1">' +
-            titulo +
+            A.esc(titulo) +
             '</h1>' +
-            (sub ? '<p>' + sub + '</p>' : '') +
+            (sub ? '<p>' + A.esc(sub) + '</p>' : '') +
             '</div>'
         );
     }
@@ -116,10 +123,10 @@
             A.folha(c.data) +
             '<span class="consulta-cartao__corpo">' +
             '<span class="consulta-cartao__esp">' +
-            esp(m.esp).nome +
+            A.esc(esp(m.esp).nome) +
             '</span>' +
             '<span class="consulta-cartao__medico">' +
-            m.nome +
+            A.esc(m.nome) +
             '</span>' +
             '<span class="meta">' +
             I('clock') +
@@ -130,7 +137,7 @@
             '</span>' +
             '<span class="pessoa-chip">' +
             A.avatar(p, 28) +
-            nomeCurto(p) +
+            A.esc(nomeCurto(p)) +
             '</span>' +
             '</span>' +
             I('chevron-right', 'item__seta') +
@@ -151,7 +158,7 @@
     function ligarClinica(rotulo) {
         return (
             '<a class="botao botao--secundario botao--pequeno" href="tel:' +
-            D.clinica.telefoneLink +
+            A.esc(D.clinica.telefoneLink) +
             '">' +
             I('phone') +
             rotulo +
@@ -207,10 +214,10 @@
     function restricaoHTML(r) {
         return (
             '<div class="aviso-regra aviso-regra--forte" role="note">' + I('info') +
-            '<span><b>' + r.titulo + '</b>' + r.texto +
+            '<span><b>' + A.esc(r.titulo) + '.</b>' + A.esc(r.texto) +
             (r.tipo === 'so_recepcao'
-                ? '<br><a class="botao botao--principal" style="margin-top:10px" href="tel:' + D.clinica.telefoneLink + '">' +
-                  I('phone') + 'Ligar para a clínica · ' + D.clinica.telefone + '</a>'
+                ? '<br><a class="botao botao--principal" style="margin-top:10px" href="tel:' + A.esc(D.clinica.telefoneLink) + '">' +
+                  I('phone') + 'Ligar para a clínica · ' + A.esc(D.clinica.telefone) + '</a>'
                 : '') +
             '</span></div>'
         );
@@ -224,8 +231,8 @@
                 return (
                     '<section class="confirmar-presenca" aria-label="Confirmar presença">' +
                     '<p><b>Confirme sua consulta ' + (amanha ? 'de amanhã' : 'de hoje') + '</b><br>' +
-                    esp(m.esp).nome + ' com ' + m.nome + ', às ' + c.hora +
-                    (p.id === D.titular ? '' : ' · para ' + nomeCurto(p)) + '.</p>' +
+                    A.esc(esp(m.esp).nome) + ' com ' + A.esc(m.nome) + ', às ' + c.hora +
+                    (ehTitular(p) ? '' : ' · para ' + A.esc(nomeCurto(p))) + '.</p>' +
                     (amanha ? '<p style="font-size:0.875rem">Se não puder ir, toque em “Não vou” até o fim de hoje: não há nenhuma consequência.</p>' : '') +
                     '<div class="confirmar-presenca__acoes">' +
                     '<button type="button" class="botao botao--principal" data-vou="' + c.id + '">Vou</button>' +
@@ -289,7 +296,7 @@
             I('phone') +
             'Ligar 192</a>' +
             '</div></div></section>';
-        if (e && !e.resolvida) {
+        if (e) {
             const m = medico(e.medico);
             html +=
                 '<section class="grupo" aria-labelledby="t-espera-ini">' +
@@ -299,16 +306,17 @@
                 I('list-ordered') +
                 '</span>' +
                 '<span class="item__corpo"><span class="item__titulo" style="display:block">' +
-                esp(m.esp).nome +
+                A.esc(esp(m.esp).nome) +
                 ' · ' +
-                m.nome +
+                A.esc(m.nome) +
                 '</span>' +
                 '<span class="item__sub" style="display:block">Você está na posição ' +
                 e.posicao +
                 ' da fila</span></span>' +
                 I('chevron-right', 'item__seta') +
-                '</a></section></div>';
+                '</a></section>';
         }
+        html += '</div>'; /* fecha a coluna do assistente, com ou sem fila */
         html +=
             '<div style="display:flex;flex-direction:column;gap:20px">' +
             '<a class="botao botao--principal botao--largo" href="#agendar">' +
@@ -329,26 +337,31 @@
                 A.folha(prox.data, { bloco: true }) +
                 '<span class="consulta-cartao__corpo">' +
                 '<span class="consulta-cartao__topo"><span class="consulta-cartao__esp">' +
-                esp(m.esp).nome +
+                A.esc(esp(m.esp).nome) +
                 '</span><span class="selo selo--menta">' +
                 cap(A.relativo(prox.data)) +
                 '</span></span>' +
                 '<span class="consulta-cartao__medico">' +
-                m.nome +
+                A.esc(m.nome) +
                 '</span>' +
                 '<span class="meta">' +
                 I('clock') +
                 '<span class="num">' +
                 prox.hora +
-                '</span> · ' +
-                prox.sala +
+                '</span>' +
+                (prox.sala ? ' · ' + A.esc(prox.sala) : '') +
                 '</span>' +
                 '<span class="pessoa-chip">' +
                 A.avatar(p, 30) +
                 'Para ' +
-                (p.id === D.titular ? 'você' : p.tratamento) +
+                (ehTitular(p) ? 'você' : A.esc(p.tratamento)) +
                 '</span>' +
                 '</span></a></section>';
+        } else {
+            html +=
+                '<section class="grupo" aria-labelledby="t-prox-ini">' +
+                cabecaSecao('Próxima consulta') +
+                '<p class="cartao">Nenhuma consulta marcada. Conte ao assistente o que está sentindo, ou toque em “Marcar consulta”.</p></section>';
         }
 
         html +=
@@ -363,11 +376,11 @@
                         '">' +
                         A.avatar(p, 44) +
                         '<span class="item__corpo"><span class="pessoa-linha__nome" style="display:block">' +
-                        p.curto +
-                        (p.id === D.titular ? ' (você)' : '') +
+                        A.esc(p.curto) +
+                        (ehTitular(p) ? ' (você)' : '') +
                         '</span>' +
                         '<span class="pessoa-linha__rel" style="display:block">' +
-                        p.relacao +
+                        A.esc(p.relacao) +
                         ' · ' +
                         p.idade +
                         ' anos</span></span>' +
@@ -435,120 +448,67 @@
         return { titulo: 'Início', html, montar };
     }
 
-    const EMERGENCIAS = [
-        'dor no peito',
-        'falta de ar',
-        'infarto',
-        'avc',
-        'acidente',
-        'desmaio',
-        'convulsão',
-        'sangramento',
-        'overdose',
-        'intoxicação',
-    ];
-    const CVV = [
-        'suicídio',
-        'suicidar',
-        'me matar',
-        'não quero viver',
-        'acabar com tudo',
-    ];
-    const SUGESTOES = {
-        cabeça: [
-            { nome: 'Neurologia', esp: 'neuro' },
-            { nome: 'Clínica geral', esp: 'clinica' },
-        ],
-        febre: [
-            { nome: 'Clínica geral', esp: 'clinica' },
-            { nome: 'Pediatria', esp: 'pediatria' },
-        ],
-        costas: [{ nome: 'Ortopedia', esp: 'orto' }],
-        joelho: [{ nome: 'Ortopedia', esp: 'orto' }],
-        pele: [{ nome: 'Dermatologia', esp: 'dermato' }],
-        coração: [{ nome: 'Cardiologia', esp: 'cardio' }],
-        peito: [
-            { nome: 'Cardiologia', esp: 'cardio' },
-            { nome: 'Pneumologia', esp: 'pneumo' },
-        ],
-        pressão: [
-            { nome: 'Cardiologia', esp: 'cardio' },
-            { nome: 'Clínica geral', esp: 'clinica' },
-        ],
-        ouvido: [{ nome: 'Otorrinolaringologia', esp: 'otorrino' }],
-        garganta: [{ nome: 'Otorrinolaringologia', esp: 'otorrino' }],
-        olho: [{ nome: 'Oftalmologia', esp: 'oftalmo' }],
-        vista: [{ nome: 'Oftalmologia', esp: 'oftalmo' }],
-        barriga: [{ nome: 'Clínica geral', esp: 'clinica' }],
-        estômago: [{ nome: 'Clínica geral', esp: 'clinica' }],
-        urina: [{ nome: 'Urologia', esp: 'uro' }],
-        criança: [{ nome: 'Pediatria', esp: 'pediatria' }],
-    };
-
-    function analisar(texto) {
-        const t = texto.toLowerCase();
-        if (CVV.some((s) => t.includes(s))) return { tipo: 'cvv' };
-        if (EMERGENCIAS.some((s) => t.includes(s)))
-            return { tipo: 'emergencia' };
-        const sugs = [];
-        Object.keys(SUGESTOES).forEach((palavra) => {
-            if (t.includes(palavra)) {
-                SUGESTOES[palavra].forEach((s) => {
-                    if (!sugs.find((x) => x.esp === s.esp)) sugs.push(s);
-                });
-            }
-        });
-        if (sugs.length) return { tipo: 'sugestoes', sugestoes: sugs };
-        return { tipo: 'generico' };
-    }
+    /* ─── Assistente: as mesmas regras do celular (triagem.js), para o alerta de emergência nunca ser diferente ─── */
+    const analisar = (texto) => window.TRIAGEM.analisar(texto);
 
     function respostaHTML(r) {
         if (r.tipo === 'emergencia') {
             return (
-                '<div class="emergencia">' +
+                '<div class="emergencia" role="alert">' +
                 '<p class="emergencia__titulo">' +
                 I('triangle-alert') +
                 ' Isso pode ser uma emergência</p>' +
-                '<p>Não aguarde uma consulta. Ligue agora para o SAMU ou vá ao pronto-socorro mais próximo.</p>' +
+                '<p>Dor no peito, falta de ar, desmaio ou fraqueza de um lado do corpo precisam de atendimento <b>agora</b>. Não espere por uma consulta.</p>' +
                 '<a href="tel:192">' +
                 I('phone') +
-                ' Ligar 192 — SAMU</a></div>'
+                ' Ligar 192 (SAMU)</a></div>'
             );
         }
         if (r.tipo === 'cvv') {
             return (
-                '<div class="emergencia">' +
+                '<div class="emergencia" role="alert">' +
                 '<p class="emergencia__titulo">' +
-                I('heart-handshake') +
+                I('heart-pulse') +
                 ' Você não está sozinho</p>' +
-                '<p>Se estiver pensando em se machucar, ligue para o CVV agora. Eles atendem 24 horas por dia.</p>' +
+                '<p>Converse agora com alguém do CVV, de graça, 24 horas por dia. Se houver risco imediato, ligue para o SAMU.</p>' +
                 '<a href="tel:188">' +
                 I('phone') +
-                ' Ligar 188 — CVV</a></div>'
+                ' Ligar 188 (CVV)</a> ' +
+                '<a href="tel:192">' +
+                I('phone') +
+                ' Ligar 192 (SAMU)</a></div>'
             );
         }
-        if (r.tipo === 'sugestoes') {
-            return (
-                '<p class="balao balao--ele" style="max-width:none">Pelo que você descreveu, pode ser indicado consultar:</p>' +
-                r.sugestoes
-                    .map(
-                        (s) =>
-                            '<a class="chip-esp pressionavel" href="#agendar/' +
-                            s.esp +
-                            '/' +
-                            D.titular +
-                            '">' +
-                            s.nome +
-                            I('chevron-right') +
-                            '</a>',
-                    )
-                    .join('')
-            );
-        }
+        /* o assistente sugere NOMES; cada um é procurado nas especialidades desta clínica */
+        const p = pessoa(r.quem) || pessoa(D.titular);
+        const ids = r.esps.map((nome) => espPeloNome(semAcento(nome))).filter(Boolean);
+        const intro = ehTitular(p)
+            ? 'Pelo que você descreveu, estas especialidades podem ajudar:'
+            : 'Para ' + A.esc(p.tratamento) + ', estas especialidades podem ajudar:';
         return (
-            '<p class="balao balao--ele" style="max-width:none">Entendi. Para te ajudar melhor, você pode descrever mais detalhes do que está sentindo? Ou, se preferir, podemos marcar uma consulta de clínica geral. <a href="#agendar/clinica/' +
-            D.titular +
-            '">Agendar clínica geral</a></p>'
+            '<p class="balao balao--ele" style="max-width:none">' +
+            intro +
+            '</p>' +
+            (ids.length
+                ? ids
+                      .map(
+                          (id) =>
+                              '<a class="chip-esp pressionavel" href="#agendar/' +
+                              id +
+                              '/' +
+                              p.id +
+                              '">' +
+                              A.esc(esp(id).nome) +
+                              I('chevron-right') +
+                              '</a>',
+                      )
+                      .join('')
+                : '<p class="balao balao--ele" style="max-width:none">Esta clínica não atende ' +
+                  A.esc(r.esps.join(' nem ')) +
+                  '. Ligue para a clínica para saber onde procurar: ' +
+                  A.esc(D.clinica.telefone) +
+                  '.</p>') +
+            '<p class="balao balao--ele" style="max-width:none">Isto é uma orientação, não um diagnóstico. Se piorar, ou se aparecer febre alta, falta de ar ou dor forte, procure um pronto-socorro.</p>'
         );
     }
 
@@ -661,6 +621,16 @@
         return { titulo: 'Assistente de saúde', html, montar };
     }
 
+    /* "1 retorno e 2 exames para acompanhar" contado a partir da API */
+    function textoAcompanhamento() {
+        const r = D.acompanhamento.retornos.length, x = D.acompanhamento.exames.length;
+        if (!r && !x) return 'Nada para acompanhar agora';
+        const partes = [];
+        if (r) partes.push(r + (r === 1 ? ' retorno' : ' retornos'));
+        if (x) partes.push(x + (x === 1 ? ' exame' : ' exames'));
+        return partes.join(' e ') + ' para acompanhar';
+    }
+
     function renderAgenda() {
         const html =
             tituloPagina('Agenda', null) +
@@ -684,7 +654,7 @@
             I('repeat') +
             '</span>' +
             '<span class="item__corpo"><span class="item__titulo" style="display:block">Retornos e exames pedidos</span>' +
-            '<span class="item__sub" style="display:block">1 retorno e 2 exames para acompanhar</span></span>' +
+            '<span class="item__sub" style="display:block">' + textoAcompanhamento() + '</span></span>' +
             I('chevron-right', 'item__seta') +
             '</a></div>';
 
@@ -800,30 +770,32 @@
         const html =
             tituloPagina(
                 'Família',
-                'Você cuida das consultas de ' + D.pessoas.length + ' pessoas.',
+                D.pessoas.length === 1
+                    ? 'Por enquanto, só você. Adicione quem você cuida para marcar consultas para essas pessoas.'
+                    : 'Você cuida das consultas de ' + D.pessoas.length + ' pessoas.',
             ) +
             '<div class="cartao lista-cartao">' +
             D.pessoas
                 .map((p) => {
-                    const c = proximas().find((k) => k.pessoa === p.id);
+                    const c = proximas().find((k) => A.mesmoId(k.pessoa, p.id));
                     return (
                         '<a class="pessoa-linha" href="#pessoa/' +
                         p.id +
                         '">' +
                         A.avatar(p, 56) +
                         '<span class="item__corpo"><span class="pessoa-linha__nome" style="display:block">' +
-                        p.curto +
-                        (p.id === D.titular ? ' (você)' : '') +
+                        A.esc(p.curto) +
+                        (ehTitular(p) ? ' (você)' : '') +
                         '</span>' +
                         '<span class="pessoa-linha__rel" style="display:block">' +
-                        p.relacao +
+                        A.esc(p.relacao) +
                         ' · ' +
                         p.idade +
                         ' anos</span>' +
                         '<span class="pessoa-linha__prox">' +
                         (c
                             ? I('calendar-days') +
-                              esp(medico(c.medico).esp).nome +
+                              A.esc(esp(medico(c.medico).esp).nome) +
                               ' · ' +
                               A.curto(c.data)
                             : 'Nenhuma consulta marcada') +
@@ -844,19 +816,20 @@
 
     function renderPessoa(id) {
         const p = pessoa(id) || pessoa(D.titular);
-        const consultas = proximas().filter((c) => c.pessoa === p.id);
+        const consultas = proximas().filter((c) => A.mesmoId(c.pessoa, p.id));
         const lembretes = [];
         D.prevencao.forEach((mes) =>
             mes.itens.forEach((it) => {
-                if (it.pessoa === p.id) lembretes.push({ mes, it });
+                if (A.mesmoId(it.pessoa, p.id)) lembretes.push({ mes, it });
             }),
         );
-        const espPadrao = p.idade < 18 ? 'pediatria' : 'clinica';
+        const espPadrao = espPadraoPara(p);
         const retornos = D.acompanhamento.retornos.filter(
-            (r) => r.pessoa === p.id,
+            (r) => A.mesmoId(r.pessoa, p.id),
         );
+        /* F28: exame pedido pelo médico só é "pendente" ou "realizado" */
         const exames = D.acompanhamento.exames.filter(
-            (x) => x.pessoa === p.id && x.status !== 'agendado',
+            (x) => A.mesmoId(x.pessoa, p.id) && x.status === 'pendente',
         );
 
         const html =
@@ -875,7 +848,7 @@
             '">' +
             I('plus') +
             'Marcar consulta para ' +
-            (p.id === D.titular ? 'mim' : p.curto) +
+            (ehTitular(p) ? 'mim' : A.esc(p.curto)) +
             '</a></div>' +
             '</div>' +
             '<div>' +
@@ -887,7 +860,7 @@
                       .map(
                           (r) =>
                               '<div class="prev-item"><div class="item__corpo"><p class="prev-item__titulo">' +
-                              r.titulo +
+                              A.esc(r.titulo) +
                               '</p>' +
                               '<div class="prev-item__acao">' +
                               seloPrazo(r.prazo) +
@@ -898,7 +871,7 @@
                       .map(
                           (x) =>
                               '<div class="prev-item"><div class="item__corpo"><p class="prev-item__titulo">' +
-                              x.titulo +
+                              A.esc(x.titulo) +
                               '</p>' +
                               '<div class="prev-item__acao">' +
                               ligarClinica('Ligar para marcar') +
@@ -911,13 +884,21 @@
             '<div><dt>Parentesco</dt><dd>' +
             A.esc(p.relacao) +
             '</dd></div>' +
+            '<div><dt>Nascimento</dt><dd>' +
+            (p.nascimento ? A.extenso(p.nascimento, false) + ' de ' + p.nascimento.slice(0, 4) : '—') +
+            '</dd></div>' +
             '<div><dt>CPF</dt><dd>' +
-            (p.cpf ? API.formatarCPF(p.cpf) : '—') +
+            (p.cpf ? A.esc(API.formatarCPF(p.cpf)) : '—') +
             '</dd></div>' +
             '<div><dt>Alergias</dt><dd>' +
-            p.alergias +
+            A.esc(p.alergias) +
             '</dd></div>' +
             '</dl>' +
+            '<a class="botao botao--secundario botao--largo" style="margin-top:12px" href="#editar-familiar/' +
+            p.id +
+            '">' +
+            I('user-round') +
+            'Editar dados</a>' +
             '</div></div>';
 
         return { titulo: p.curto, html };
@@ -947,12 +928,12 @@
                         '<div class="prev-item">' +
                         A.avatar(p, 40) +
                         '<div class="item__corpo"><p class="prev-item__titulo">' +
-                        r.titulo +
+                        A.esc(r.titulo) +
                         '</p>' +
                         '<p class="prev-item__nota">' +
-                        p.curto +
+                        A.esc(p.curto) +
                         ' · com ' +
-                        medico(r.medico).nome +
+                        A.esc(medico(r.medico).nome) +
                         '</p>' +
                         '<div class="prev-item__acao">' +
                         seloPrazo(r.prazo) +
@@ -979,12 +960,12 @@
                         '<div class="prev-item">' +
                         A.avatar(p, 40) +
                         '<div class="item__corpo"><p class="prev-item__titulo">' +
-                        x.titulo +
+                        A.esc(x.titulo) +
                         '</p>' +
                         '<p class="prev-item__nota">' +
-                        p.curto +
+                        A.esc(p.curto) +
                         ' · pedido por ' +
-                        medico(x.pedidoPor).nome +
+                        A.esc(medico(x.pedidoPor).nome) +
                         '</p>' +
                         '<div class="prev-item__acao">' +
                         (c
@@ -1018,7 +999,7 @@
             '<div class="cartao item" style="padding:16px;margin-bottom:20px;margin-top:40px">' +
             A.avatar(t, 64) +
             '<span class="item__corpo"><span class="item__titulo" style="display:block;font-size:1.125rem">' +
-            t.nome +
+            A.esc(t.nome) +
             '</span>' +
             '<span class="item__sub" style="display:block">juliana.santos@exemplo.com</span></span></div>' +
             '<div class="grupo">' +
@@ -1126,8 +1107,8 @@
 
     function renderConsulta(id) {
         const c =
-            D.consultas.find((k) => k.id === id) ||
-            D.passadas.find((k) => k.id === id);
+            D.consultas.find((k) => A.mesmoId(k.id, id)) ||
+            D.passadas.find((k) => A.mesmoId(k.id, id));
         if (!c) return renderAgenda();
         const passada = D.passadas.includes(c);
         const m = medico(c.medico),
@@ -1142,15 +1123,15 @@
             '<div class="cartao consulta-cartao" style="padding:20px">' +
             A.folha(c.data, { bloco: true }) +
             '<span class="consulta-cartao__corpo"><span class="consulta-cartao__esp">' +
-            esp(m.esp).nome +
+            A.esc(esp(m.esp).nome) +
             '</span>' +
             '<span class="consulta-cartao__medico">' +
-            m.nome +
+            A.esc(m.nome) +
             '</span>' +
             '<span class="pessoa-chip">' +
             A.avatar(p, 30) +
             'Para ' +
-            (p.id === D.titular ? 'você' : p.tratamento) +
+            (ehTitular(p) ? 'você' : A.esc(p.tratamento)) +
             '</span></span></div>' +
             '<dl class="cartao lista-cartao ficha">' +
             '<div><dt>Data</dt><dd>' +
@@ -1160,30 +1141,27 @@
             c.hora +
             '</dd></div>' +
             '<div><dt>Local</dt><dd>' +
-            D.clinica.nome +
-            ', ' +
-            c.sala +
+            A.esc(D.clinica.nome) +
+            (c.sala ? ', ' + A.esc(c.sala) : '') +
+            '<br>' +
+            A.esc(D.clinica.endereco) +
             '</dd></div>' +
             '<div><dt>Motivo</dt><dd>' +
-            c.motivo +
+            (c.motivo ? A.esc(c.motivo) : 'Não informado') +
             '</dd></div>' +
             '</dl>' +
             '</div>' +
             (!passada
                 ? '<div class="gaveta__acoes" style="margin-top:20px">' +
-                  '<a class="botao botao--principal" href="#agendar/' +
-                  m.esp +
-                  '/' +
-                  p.id +
-                  '">' +
-                  I('calendar-days') +
-                  'Remarcar</a>' +
                   '<a class="botao botao--secundario" href="tel:' +
-                  D.clinica.telefoneLink +
+                  A.esc(D.clinica.telefoneLink) +
                   '">' +
                   I('phone') +
-                  'Ligar para a clínica</a></div>' +
-                  '<div class="zona-perigo" style="margin-top:16px"><button type="button" class="botao botao--texto-perigo" id="cancelar">Cancelar consulta</button></div>'
+                  'Ligar para a clínica ' +
+                  A.esc(D.clinica.telefone) +
+                  '</a></div>' +
+                  '<p class="aviso-falta">' + I('info') + '<span>' + PACIENTE.textoDaRegra() + '</span></p>' +
+                  '<div class="zona-perigo" style="margin-top:16px"><button type="button" class="botao botao--texto-perigo" id="cancelar">Cancelar consulta</button><p>Cancelar até o fim do dia anterior não tem nenhuma consequência.</p></div>'
                 : '');
 
         function montar(el) {
@@ -1194,9 +1172,9 @@
                 abrirGaveta(
                     '<h2 class="gaveta__titulo" id="gaveta-titulo">Cancelar esta consulta?</h2>' +
                         '<p class="gaveta__texto">' +
-                        esp(m.esp).nome +
+                        A.esc(esp(m.esp).nome) +
                         ' com ' +
-                        m.nome +
+                        A.esc(m.nome) +
                         ', ' +
                         A.extenso(c.data) +
                         ', às ' +
@@ -1205,20 +1183,32 @@
                         (contaFalta
                             ? '<p class="aviso-regra aviso-regra--forte">' + I('info') + '<span>Hoje é o dia da consulta e você confirmou presença: cancelar agora conta como falta sem aviso.</span></p>'
                             : '<p class="gaveta__texto">Sem nenhuma consequência: o horário volta para quem precisa.</p>') +
+                        '<p class="campo__erro" id="erro-cancelar" role="alert" hidden></p>' +
                         '<div class="gaveta__acoes"><button type="button" class="botao botao--principal" data-fechar>Manter consulta</button></div>' +
                         '<div class="gaveta__acoes" style="margin-top:28px"><button type="button" class="botao botao--texto-perigo" id="confirmar-cancelar">Sim, cancelar</button></div>',
                     {
                         montar: (g) =>
                             g
                                 .querySelector('#confirmar-cancelar')
-                                .addEventListener('click', () => {
-                                    const r = PACIENTE.cancelar(c);
+                                .addEventListener('click', async (ev) => {
+                                    const botao = ev.currentTarget;
+                                    botao.disabled = true;
+                                    let r;
+                                    try {
+                                        r = await PACIENTE.cancelar(c); /* DELETE /api/consultas/{id} → { falta, oferecidoAFila } */
+                                    } catch (e) {
+                                        const erro = g.querySelector('#erro-cancelar');
+                                        erro.textContent = e.message;
+                                        erro.hidden = false;
+                                        botao.disabled = false;
+                                        return;
+                                    }
                                     fecharGaveta();
                                     aviso({
                                         titulo: 'Consulta cancelada',
                                         texto:
                                             (r.falta ? 'Conta como falta sem aviso. ' : '') +
-                                            (r.oferecidoA
+                                            (r.oferecidoAFila
                                                 ? 'O horário foi oferecido a quem espera na lista.'
                                                 : 'O horário ficou livre para outra pessoa.'),
                                         icone: 'info',
@@ -1255,9 +1245,9 @@
             ord +
             '</span><br>da fila</p></div>' +
             '<p class="espera-painel__detalhe"><b>' +
-            esp(m.esp).nome +
+            A.esc(esp(m.esp).nome) +
             '</b> · ' +
-            m.nome +
+            A.esc(m.nome) +
             '<br>Na fila desde ' +
             A.extenso(e.desde, false) +
             '</p>' +
@@ -1347,9 +1337,9 @@
                 '<div class="gaveta__resumo">' +
                 A.folha(v.data, { menta: true }) +
                 '<div><b>' +
-                esp(m.esp).nome +
+                A.esc(esp(m.esp).nome) +
                 '</b><br>' +
-                m.nome +
+                A.esc(m.nome) +
                 '<br><span class="num">' +
                 v.hora +
                 '</span></div></div>' +
@@ -1420,9 +1410,9 @@
             cabeca: 'AgendaPro Saúde · agora',
             titulo: 'Abriu uma vaga para você!',
             texto:
-                esp(m.esp).nome +
+                A.esc(esp(m.esp).nome) +
                 ' com ' +
-                m.nome +
+                A.esc(m.nome) +
                 ', ' +
                 A.extenso(e.vaga.data) +
                 ', às ' +
@@ -1463,9 +1453,9 @@
                 ', às <span class="num">' +
                 c.hora +
                 '</span></b><br>' +
-                esp(m.esp).nome +
+                A.esc(esp(m.esp).nome) +
                 ' com ' +
-                m.nome +
+                A.esc(m.nome) +
                 '<br>Para ' +
                 (p.id === D.titular ? 'você' : p.tratamento) +
                 '</div></div>' +
@@ -1537,7 +1527,7 @@
                             p.id +
                             '">' +
                             A.avatar(p, 28) +
-                            nomeCurto(p) +
+                            A.esc(nomeCurto(p)) +
                             '</button>',
                     )
                     .join('') +
@@ -1598,9 +1588,9 @@
                         iniciais +
                         '</span>' +
                         '<span><strong style="display:block">' +
-                        m.nome +
+                        A.esc(m.nome) +
                         '</strong><span style="font-size:0.875rem;color:var(--tinta-2)">' +
-                        mEsp.nome +
+                        A.esc(mEsp.nome) +
                         '</span></span>' +
                         '</div>' +
                         '<div style="display:flex;flex-wrap:wrap;gap:8px">' +
@@ -1658,9 +1648,9 @@
                         '<div class="gaveta__resumo">' +
                         A.folha(data, { menta: true }) +
                         '<div><b>' +
-                        mEsp.nome +
+                        A.esc(mEsp.nome) +
                         '</b><br>' +
-                        m.nome +
+                        A.esc(m.nome) +
                         '<br><span class="num">' +
                         hora +
                         '</span></div>' +
@@ -1750,42 +1740,45 @@
         return { titulo, html, montar };
     }
 
-    function renderAdicionarFamiliar() {
-        const CORES = [
-            '#12263f',
-            '#e07b39',
-            '#2f6f9f',
-            '#b5543a',
-            '#2e5e4e',
-            '#a0522d',
-            '#7c3f8c',
-        ];
+    /* Adicionar (#adicionar-familiar) ou editar (#editar-familiar/{id}) alguém da família, pela API.
+       Os erros da API (como "Este CPF já está cadastrado.") aparecem no campo certo. */
+    function renderAdicionarFamiliar(idEditar) {
+        const CORES = PACIENTE.CORES_FAMILIA;
+        const p = idEditar ? pessoa(idEditar) : null;
+        const editar = !!p;
+        const titular = editar && p.titular;
+        const dataBr = (iso) => (iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) : '');
+        const corAtual = editar ? String(p.cor || '').toUpperCase() : CORES[D.pessoas.length % CORES.length];
+        const val = (v) => (v ? ' value="' + A.esc(v) + '"' : '');
 
         const html =
             tituloPagina(
-                'Adicionar familiar',
-                'Preencha os dados e a pessoa aparecerá em todas as consultas.',
+                editar ? 'Editar dados de ' + p.curto : 'Adicionar familiar',
+                editar ? 'As mudanças aparecem em todas as consultas.' : 'Preencha os dados e a pessoa aparecerá em todas as consultas.',
             ) +
             '<div class="grade grade--2" style="gap:24px;align-items:start">' +
             '<div>' +
             '<form id="form-familiar" class="formulario" novalidate>' +
-            '<div class="campo"><label for="f-nome">Nome completo</label>' +
-            '<input id="f-nome" type="text" autocomplete="off" placeholder="Ex.: Ana Beatriz Santos" required></div>' +
+            '<div class="campo" id="c-nome"><label for="f-nome">Nome completo</label>' +
+            '<input id="f-nome" type="text" autocomplete="off" placeholder="Ex.: Ana Beatriz Santos" required' + val(editar && p.nome) + '></div>' +
             '<div class="campo" id="c-cpf"><label for="f-cpf">CPF</label>' +
-            '<input id="f-cpf" type="text" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required></div>' +
-            '<div class="campo" id="c-rel"><span class="campo__rotulo" id="f-rel-label">Parentesco (obrigatório)</span>' +
-            '<div class="opcoes" role="radiogroup" aria-labelledby="f-rel-label" aria-required="true">' +
-            PACIENTE.PARENTESCOS.map(
-                (o) => '<button type="button" role="radio" aria-checked="false">' + o + '</button>',
-            ).join('') +
-            '</div></div>' +
+            '<input id="f-cpf" type="text" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required' + val(editar && API.formatarCPF(p.cpf)) + '></div>' +
+            (titular
+                ? ''
+                : '<div class="campo" id="c-rel"><span class="campo__rotulo" id="f-rel-label">Parentesco (obrigatório)</span>' +
+                  '<div class="opcoes" role="radiogroup" aria-labelledby="f-rel-label" aria-required="true">' +
+                  PACIENTE.PARENTESCOS.map(
+                      (o) => '<button type="button" role="radio" aria-checked="' + (editar && p.relacao === o) + '">' + A.esc(o) + '</button>',
+                  ).join('') +
+                  '</div></div>') +
             '<div class="campo" id="c-nasc"><label for="f-nasc">Data de nascimento</label>' +
-            '<input id="f-nasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" required></div>' +
+            '<input id="f-nasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" required' + val(editar && dataBr(p.nascimento)) + '></div>' +
             '<div class="campo"><label for="f-alergias">Alergias (opcional)</label>' +
-            '<input id="f-alergias" type="text" placeholder="Ex.: Penicilina, dipirona"></div>' +
+            '<input id="f-alergias" type="text" placeholder="Ex.: Penicilina, dipirona"' + val(editar && p.alergiasApi) + '></div>' +
+            '<p class="campo__erro" id="f-erro-geral" role="alert" hidden></p>' +
             '<div class="gaveta__acoes">' +
-            '<button type="submit" class="botao botao--principal">Adicionar familiar</button>' +
-            '<a class="botao botao--secundario" href="#familia">Cancelar</a>' +
+            '<button type="submit" class="botao botao--principal">' + (editar ? 'Salvar' : 'Adicionar familiar') + '</button>' +
+            '<a class="botao botao--secundario" href="' + (editar ? '#pessoa/' + p.id : '#familia') + '">Cancelar</a>' +
             '</div>' +
             '</form>' +
             '</div>' +
@@ -1796,7 +1789,7 @@
             CORES.map(
                 (cor, i) =>
                     '<button type="button" class="cor-btn" aria-pressed="' +
-                    (i === 0) +
+                    (cor === corAtual) +
                     '" data-cor="' +
                     cor +
                     '" style="background:' +
@@ -1814,7 +1807,7 @@
             '</div>';
 
         function montar(el) {
-            let corSelecionada = CORES[0];
+            let corSelecionada = editar ? p.cor : corAtual;
             /* máscara do CPF: só números, no formato 000.000.000-00 */
             const cpf = el.querySelector('#f-cpf');
             cpf.addEventListener('input', () => { cpf.value = API.formatarCPF(cpf.value); });
@@ -1838,52 +1831,58 @@
                 ),
             );
 
-            el.querySelector('#form-familiar').addEventListener(
-                'submit',
-                (ev) => {
-                    ev.preventDefault();
-                    const relBtn = el.querySelector('.opcoes [aria-checked="true"]');
-                    /* nome, CPF, parentesco e nascimento obrigatórios (paciente-servicos.js) */
-                    const r = PACIENTE.adicionarFamiliar({
-                        nome: el.querySelector('#f-nome').value,
-                        cpf: cpf.value,
-                        relacao: relBtn ? relBtn.textContent.trim() : '',
-                        nascimento: el.querySelector('#f-nasc').value,
-                        alergias: el.querySelector('#f-alergias').value,
-                        cor: corSelecionada,
-                    });
-                    el.querySelectorAll('.campo__erro').forEach((x) => x.remove());
-                    const mostrarErro = (campo, alvo, texto) => {
-                        if (!texto) return;
-                        el.querySelector(campo).insertAdjacentHTML('beforeend', '<p class="campo__erro" role="alert">' + texto + '</p>');
-                        if (alvo) alvo.focus();
-                    };
-                    if (!r.familiar) {
-                        mostrarErro('#c-nasc', null, r.erros.nascimento);
-                        mostrarErro('#c-rel', null, r.erros.relacao);
-                        mostrarErro('#c-cpf', null, r.erros.cpf);
-                        if (r.erros.nome) el.querySelector('#f-nome').focus();
-                        else if (r.erros.cpf) cpf.focus();
-                        else if (r.erros.relacao) el.querySelector('#c-rel [role="radio"]').focus();
-                        else el.querySelector('#f-nasc').focus();
-                        return;
-                    }
-                    const nome = r.familiar.nome;
-                    navegar('#familia');
-                    setTimeout(() => {
-                        aviso({
-                            titulo:
-                                nome.split(' ')[0] +
-                                ' foi adicionado à família',
-                            texto: 'Você já pode marcar consultas para esta pessoa.',
-                            icone: 'users',
-                        });
-                    }, 100);
-                },
-            );
+            const form = el.querySelector('#form-familiar');
+            const botao = form.querySelector('[type="submit"]');
+            form.addEventListener('submit', async (ev) => {
+                ev.preventDefault();
+                const relBtn = el.querySelector('.opcoes [aria-checked="true"]');
+                const dados = {
+                    nome: el.querySelector('#f-nome').value,
+                    cpf: cpf.value,
+                    relacao: titular ? 'Titular' : relBtn ? relBtn.textContent.trim() : '',
+                    nascimento: el.querySelector('#f-nasc').value,
+                    alergias: el.querySelector('#f-alergias').value,
+                    cor: corSelecionada,
+                };
+                el.querySelectorAll('.campo .campo__erro').forEach((x) => x.remove());
+                const geral = el.querySelector('#f-erro-geral');
+                geral.hidden = true;
+                botao.disabled = true;
+                let r;
+                try {
+                    r = editar ? await PACIENTE.editarFamiliar(p.id, dados) : await PACIENTE.adicionarFamiliar(dados);
+                } catch (e) {
+                    geral.textContent = e.message;
+                    geral.hidden = false;
+                    botao.disabled = false;
+                    return;
+                }
+                botao.disabled = false;
+                const mostrarErro = (campo, texto) => {
+                    const c = el.querySelector(campo);
+                    if (texto && c) c.insertAdjacentHTML('beforeend', '<p class="campo__erro" role="alert">' + A.esc(texto) + '</p>');
+                };
+                if (!r.familiar) {
+                    mostrarErro('#c-nome', r.erros.nome);
+                    mostrarErro('#c-cpf', r.erros.cpf);
+                    mostrarErro('#c-rel', r.erros.relacao);
+                    mostrarErro('#c-nasc', r.erros.nascimento);
+                    if (r.erros.nome) el.querySelector('#f-nome').focus();
+                    else if (r.erros.cpf) cpf.focus();
+                    else if (r.erros.relacao) el.querySelector('#c-rel [role="radio"]').focus();
+                    else el.querySelector('#f-nasc').focus();
+                    return;
+                }
+                navegar(editar ? '#pessoa/' + p.id : '#familia');
+                setTimeout(() => {
+                    aviso(editar
+                        ? { titulo: 'Dados salvos', texto: 'As mudanças já aparecem em todas as telas.', icone: 'check' }
+                        : { titulo: r.familiar.curto + ' agora está na família', texto: 'Você já pode marcar consultas para esta pessoa.', icone: 'users' });
+                }, 100);
+            });
         }
 
-        return { titulo: 'Adicionar familiar', html, montar };
+        return { titulo: editar ? 'Editar dados' : 'Adicionar familiar', html, montar };
     }
 
     const TELAS = {
@@ -1899,6 +1898,7 @@
         consulta: renderConsulta,
         agendar: renderAgendar,
         'adicionar-familiar': renderAdicionarFamiliar,
+        'editar-familiar': renderAdicionarFamiliar,
     };
 
     const SECOES_NAV = [
@@ -1979,9 +1979,9 @@
             (o.cabeca || 'AgendaPro Saúde') +
             '</p>' +
             '<p class="aviso__titulo">' +
-            o.titulo +
+            A.esc(o.titulo) +
             '</p>' +
-            (o.texto ? '<p class="aviso__texto">' + o.texto + '</p>' : '') +
+            (o.texto ? '<p class="aviso__texto">' + A.esc(o.texto) + '</p>' : '') + /* texto puro: pode ter nome ou mensagem da API */
             (o.acoes
                 ? '<div class="aviso__acoes">' +
                   o.acoes
@@ -2111,26 +2111,30 @@
         if (!vou && !nao) return;
         const c = D.consultas.find((k) => A.mesmoId(k.id, vou ? vou.dataset.vou : nao.dataset.naovou));
         if (!c) return;
-        if (vou) {
-            PACIENTE.confirmarPresenca(c);
-            aviso({ titulo: 'Presença confirmada', texto: 'A clínica já sabe que você vai. Se não puder mais ir, avise; cancelar no dia da consulta conta como falta.', icone: 'circle-check' });
-        } else {
-            const r = PACIENTE.cancelar(c);
-            aviso({
-                titulo: 'Consulta cancelada',
-                texto: (r.falta ? 'Conta como falta sem aviso. ' : 'Sem nenhuma consequência. ') +
-                    (r.oferecidoA ? 'O horário foi oferecido a quem espera na lista.' : 'O horário ficou livre para outra pessoa.'),
-                icone: 'info',
+        (vou || nao).disabled = true;
+        /* PUT /api/consultas/{id}/presenca { vou: true | false }; "Não vou" cancela pelas mesmas regras */
+        (vou ? PACIENTE.confirmarPresenca(c) : PACIENTE.naoVou(c))
+            .then((r) => {
+                if (vou) aviso({ titulo: 'Presença confirmada', texto: 'A clínica já sabe que você vai. Se não puder mais ir, avise; cancelar no dia da consulta conta como falta.', icone: 'circle-check' });
+                else aviso({
+                    titulo: 'Consulta cancelada',
+                    texto: (r.falta ? 'Conta como falta sem aviso. ' : 'Sem nenhuma consequência. ') +
+                        (r.oferecidoAFila ? 'O horário foi oferecido a quem espera na lista.' : 'O horário ficou livre para outra pessoa.'),
+                    icone: 'info',
+                });
+                navegar();
+            })
+            .catch((e) => {
+                (vou || nao).disabled = false;
+                aviso({ titulo: 'Não deu para responder', texto: e.message, icone: 'info' });
             });
-        }
-        navegar();
     });
 
-    /* vaga da lista de espera: a recepção ofereceu (agora, em outra aba, ou antes de a página abrir) */
+    /* vaga da lista de espera oferecida (antes de a página abrir, ou enquanto ela está aberta: PACIENTE confere a cada 30 s) */
     if (D.espera && D.espera.oferta) setTimeout(oferecerVaga, 600);
     PACIENTE.aoMudar((novaVaga) => {
         if (novaVaga) oferecerVaga();
-        else if (location.hash.startsWith('#espera')) navegar();
+        else if (/^#?(espera|inicio)?$/.test(location.hash.replace(/^#/, ''))) navegar();
         if (estado.calAtivo) estado.calAtivo.atualizar();
     });
 
@@ -2214,4 +2218,4 @@
             dica.hidden = true;
         });
     })();
-})();
+});

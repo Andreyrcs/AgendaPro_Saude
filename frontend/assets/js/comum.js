@@ -133,7 +133,8 @@
   }
 
   function avatarMedico(m, tamanho) {
-    return '<span class="avatar-iniciais" style="--tam:' + tamanho + "px;background:" + m.cor + '" aria-hidden="true">' + iniciais(m.nome) + "</span>";
+    /* o nome do médico é digitado pela recepção: as iniciais passam por esc() antes de entrar no HTML */
+    return '<span class="avatar-iniciais" style="--tam:' + tamanho + "px;background:" + esc(m.cor) + '" aria-hidden="true">' + esc(iniciais(m.nome)) + "</span>";
   }
 
   /* Marca: uma folha de destacar com a cruz da saúde */
