@@ -39,6 +39,17 @@ public class ClinicasController : ApiControllerBase
         return Ok(await _servico.BuscarPorCodigoAsync(codigo));
     }
 
+    // L1: dados da própria clínica, com o código, para o dono e a recepção
+    [Authorize(Roles = "recepcao,dono")]
+    [HttpGet("api/clinicas/{idClinica:int}")]
+    public async Task<ActionResult<ClinicaResposta>> Obter(int idClinica)
+    {
+        var resposta = await _servico.ObterAsync(idClinica, Logado);
+        if (resposta is null)
+            return Forbid();
+        return Ok(resposta);
+    }
+
     [Authorize(Roles = "dono")]
     [HttpPut("api/clinicas/{idClinica:int}")]
     public async Task<ActionResult<ClinicaResposta>> Atualizar(int idClinica, AtualizacaoClinicaRequisicao dados)

@@ -25,6 +25,16 @@ public class PacientesController : ApiControllerBase
 
     private UsuarioLogado Logado => new(IdUsuarioLogado, PapelLogado, ClinicaLogada, MedicoLogado);
 
+    // L4: dados da conta para o Perfil. {id} = idUsuario da conta, como nas outras rotas de paciente
+    [Authorize(Roles = "paciente")]
+    [HttpGet("api/pacientes/{id:int}")]
+    public async Task<ActionResult<ContaPacienteResposta>> ObterConta(int id)
+    {
+        if (id != IdUsuarioLogado)
+            return Forbid();
+        return Ok(await _servico.ObterContaAsync(id));
+    }
+
     [Authorize(Roles = "paciente")]
     [HttpGet("api/pacientes/{id:int}/familiares")]
     public async Task<ActionResult<IEnumerable<FamiliarResposta>>> ListarFamiliares(int id)

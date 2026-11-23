@@ -362,3 +362,13 @@ Apêndice Q.
 |---|---|
 | Todas as que gravam | Dois pedidos simultâneos que gravariam o mesmo dado (CPF, e-mail, CNPJ, CRM…): o segundo recebe **409** com a mesma mensagem da checagem normal, em vez de 500 (ver a nota abaixo do Quadro 5.1) |
 | PUT /api/medicos/{id} | O médico continua alterando os próprios dados, mas **não o CRM**. Se mandar um CRM diferente do atual: **403** `{ "mensagem": "Só a recepção pode alterar o CRM." }`. Mandar o mesmo CRM continua valendo. Recepção e dono alteram o CRM normalmente |
+
+### Rotas novas
+
+Seguem o padrão das outras: token no cabeçalho `Authorization: Bearer`, **401 sem corpo** sem token, **403 sem
+corpo** para perfil sem acesso ou recurso de outra clínica ou conta, e erros em `{ "mensagem": "..." }`.
+
+| Método e rota | Perfis | Resposta | Erros |
+|---|---|---|---|
+| GET /api/clinicas/{id} | Dono e recepção (só a própria clínica) | 200 `{ id, nome, endereco, telefone, cnpj, cidade, uf, codigo, publica }`, o mesmo formato do PUT. Serve para a casca e para equipe.html mostrarem os dados e o **código AAA-0000** | 403 outra clínica ou outro perfil; 404 "Clínica não encontrada." |
+| GET /api/pacientes/{id} | Paciente (só a própria conta; `{id}` = idUsuario, como nas outras rotas de paciente) | 200 `{ nome, cpf, email, telefone, nascimento }`. Nome, CPF e nascimento são do titular; e-mail e telefone, da conta. Usada no Perfil da web e do app | 403 outra conta ou outro perfil |

@@ -93,6 +93,18 @@ public class PacienteServico : IPacienteServico
         return pessoas.Select(Familiar).ToList();
     }
 
+    // Perfil (web e app): dados do titular e da conta. A conta desativada já recebe 401 antes daqui.
+    public async Task<ContaPacienteResposta> ObterContaAsync(int idConta)
+    {
+        var conta = await _usuarios.BuscarAtivoPorIdAsync(idConta);
+        var titular = (await _pacientes.ListarDaContaAsync(idConta)).FirstOrDefault(p => p.Parentesco == "Titular");
+        if (conta is null || titular is null)
+            throw new ErroApi(StatusCodes.Status404NotFound, "Paciente não encontrado.");
+
+        return new ContaPacienteResposta(titular.Nome, titular.Cpf, conta.Email, conta.Telefone,
+            DateOnly.FromDateTime(titular.DataNascimento));
+    }
+
     // Mesmas regras do titular para CPF e nascimento (seção 5.4; pendência 1 do CLAUDE.md: CPF repetido é 400)
     public async Task<FamiliarResposta> AdicionarFamiliarAsync(int idConta, FamiliarRequisicao dados)
     {

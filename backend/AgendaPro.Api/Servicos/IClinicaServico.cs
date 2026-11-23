@@ -11,6 +11,7 @@ public interface IClinicaServico
     Task<ClinicaResposta> BuscarPorCodigoAsync(string codigo);
 
     // Dono e equipe. null (ou false) = outra clínica: o controller responde Forbid()
+    Task<ClinicaResposta?> ObterAsync(int idClinica, UsuarioLogado logado);
     Task<ClinicaResposta?> AtualizarAsync(int idClinica, AtualizacaoClinicaRequisicao dados, UsuarioLogado logado);
     Task<IEnumerable<MembroEquipeResposta>?> ListarEquipeAsync(int idClinica, UsuarioLogado logado);
     Task<RecepcionistaCadastradaResposta?> CadastrarRecepcionistaAsync(int idClinica, CadastroRecepcionistaRequisicao dados, UsuarioLogado logado);

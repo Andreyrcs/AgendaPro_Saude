@@ -135,6 +135,17 @@ public class ClinicaServico : IClinicaServico
     }
 
     // Só o dono, só a própria clínica; o CNPJ e o código não mudam. Regras do cadastro (api.js: atualizarClinica)
+    // L1: dono e recepção leem os dados da própria clínica, com o código AAA-0000 (casca e equipe.html)
+    public async Task<ClinicaResposta?> ObterAsync(int idClinica, UsuarioLogado logado)
+    {
+        if (logado.IdClinica != idClinica)
+            return null;
+
+        var clinica = await _clinicas.BuscarPorIdAsync(idClinica)
+            ?? throw new ErroApi(StatusCodes.Status404NotFound, "Clínica não encontrada.");
+        return Resposta(clinica);
+    }
+
     public async Task<ClinicaResposta?> AtualizarAsync(int idClinica, AtualizacaoClinicaRequisicao dados, UsuarioLogado logado)
     {
         if (logado.IdClinica != idClinica)

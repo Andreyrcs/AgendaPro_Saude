@@ -8,6 +8,7 @@ public interface IPacienteServico
 
     // Família da conta (o controller já conferiu que a conta é a do token)
     Task<IEnumerable<FamiliarResposta>> ListarFamiliaresAsync(int idConta);
+    Task<ContaPacienteResposta> ObterContaAsync(int idConta);
     Task<FamiliarResposta> AdicionarFamiliarAsync(int idConta, FamiliarRequisicao dados);
 
     // Pacientes da clínica com a ficha. null = outra clínica: o controller responde Forbid()
