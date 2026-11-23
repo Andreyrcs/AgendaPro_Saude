@@ -54,8 +54,24 @@ O navegador só deixa a página chamar a API se a origem dela estiver em `Cors:O
 - `http://localhost:5500`
 - `http://127.0.0.1:5500`
 
-Se a web rodar em outro endereço ou porta, acrescente a origem nessa lista e reinicie a API.
+Se a web rodar em outro endereço ou porta (por exemplo, na apresentação com dois notebooks, a web aberta por
+`http://<IP-do-servidor>:5500`), acrescente a origem **no user-secrets**, sem mexer no `appsettings.json`, e
+reinicie a API. O índice continua a lista do arquivo, que já tem os itens 0 e 1:
+
+```
+dotnet user-secrets set "Cors:Origens:2" "http://192.168.0.10:5500"
+dotnet user-secrets set "Cors:Origens:3" "http://outro-endereco:5500"
+```
+
+Para tirar uma origem: `dotnet user-secrets remove "Cors:Origens:2"`.
 O app do celular não passa pelo CORS (não é navegador).
+
+## Erros
+
+Toda resposta de erro vem como `{ "mensagem": "..." }`. Além dos códigos do Quadro 5.1, a API responde **409**
+quando dois pedidos tentam gravar o mesmo dado ao mesmo tempo (por exemplo, dois cadastros com o mesmo CPF ou
+e-mail): o segundo recebe 409 com a mesma mensagem da checagem normal ("Este CPF já está cadastrado.",
+"Este e-mail já tem uma conta. Entre com ele ou use outro."). Fora da corrida, a checagem continua respondendo 400.
 
 ## Swagger e token
 

@@ -30,6 +30,12 @@ Quadro 5.1 – Códigos HTTP usados nas respostas de erro
 | 429 (Too Many Requests) | Tentativas de login acima do limite | "Muitas tentativas. Aguarde um minuto e tente de novo." |
 | 500 (Internal Server Error) | Erro inesperado no servidor | "Não foi possível concluir agora. Tente de novo." |
 
+> **Acréscimo depois da entrega do PIM (integração com o front):** quando dois pedidos tentam gravar o mesmo dado
+> ao mesmo tempo (por exemplo, dois cadastros com o mesmo CPF ou e-mail), os dois passam pela checagem do serviço e
+> o banco recusa o segundo (UNIQUE, erros 2627 e 2601). A API responde **409 (Conflict)** com a mesma mensagem da
+> checagem normal, como "Este CPF já está cadastrado." ou "Este e-mail já tem uma conta. Entre com ele ou use
+> outro.", em vez do 500 genérico. Fora dessa corrida, a checagem continua respondendo 400.
+
 Um agendamento mostra as camadas em funcionamento. O aplicativo envia POST /api/consultas com o familiar, o médico, a data, o horário e o motivo. A API valida o token, confere o perfil e se o familiar pertence à conta e chama a procedure sp_AgendarConsulta, informando no parâmetro @PelaRecepcao se quem agenda é a recepção. Se outra pessoa tiver ocupado o horário um instante antes, a procedure lança o erro 50008, e o paciente vê "Este horário acabou de ser ocupado. Escolha outro." O Apêndice E mostra a requisição e as respostas desse exemplo e do login.
 
 ### 5.3 Autenticação

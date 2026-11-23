@@ -49,7 +49,10 @@ builder.Services.AddOpenApi(opcoes =>
     });
 });
 // CORS (Apêndice H): só as páginas da aplicação web podem chamar a API pelo navegador.
-// As origens ficam em Cors:Origens no appsettings.json.
+// As origens ficam em Cors:Origens: as fixas no appsettings.json, e as de cada máquina (por exemplo
+// http://<IP-do-servidor>:5500 na apresentação) no user-secrets, sem mexer no arquivo versionado:
+//   dotnet user-secrets set "Cors:Origens:2" "http://192.168.0.10:5500"
+// (o índice continua a lista do appsettings, que tem os itens 0 e 1).
 var origensWeb = builder.Configuration.GetSection("Cors:Origens").Get<string[]>()
     ?? throw new InvalidOperationException("Configure Cors:Origens no appsettings.json.");
 builder.Services.AddCors(opcoes =>
