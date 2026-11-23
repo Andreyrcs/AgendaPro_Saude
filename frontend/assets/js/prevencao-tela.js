@@ -1,6 +1,6 @@
 /* AgendaPro Saúde — a tela de Prevenção do paciente (lista por mês, filtro por pessoa, "Marcar", "Já fiz",
    "Desfazer" e o diálogo "Incluir na prevenção"), igual à do app e usada no computador e no celular.
-   Os dados e as regras ficam em paciente-servicos.js. */
+   Os dados e as regras ficam em paciente-servicos.js (API). Ids comparados pelo texto; nomes passam por A.esc(). */
 (function () {
   "use strict";
 
@@ -9,11 +9,11 @@
   const I = A.icone;
   const P = window.PACIENTE;
 
-  const pessoa = (id) => D.pessoas.find((p) => p.id === id);
-  const quem = (p) => (p.id === D.titular ? "Você" : p.curto);
-  const quemMinusculo = (p) => (p.id === D.titular ? "você" : p.curto);
+  const pessoa = (id) => D.pessoas.find((p) => A.mesmoId(p.id, id));
+  const quem = (p) => (A.mesmoId(p.id, D.titular) ? "Você" : p.curto);
+  const quemMinusculo = (p) => (A.mesmoId(p.id, D.titular) ? "você" : p.curto);
   const nomeDoMes = (mes) => { const t = A.MESES_LONGOS[A.data(mes + "-01").getMonth()]; return t.charAt(0).toUpperCase() + t.slice(1) + " de " + mes.slice(0, 4); };
-  const contar = (id) => D.prevencao.reduce((s, m) => s + m.itens.filter((i) => id === "todos" || i.pessoa === id).length, 0);
+  const contar = (id) => D.prevencao.reduce((s, m) => s + m.itens.filter((i) => id === "todos" || A.mesmoId(i.pessoa, id)).length, 0);
 
   /* o topo da tela: título com o botão "+" (op.titulo é a função de cabeçalho de cada página) */
   function html(op) {
@@ -39,15 +39,15 @@
       /* "Marcar" só nos itens com especialidade; ela é procurada pelo nome na clínica atual */
       acoes = (it.especialidade
         ? '<button type="button" class="botao botao--principal botao--pequeno" data-prev-marcar="' + it.id + '"' +
-          ' aria-label="Marcar ' + A.esc(it.titulo) + " para " + quemMinusculo(p) + '">' + I("calendar-days") + "Marcar</button>"
+          ' aria-label="' + A.esc("Marcar " + it.titulo + " para " + quemMinusculo(p)) + '">' + I("calendar-days") + "Marcar</button>"
         : "") +
         '<button type="button" class="botao botao--secundario botao--pequeno" data-prev-status="feito" data-id="' + it.id + '"' +
-        ' aria-label="Já fiz: ' + A.esc(it.titulo) + " de " + quemMinusculo(p) + '">Já fiz</button>';
+        ' aria-label="' + A.esc("Já fiz: " + it.titulo + " de " + quemMinusculo(p)) + '">Já fiz</button>';
     }
     return (
       '<div class="prev-item">' + A.avatar(p, 36) +
       '<div class="item__corpo"><p class="prev-item__titulo">' + A.esc(it.titulo) + "</p>" +
-      '<p class="prev-item__nota">' + quem(p) + " · " + A.esc(it.nota) + "</p>" +
+      '<p class="prev-item__nota">' + A.esc(quem(p)) + " · " + A.esc(it.nota) + "</p>" +
       '<div class="prev-item__acao">' + acoes + "</div>" +
       '<p class="campo__erro" role="alert" data-prev-erro="' + it.id + '" hidden></p></div></div>'
     );
@@ -60,11 +60,11 @@
     function desenhar() {
       const f = op.estado.prevFiltro || "todos";
       filtros.innerHTML = [{ id: "todos", rotulo: "Todos" }].concat(D.pessoas.map((p) => ({ id: p.id, rotulo: quem(p), p })))
-        .map((x) => '<button type="button" class="filtro" aria-pressed="' + (f === x.id) + '" data-f="' + x.id + '"' +
+        .map((x) => '<button type="button" class="filtro" aria-pressed="' + (String(f) === String(x.id)) + '" data-f="' + x.id + '"' +
           ' aria-label="' + A.esc(x.rotulo) + ", " + contar(x.id) + ' lembretes">' + (x.p ? A.avatar(x.p, 28) : "") +
           A.esc(x.rotulo) + ' <span class="filtro__n">' + contar(x.id) + "</span></button>").join("");
       const visiveis = D.prevencao
-        .map((m) => Object.assign({}, m, { itens: m.itens.filter((i) => f === "todos" || i.pessoa === f) }))
+        .map((m) => Object.assign({}, m, { itens: m.itens.filter((i) => f === "todos" || A.mesmoId(i.pessoa, f)) }))
         .filter((m) => m.itens.length);
       meses.innerHTML = visiveis.length
         ? visiveis.map((mes, i) =>
@@ -95,7 +95,7 @@
         '<form id="form-prev" class="formulario" novalidate>' +
         '<div class="campo"><span class="campo__rotulo" id="prev-quem">Quem vai entrar?</span>' +
         '<div class="opcoes preven_family" role="radiogroup" aria-labelledby="prev-quem">' +
-        radios("pessoa", D.pessoas.map((p) => ({ valor: p.id, rotulo: p.id === D.titular ? "Você" : p.curto + ", " + p.relacao, html: A.avatar(p, 24) + " " + quem(p) }))) +
+        radios("pessoa", D.pessoas.map((p) => ({ valor: p.id, rotulo: A.mesmoId(p.id, D.titular) ? "Você" : p.curto + ", " + p.relacao + ", " + p.idade + " anos", html: A.avatar(p, 24) + " " + A.esc(quem(p)) }))) +
         "</div></div>" +
         '<div class="campo"><span class="campo__rotulo" id="prev-campanha">Em qual campanha?</span>' +
         '<div class="opcoes opcoes--lista" role="radiogroup" aria-labelledby="prev-campanha">' +
@@ -133,15 +133,19 @@
               lista[j].focus();
               lista[j].click();
             });
-            g.querySelector("#form-prev").addEventListener("submit", (ev) => {
+            g.querySelector("#form-prev").addEventListener("submit", async (ev) => {
               ev.preventDefault();
               const erro = g.querySelector("#prev-erro");
-              const sugestao = sugestoes().find((s) => s.id === escolha.exame);
+              const botao = ev.target.querySelector('[type="submit"]');
+              const sugestao = sugestoes().find((s) => A.mesmoId(s.id, escolha.exame));
               const mostrar = (t) => { erro.textContent = t; erro.hidden = false; };
+              erro.hidden = true;
               if (!escolha.pessoa || !escolha.mes || !sugestao) { mostrar("Escolha quem vai entrar, a campanha e o exame."); return; }
+              botao.disabled = true;
               try {
-                P.incluirNaPrevencao({ mes: escolha.mes, pessoa: escolha.pessoa, exame: sugestao.id });
-              } catch (e) { mostrar(e.message); return; }
+                /* POST /api/pacientes/{id}/prevencao; a idade é conferida (pediatria só até 18 anos) */
+                await P.incluirNaPrevencao({ mes: escolha.mes, pessoa: escolha.pessoa, exame: sugestao.id });
+              } catch (e) { botao.disabled = false; mostrar(e.message); return; }
               op.fecharGaveta();
               desenhar();
               op.anunciar(sugestao.titulo + " incluído na prevenção.");
@@ -172,9 +176,18 @@
       }
       const bs = ev.target.closest("[data-prev-status]");
       if (bs) {
-        const it = P.marcarItemPrevencao(bs.dataset.id, bs.dataset.prevStatus);
-        desenhar();
-        op.anunciar(it.titulo + (it.status === "feito" ? " marcado como feito." : " voltou a ficar pendente."));
+        bs.disabled = true;
+        /* PUT /api/prevencao/{id} { status } */
+        P.marcarItemPrevencao(bs.dataset.id, bs.dataset.prevStatus).then((it) => {
+          desenhar();
+          op.anunciar(it.titulo + (it.status === "feito" ? " marcado como feito." : " voltou a ficar pendente."));
+        }).catch((e) => {
+          bs.disabled = false;
+          const aviso = el.querySelector('[data-prev-erro="' + bs.dataset.id + '"]');
+          aviso.textContent = e.message;
+          aviso.hidden = false;
+          op.anunciar(e.message);
+        });
       }
     });
   }

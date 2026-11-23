@@ -249,6 +249,7 @@ window.PACIENTE.iniciar(function () {
         if (novos.length) {
             h += '<section class="grupo" aria-label="Avisos novos" style="margin-bottom:16px">' +
                 cabecaSecao('Avisos') + '<div class="cartao lista-cartao">' +
+                '<p style="padding:8px 16px 0"><button type="button" class="botao botao--secundario botao--pequeno" data-ler-avisos>' + I('check') + 'Marcar como lidos</button></p>' +
                 novos.map((n) => '<p class="notif" style="padding:12px 16px">' + I(n.icone || 'bell') +
                     '<span class="item__corpo"><span style="display:block">' + A.esc(n.texto) + '</span>' +
                     '<span class="item__sub" style="display:block">' + A.esc(n.quando) + '</span></span></p>').join('') +
@@ -913,76 +914,69 @@ window.PACIENTE.iniciar(function () {
     function renderAcompanhamento() {
         const ac = D.acompanhamento;
         const html =
-            tituloPagina(
-                'Depois da consulta',
-                'Retornos, exames e próximas consultas.',
-            ) +
+            tituloPagina('Depois da consulta', 'Retornos e exames pedidos pelo médico.') +
             '<div class="grade grade--2" style="gap:24px;align-items:start">' +
             '<div class="grupo">' +
             cabecaSecao('Retornos') +
-            '<div class="cartao lista-cartao">' +
-            ac.retornos
-                .map((r) => {
-                    const p = pessoa(r.pessoa);
-                    return (
-                        '<div class="prev-item">' +
-                        A.avatar(p, 40) +
-                        '<div class="item__corpo"><p class="prev-item__titulo">' +
-                        A.esc(r.titulo) +
-                        '</p>' +
-                        '<p class="prev-item__nota">' +
-                        A.esc(p.curto) +
-                        ' · com ' +
-                        A.esc(medico(r.medico).nome) +
-                        '</p>' +
-                        '<div class="prev-item__acao">' +
-                        seloPrazo(r.prazo) +
-                        '<a class="botao botao--principal botao--pequeno" href="#agendar/' +
-                        r.esp +
-                        '/' +
-                        r.pessoa +
-                        '">Agendar retorno</a>' +
-                        '</div></div></div>'
-                    );
-                })
-                .join('') +
-            '</div></div>' +
+            (ac.retornos.length
+                ? '<div class="cartao lista-cartao">' +
+                  ac.retornos
+                      .map((r) => {
+                          const p = pessoa(r.pessoa);
+                          return (
+                              '<div class="prev-item">' +
+                              A.avatar(p, 40) +
+                              '<div class="item__corpo"><p class="prev-item__titulo">' +
+                              A.esc(r.titulo) +
+                              '</p>' +
+                              '<p class="prev-item__nota">' +
+                              A.esc(p.curto) +
+                              ' · com ' +
+                              A.esc(medico(r.medico).nome) +
+                              '<br>' +
+                              A.esc(r.origem) +
+                              '. Marcar até ' +
+                              A.extenso(r.prazo, false) +
+                              '.</p>' +
+                              '<div class="prev-item__acao">' +
+                              seloPrazo(r.prazo) +
+                              (r.esp ? '<a class="botao botao--principal botao--pequeno" href="#agendar/' + r.esp + '/' + r.pessoa + '">Agendar retorno</a>' : '') +
+                              '</div></div></div>'
+                          );
+                      })
+                      .join('') +
+                  '</div>'
+                : '<p class="cartao" style="padding:16px 20px">Nenhum retorno para marcar.</p>') +
+            '</div>' +
             '<div class="grupo">' +
             cabecaSecao('Exames pedidos') +
-            '<div class="cartao lista-cartao">' +
-            ac.exames
-                .map((x) => {
-                    const p = pessoa(x.pessoa);
-                    const c = x.consulta
-                        ? D.consultas.find((k) => k.id === x.consulta)
-                        : null;
-                    return (
-                        '<div class="prev-item">' +
-                        A.avatar(p, 40) +
-                        '<div class="item__corpo"><p class="prev-item__titulo">' +
-                        A.esc(x.titulo) +
-                        '</p>' +
-                        '<p class="prev-item__nota">' +
-                        A.esc(p.curto) +
-                        ' · pedido por ' +
-                        A.esc(medico(x.pedidoPor).nome) +
-                        '</p>' +
-                        '<div class="prev-item__acao">' +
-                        (c
-                            ? '<span class="selo selo--feito">' +
-                              I('check') +
-                              'Marcado: ' +
-                              A.curto(c.data) +
-                              ', ' +
-                              c.hora +
-                              '</span>'
-                            : '<span class="selo selo--alerta">Não marcado</span>' +
-                              ligarClinica('Ligar para marcar')) +
-                        '</div></div></div>'
-                    );
-                })
-                .join('') +
-            '</div></div></div>';
+            (ac.exames.length
+                ? '<div class="cartao lista-cartao">' +
+                  /* F28: o exame só é "pendente" ou "realizado"; a recepção marca o realizado */
+                  ac.exames
+                      .map((x) => {
+                          const p = pessoa(x.pessoa);
+                          return (
+                              '<div class="prev-item">' +
+                              A.avatar(p, 40) +
+                              '<div class="item__corpo"><p class="prev-item__titulo">' +
+                              A.esc(x.titulo) +
+                              '</p>' +
+                              '<p class="prev-item__nota">' +
+                              A.esc(p.curto) +
+                              (x.pedidoPor ? ' · pedido por ' + A.esc(medico(x.pedidoPor).nome) : '') +
+                              '<br>' +
+                              A.esc(x.obs) +
+                              '.</p>' +
+                              '<div class="prev-item__acao"><span class="selo selo--alerta">Exame pendente</span>' +
+                              ligarClinica('Ligar para marcar') +
+                              '</div></div></div>'
+                          );
+                      })
+                      .join('') +
+                  '</div>'
+                : '<p class="cartao" style="padding:16px 20px">Nenhum exame pendente.</p>') +
+            '</div></div>';
 
         return { titulo: 'Depois da consulta', html };
     }
@@ -1001,7 +995,12 @@ window.PACIENTE.iniciar(function () {
             '<span class="item__corpo"><span class="item__titulo" style="display:block;font-size:1.125rem">' +
             A.esc(t.nome) +
             '</span>' +
-            '<span class="item__sub" style="display:block">juliana.santos@exemplo.com</span></span></div>' +
+            '<span class="item__sub" style="display:block" id="conta-email">' +
+            A.esc(API.usuarioAtual().email || '') +
+            '</span></span></div>' +
+            '<div class="grupo">' +
+            cabecaSecao('Seus dados') +
+            '<dl class="cartao lista-cartao ficha" id="conta-dados" aria-busy="true"><div><dt>Carregando</dt><dd>…</dd></div></dl></div>' +
             '<div class="grupo">' +
             cabecaSecao('Sua clínica') +
             '<div class="cartao item" style="padding:16px">' +
@@ -1009,8 +1008,11 @@ window.PACIENTE.iniciar(function () {
             A.esc(D.clinica.nome) +
             '</span><span class="item__sub" style="display:block">' +
             A.esc(D.clinica.endereco) +
+            (D.clinica.telefone ? ' · ' + A.esc(D.clinica.telefone) : '') +
             '</span></span>' +
             '<a class="botao botao--secundario" href="escolher-clinica.html">Trocar de clínica</a></div></div>' +
+            '</div>' +
+            '<div>' +
             '<div class="grupo">' +
             cabecaSecao('Acessibilidade') +
             '<div class="cartao">' +
@@ -1039,38 +1041,42 @@ window.PACIENTE.iniciar(function () {
             interruptor(
                 'movimento',
                 'Reduzir movimento',
-                'Desativa os efeitos de transição.',
+                'Desativa os efeitos de transição. A página também segue a opção do seu computador.',
                 reduzido,
             ) +
-            '</div></div></div></div>' +
+            '</div></div></div>' +
             '<div class="grupo">' +
-            cabecaSecao('Avisos') +
-            '<div class="cartao lista-cartao">' +
-            interruptor(
-                'lembrete',
-                'Lembrete de consulta',
-                'Um dia antes e duas horas antes',
-                true,
-            ) +
-            interruptor(
-                'fila',
-                'Vagas da lista de espera',
-                'Avisamos assim que abrir uma vaga',
-                true,
-            ) +
-            interruptor(
-                'prev',
-                'Calendário de prevenção',
-                'No começo de cada mês',
-                true,
-            ) +
-            '</div></div>' +
+            cabecaSecao('Trocar a senha') +
+            '<form class="cartao formulario" id="form-senha" novalidate style="padding:16px 20px">' +
+            '<div class="campo"><label for="s-atual">Senha atual</label><input id="s-atual" type="password" autocomplete="current-password"></div>' +
+            '<div class="campo"><label for="s-nova">Nova senha</label><input id="s-nova" type="password" autocomplete="new-password"><span class="item__sub">De 8 a 64 caracteres.</span></div>' +
+            '<div class="campo"><label for="s-repete">Repita a nova senha</label><input id="s-repete" type="password" autocomplete="new-password"></div>' +
+            '<p class="campo__erro" id="s-erro" role="alert" hidden></p>' +
+            '<button type="submit" class="botao botao--secundario">Trocar a senha</button></form></div>' +
             '</div></div>' +
             '<div class="zona-perigo" style="margin-top:16px"><button type="button" class="botao botao--texto-perigo" id="sair">' +
             I('log-out') +
             'Sair da conta</button></div>';
 
         function montar(el) {
+            /* L4: GET /api/pacientes/{id} → nome, CPF, e-mail, telefone e nascimento da conta */
+            const dl = el.querySelector('#conta-dados');
+            API.chamar('GET', '/api/pacientes/' + API.usuarioAtual().id)
+                .then((c) => {
+                    const tel = String(c.telefone || '').replace(/\D/g, '');
+                    dl.innerHTML =
+                        '<div><dt>Nome</dt><dd>' + A.esc(c.nome) + '</dd></div>' +
+                        '<div><dt>E-mail</dt><dd>' + A.esc(c.email) + '</dd></div>' +
+                        '<div><dt>Telefone</dt><dd>' + (tel ? '•••• ' + A.esc(tel.slice(-4)) : 'Não informado') + '</dd></div>' +
+                        '<div><dt>CPF</dt><dd>' + A.esc(API.formatarCPF(c.cpf)) + '</dd></div>' +
+                        '<div><dt>Nascimento</dt><dd>' + A.extenso(c.nascimento, false) + ' de ' + c.nascimento.slice(0, 4) + '</dd></div>';
+                    el.querySelector('#conta-email').textContent = c.email;
+                })
+                .catch((e) => {
+                    dl.innerHTML = '<div><dt>Seus dados</dt><dd>' + A.esc(e.message) + '</dd></div>';
+                })
+                .finally(() => dl.removeAttribute('aria-busy'));
+
             el.querySelectorAll('[data-texto]').forEach((b) =>
                 b.addEventListener('click', () => {
                     gravarPref('texto', b.dataset.texto);
@@ -1094,6 +1100,29 @@ window.PACIENTE.iniciar(function () {
                     gravarPref('movimento', ligado ? 'reduzido' : 'sistema');
                     aplicarPrefs();
                 }
+            });
+
+            /* PUT /api/usuarios/{id}/senha { senhaAtual, novaSenha } */
+            el.querySelector('#form-senha').addEventListener('submit', async (ev) => {
+                ev.preventDefault();
+                const erro = el.querySelector('#s-erro');
+                const atual = el.querySelector('#s-atual').value;
+                const nova = el.querySelector('#s-nova').value;
+                const mostrar = (t2) => {
+                    erro.textContent = t2;
+                    erro.hidden = false;
+                };
+                erro.hidden = true;
+                if (!atual) return mostrar('Digite a senha que você usa hoje.');
+                if (nova.length < 8 || nova.length > 64) return mostrar('A nova senha precisa ter de 8 a 64 caracteres.');
+                if (nova !== el.querySelector('#s-repete').value) return mostrar('As duas senhas novas não estão iguais.');
+                try {
+                    await API.trocarSenha(atual, nova);
+                } catch (e) {
+                    return mostrar(e.message);
+                }
+                ev.target.reset();
+                aviso({ titulo: 'Senha trocada', texto: 'Use a nova senha no próximo login.', icone: 'check' });
             });
 
             el.querySelector('#sair').addEventListener('click', async () => {
@@ -2074,6 +2103,16 @@ window.PACIENTE.iniciar(function () {
     aplicarPrefs();
     A.seloClinica(document.querySelector('.lateral'), 'paciente', { href: 'escolher-clinica.html' });
     navegar();
+
+    /* Avisos do Início: PUT /api/pacientes/{id}/notificacoes/lidas */
+    document.addEventListener('click', (ev) => {
+        const b = ev.target.closest('[data-ler-avisos]');
+        if (!b) return;
+        b.disabled = true;
+        PACIENTE.lerTodosAvisos()
+            .then(() => { anunciar('Avisos marcados como lidos'); navegar(); })
+            .catch((e) => { b.disabled = false; aviso({ titulo: 'Não deu para marcar', texto: e.message, icone: 'info' }); });
+    });
 
     /* "Vou" / "Não vou" no cartão do Início */
     document.addEventListener('click', (ev) => {

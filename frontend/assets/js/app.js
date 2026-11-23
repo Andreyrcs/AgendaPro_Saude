@@ -1164,45 +1164,47 @@ window.PACIENTE.iniciar(function () {
     return { titulo: "Consulta", html, montar };
   }
 
-  /* Depois da consulta */
+  /* Depois da consulta (GET /api/pacientes/{id}/acompanhamento) */
   function telaAcompanhamento() {
     const ac = D.acompanhamento;
     const html =
       barra("Depois da consulta", "Retornos, exames e próximas consultas") +
       '<section class="secao" style="margin-top:12px">' + cabecaSecao("Retornos") +
-      '<div class="cartao lista-cartao">' +
-      ac.retornos.map((r) => {
-        const p = pessoa(r.pessoa);
-        return (
-          '<div class="prev-item">' + A.avatar(p, 40) +
-          '<div class="item__corpo"><p class="prev-item__titulo">' + r.titulo + '</p><p class="prev-item__nota">' + p.curto + " · com " + medico(r.medico).nome + "<br>" + r.origem + ". Marcar até " + A.extenso(r.prazo, false) + ".</p>" +
-          '<div class="prev-item__acao">' + seloPrazo(r.prazo) + '<a class="botao botao--principal botao--pequeno" href="#agendar/' + r.esp + "/" + r.pessoa + '">Agendar retorno</a></div></div></div>'
-        );
-      }).join("") +
-      "</div></section>" +
+      (ac.retornos.length
+        ? '<div class="cartao lista-cartao">' +
+          ac.retornos.map((r) => {
+            const p = pessoa(r.pessoa);
+            return (
+              '<div class="prev-item">' + A.avatar(p, 40) +
+              '<div class="item__corpo"><p class="prev-item__titulo">' + E(r.titulo) + '</p><p class="prev-item__nota">' + E(p.curto) + " · com " + E(medico(r.medico).nome) + "<br>" + E(r.origem) + ". Marcar até " + A.extenso(r.prazo, false) + ".</p>" +
+              '<div class="prev-item__acao">' + seloPrazo(r.prazo) + (r.esp ? '<a class="botao botao--principal botao--pequeno" href="#agendar/' + r.esp + "/" + r.pessoa + '">Agendar retorno</a>' : "") + "</div></div></div>"
+            );
+          }).join("") +
+          "</div>"
+        : '<p class="cartao">Nenhum retorno para marcar.</p>') +
+      "</section>" +
       '<section class="secao">' + cabecaSecao("Exames pedidos") +
-      '<div class="cartao lista-cartao">' +
-      ac.exames.map((x) => {
-        const p = pessoa(x.pessoa);
-        const c = x.consulta ? D.consultas.find((k) => k.id === x.consulta) : null;
-        return (
-          '<div class="prev-item">' + A.avatar(p, 40) +
-          '<div class="item__corpo"><p class="prev-item__titulo">' + x.titulo + '</p><p class="prev-item__nota">' + p.curto + " · pedido por " + medico(x.pedidoPor).nome + "<br>" + x.obs + ".</p>" +
-          '<div class="prev-item__acao">' +
-          (c
-            ? '<span class="selo selo--feito">' + I("check") + "Marcado: " + A.curto(c.data) + ", " + c.hora + "</span>"
-            : '<span class="selo selo--alerta">Não marcado</span>' + ligarClinica("Ligar para marcar")) +
-          "</div></div></div>"
-        );
-      }).join("") +
-      "</div></section>" +
+      (ac.exames.length
+        ? '<div class="cartao lista-cartao">' +
+          /* F28: o exame só é "pendente" ou "realizado"; a recepção marca o realizado */
+          ac.exames.map((x) => {
+            const p = pessoa(x.pessoa);
+            return (
+              '<div class="prev-item">' + A.avatar(p, 40) +
+              '<div class="item__corpo"><p class="prev-item__titulo">' + E(x.titulo) + '</p><p class="prev-item__nota">' + E(p.curto) + (x.pedidoPor ? " · pedido por " + E(medico(x.pedidoPor).nome) : "") + "<br>" + E(x.obs) + ".</p>" +
+              '<div class="prev-item__acao"><span class="selo selo--alerta">Exame pendente</span>' + ligarClinica("Ligar para marcar") + "</div></div></div>"
+            );
+          }).join("") +
+          "</div>"
+        : '<p class="cartao">Nenhum exame pendente.</p>') +
+      "</section>" +
       '<section class="secao">' + cabecaSecao("Próximas consultas", "#agenda", "Ver agenda") +
-      proximas().slice(0, 3).map((c) => linhaConsulta(c)).join("") +
+      (proximas().length ? proximas().slice(0, 3).map((c) => linhaConsulta(c)).join("") : '<p class="cartao">Nenhuma consulta marcada.</p>') +
       "</section>";
     return { titulo: "Depois da consulta", html };
   }
 
-  /* Perfil e acessibilidade */
+  /* Perfil: dados da conta (GET /api/pacientes/{id}), clínica, senha, acessibilidade e sair */
   function telaPerfil() {
     const t = pessoa(D.titular);
     const texto = lerPref("texto", "normal");
@@ -1210,7 +1212,12 @@ window.PACIENTE.iniciar(function () {
     const html =
       '<header class="topo"><h1 class="titulo-tela" tabindex="-1">Perfil</h1></header>' +
       '<div class="cartao item" style="margin-top:12px;padding:14px 16px">' + A.avatar(t, 64) +
-      '<span class="item__corpo"><span class="item__titulo" style="display:block;font-size:1.125rem">' + t.nome + '</span><span class="item__sub" style="display:block">juliana.santos@exemplo.com</span></span></div>' +
+      '<span class="item__corpo"><span class="item__titulo" style="display:block;font-size:1.125rem">' + E(t.nome) + '</span><span class="item__sub" style="display:block" id="conta-email">' + E(API.usuarioAtual().email || "") + "</span></span></div>" +
+      '<section class="secao">' + cabecaSecao("Seus dados") +
+      '<dl class="cartao lista-cartao ficha" id="conta-dados" aria-busy="true"><div><dt>Carregando</dt><dd>…</dd></div></dl></section>' +
+      '<section class="secao">' + cabecaSecao("Sua clínica") +
+      '<div class="cartao"><p class="item__titulo">' + E(D.clinica.nome) + '</p><p class="item__sub">' + E(D.clinica.endereco) + (D.clinica.telefone ? " · " + E(D.clinica.telefone) : "") + "</p>" +
+      '<a class="botao botao--secundario botao--pequeno" style="margin-top:10px" href="escolher-clinica.html">Trocar de clínica</a></div></section>' +
       '<section class="secao">' + cabecaSecao("Acessibilidade", null, null, "t-acess") +
       '<div class="cartao"><p class="item__titulo" id="t-texto">Tamanho do texto</p>' +
       '<div class="segmentado" role="radiogroup" aria-labelledby="t-texto">' +
@@ -1221,15 +1228,31 @@ window.PACIENTE.iniciar(function () {
       '<div class="lista-cartao" style="padding:0;margin-top:6px">' +
       interruptor("movimento", "Reduzir movimento", "Desliga os deslizes entre telas. O app também segue a opção do seu celular.", reduzido) +
       "</div></div></section>" +
-      '<section class="secao">' + cabecaSecao("Avisos") +
-      '<div class="cartao lista-cartao">' +
-      interruptor("lembrete", "Lembrete de consulta", "Um dia antes e duas horas antes", true) +
-      interruptor("fila", "Vagas da lista de espera", "Avisamos assim que abrir uma vaga", true) +
-      interruptor("prev", "Calendário de prevenção", "No começo de cada mês", true) +
-      "</div></section>" +
+      '<section class="secao">' + cabecaSecao("Trocar a senha") +
+      '<form class="cartao formulario" id="form-senha" novalidate>' +
+      '<div class="campo"><label for="s-atual">Senha atual</label><input id="s-atual" type="password" autocomplete="current-password"></div>' +
+      '<div class="campo"><label for="s-nova">Nova senha</label><input id="s-nova" type="password" autocomplete="new-password"><span class="item__sub">De 8 a 64 caracteres.</span></div>' +
+      '<div class="campo"><label for="s-repete">Repita a nova senha</label><input id="s-repete" type="password" autocomplete="new-password"></div>' +
+      '<p class="campo__erro" id="s-erro" role="alert" hidden></p>' +
+      '<button type="submit" class="botao botao--secundario">Trocar a senha</button></form></section>' +
       '<div class="zona-perigo"><button type="button" class="botao botao--texto-perigo" id="sair">' + I("log-out") + "Sair da conta</button></div>";
 
     function montar(el) {
+      /* L4: nome, CPF, e-mail, telefone e nascimento da conta */
+      const dl = el.querySelector("#conta-dados");
+      API.chamar("GET", "/api/pacientes/" + API.usuarioAtual().id).then((c) => {
+        const tel = String(c.telefone || "").replace(/\D/g, "");
+        dl.innerHTML =
+          "<div><dt>Nome</dt><dd>" + E(c.nome) + "</dd></div>" +
+          "<div><dt>E-mail</dt><dd>" + E(c.email) + "</dd></div>" +
+          "<div><dt>Telefone</dt><dd>" + (tel ? "•••• " + E(tel.slice(-4)) : "Não informado") + "</dd></div>" +
+          "<div><dt>CPF</dt><dd>" + E(API.formatarCPF(c.cpf)) + "</dd></div>" +
+          "<div><dt>Nascimento</dt><dd>" + A.extenso(c.nascimento, false) + " de " + c.nascimento.slice(0, 4) + "</dd></div>";
+        el.querySelector("#conta-email").textContent = c.email;
+      }).catch((e) => {
+        dl.innerHTML = "<div><dt>Seus dados</dt><dd>" + E(e.message) + "</dd></div>";
+      }).finally(() => dl.removeAttribute("aria-busy"));
+
       el.querySelectorAll("[data-texto]").forEach((b) =>
         b.addEventListener("click", () => {
           gravarPref("texto", b.dataset.texto);
@@ -1248,8 +1271,25 @@ window.PACIENTE.iniciar(function () {
           aplicarPrefs();
         }
       });
+      /* PUT /api/usuarios/{id}/senha { senhaAtual, novaSenha } */
+      el.querySelector("#form-senha").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const erro = el.querySelector("#s-erro");
+        const atual = el.querySelector("#s-atual").value, nova = el.querySelector("#s-nova").value;
+        const mostrar = (t2) => { erro.textContent = t2; erro.hidden = false; };
+        erro.hidden = true;
+        if (!atual) return mostrar("Digite a senha que você usa hoje.");
+        if (nova.length < 8 || nova.length > 64) return mostrar("A nova senha precisa ter de 8 a 64 caracteres.");
+        if (nova !== el.querySelector("#s-repete").value) return mostrar("As duas senhas novas não estão iguais.");
+        try {
+          await API.trocarSenha(atual, nova);
+        } catch (e) {
+          return mostrar(e.message);
+        }
+        ev.target.reset();
+        aviso({ titulo: "Senha trocada", texto: "Use a nova senha no próximo login.", icone: "check" });
+      });
       el.querySelector("#sair").addEventListener("click", async () => {
-        PACIENTE.salvar();
         await window.API.sair();
         location.href = "login.html";
       });
@@ -1257,19 +1297,39 @@ window.PACIENTE.iniciar(function () {
     return { titulo: "Perfil", html, montar };
   }
 
+  /* Notificações (F27): GET /api/pacientes/{id}/notificacoes; "lidas" por PUT .../notificacoes/lidas */
   function telaNotificacoes() {
-    const destinos = { lembrete: "#consulta/c1", fila: "#espera", retorno: "#acompanhamento", prevencao: "#prevencao" };
+    const destinos = { VAGA_OFERECIDA: "#espera", CONSULTA_CONFIRMADA: "#agenda", RESTRICAO: "#agendar" };
+    const novos = PACIENTE.avisosNovos();
     const html =
       barra("Notificações") +
-      '<div class="cartao lista-cartao" style="margin-top:8px">' +
-      D.notificacoes.map((n) =>
-        '<a class="notif' + (n.nova && !estado.notifLidas ? " notif--nova" : "") + '" href="' + destinos[n.tipo] + '" style="text-decoration:none">' +
-        '<span class="notif__icone">' + I(n.icone) + "</span>" +
-        '<span class="item__corpo"><span class="notif__texto" style="display:block">' + n.texto + '</span><span class="notif__quando" style="display:block">' +
-        (n.nova && !estado.notifLidas ? '<span class="notif__nova">Nova</span> · ' : "") + n.quando + "</span></span></a>"
-      ).join("") +
-      "</div>";
-    return { titulo: "Notificações", html, montar: () => { estado.notifLidas = true; } };
+      (D.notificacoes.length
+        ? (novos ? '<button type="button" class="botao botao--secundario botao--pequeno" id="ler-todos" style="margin-top:8px">' + I("check") + "Marcar todas como lidas</button>" : "") +
+          '<div class="cartao lista-cartao" style="margin-top:8px">' +
+          D.notificacoes.map((n) =>
+            '<a class="notif' + (n.nova ? " notif--nova" : "") + '" href="' + (destinos[n.tipo] || "#inicio") + '" style="text-decoration:none">' +
+            '<span class="notif__icone">' + I(n.icone) + "</span>" +
+            '<span class="item__corpo"><span class="notif__texto" style="display:block">' + E(n.texto) + '</span><span class="notif__quando" style="display:block">' +
+            (n.nova ? '<span class="notif__nova">Nova</span> · ' : "") + E(n.quando) + "</span></span></a>"
+          ).join("") +
+          "</div>"
+        : '<p class="cartao" style="margin-top:8px">Nenhum aviso por enquanto. Vagas da lista de espera, lembretes de presença e mudanças no agendamento aparecem aqui.</p>');
+    function montar(el) {
+      const b = el.querySelector("#ler-todos");
+      if (b) b.addEventListener("click", async () => {
+        b.disabled = true;
+        try {
+          await PACIENTE.lerTodosAvisos();
+        } catch (e) {
+          b.disabled = false;
+          aviso({ titulo: "Não deu para marcar", texto: e.message, icone: "info" });
+          return;
+        }
+        anunciar("Todos os avisos foram marcados como lidos");
+        navegar();
+      });
+    }
+    return { titulo: "Notificações", html, montar };
   }
 
   const TELAS = {
