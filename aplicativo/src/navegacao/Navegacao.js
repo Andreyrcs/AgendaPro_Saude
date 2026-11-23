@@ -9,6 +9,7 @@ import { usePreferencias } from '../contexto/PreferenciasContext';
 import { Carregando } from '../componentes/Estados';
 import LoginTela from '../telas/LoginTela';
 import CadastroTela from '../telas/CadastroTela';
+import SemClinicaTela from '../telas/SemClinicaTela';
 import Abas from './Abas';
 
 const Pilha = createNativeStackNavigator();
@@ -23,7 +24,10 @@ export default function Navegacao() {
     <Pilha.Navigator
       screenOptions={{ headerShown: false, animation: reduzirMovimento ? 'none' : 'default' }}
     >
-      {usuario ? (
+      {usuario && usuario.clinicaId === null ? (
+        // A API disse que a conta não tem clínica: explica como escolher, em vez de abrir abas sem saída
+        <Pilha.Screen name="SemClinica" component={SemClinicaTela} />
+      ) : usuario ? (
         <Pilha.Screen name="Abas" component={Abas} />
       ) : (
         <>
