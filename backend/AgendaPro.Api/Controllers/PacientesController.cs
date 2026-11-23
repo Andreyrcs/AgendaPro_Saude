@@ -55,6 +55,16 @@ public class PacientesController : ApiControllerBase
         return StatusCode(StatusCodes.Status201Created, resposta);
     }
 
+    // Editar uma pessoa da própria família. {id} = idUsuario da conta; {idPessoa} = Id_Paciente
+    [Authorize(Roles = "paciente")]
+    [HttpPut("api/pacientes/{id:int}/familiares/{idPessoa:int}")]
+    public async Task<ActionResult<FamiliarResposta>> AtualizarFamiliar(int id, int idPessoa, FamiliarRequisicao dados)
+    {
+        if (id != IdUsuarioLogado)
+            return Forbid();
+        return Ok(await _servico.AtualizarFamiliarAsync(id, idPessoa, dados));
+    }
+
     [Authorize(Roles = "recepcao,dono")]
     [HttpGet("api/clinicas/{idClinica:int}/pacientes")]
     public async Task<ActionResult<IEnumerable<PacienteDaClinicaResposta>>> ListarDaClinica(int idClinica,

@@ -12,13 +12,38 @@ public class PacienteRepositorio : IPacienteRepositorio
         _fabrica = fabrica;
     }
 
-    public async Task<bool> CpfExisteAsync(string cpf)
+    // ignorarIdPaciente: na edição, o CPF da própria pessoa não conta como repetido
+    public async Task<bool> CpfExisteAsync(string cpf, int? ignorarIdPaciente = null)
     {
-        const string sql = "SELECT COUNT(1) FROM Pacientes WHERE CPF = @Cpf;";
+        const string sql = @"
+            SELECT COUNT(1) FROM Pacientes
+            WHERE CPF = @Cpf AND (@Ignorar IS NULL OR Id_Paciente <> @Ignorar);";
 
         using var conexao = _fabrica.CriarConexao();
-        var quantidade = await conexao.ExecuteScalarAsync<int>(sql, new { Cpf = cpf });
+        var quantidade = await conexao.ExecuteScalarAsync<int>(sql, new { Cpf = cpf, Ignorar = ignorarIdPaciente });
         return quantidade > 0;
+    }
+
+    // Edita a pessoa. O nome do titular também é o nome da conta (Usuarios.Nome), por isso os dois mudam juntos.
+    public async Task AtualizarAsync(Paciente pessoa)
+    {
+        const string sqlPaciente = @"
+            UPDATE Pacientes
+            SET Nome_paciente = @Nome, CPF = @Cpf, Data_Nascimento = @DataNascimento,
+                Alergias = @Alergias, Parentesco = @Parentesco, Cor = @Cor
+            WHERE Id_Paciente = @Id;";
+
+        const string sqlConta = "UPDATE Usuarios SET Nome = @Nome WHERE Id_Usuario = @IdUsuario;";
+
+        using var conexao = _fabrica.CriarConexao();
+        conexao.Open();
+        using var transacao = conexao.BeginTransaction();
+
+        await conexao.ExecuteAsync(sqlPaciente, pessoa, transacao);
+        if (pessoa.Parentesco == "Titular")
+            await conexao.ExecuteAsync(sqlConta, new { pessoa.Nome, pessoa.IdUsuario }, transacao);
+
+        transacao.Commit();
     }
 
     public async Task<Paciente?> BuscarPorIdAsync(int idPaciente)

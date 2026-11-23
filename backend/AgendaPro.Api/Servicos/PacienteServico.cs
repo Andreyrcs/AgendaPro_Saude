@@ -137,6 +137,42 @@ public class PacienteServico : IPacienteServico
         return Familiar((await _pacientes.BuscarPorIdAsync(id))!);
     }
 
+    // Editar uma pessoa da própria família (titular ou familiar), com as mesmas regras do cadastro.
+    // O titular continua "Titular" (o parentesco enviado é ignorado); um familiar não pode virar titular.
+    // Sem cor no corpo, a cor atual fica.
+    public async Task<FamiliarResposta> AtualizarFamiliarAsync(int idConta, int idPessoa, FamiliarRequisicao dados)
+    {
+        var pessoa = await _pacientes.BuscarPorIdAsync(idPessoa)
+            ?? throw new ErroApi(StatusCodes.Status404NotFound, "Paciente não encontrado.");
+        if (pessoa.IdUsuario != idConta)
+            throw new ErroApi(StatusCodes.Status403Forbidden, "Você só pode gerenciar a sua família.");
+
+        var cpf = ValidadorCpf.SoNumeros(dados.Cpf);
+        if (!ValidadorCpf.Valido(cpf))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "CPF inválido.");
+
+        var titular = pessoa.Parentesco == "Titular";
+        if (!titular && !Parentescos.Contains(dados.Relacao))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Escolha o parentesco.");
+
+        var nascimento = dados.Nascimento!.Value;
+        if (nascimento > DateOnly.FromDateTime(DateTime.Today))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "A data de nascimento não pode ser no futuro.");
+
+        if (await _pacientes.CpfExisteAsync(cpf, pessoa.Id))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Este CPF já está cadastrado.");
+
+        pessoa.Nome = dados.Nome.Trim();
+        pessoa.Cpf = cpf;
+        pessoa.DataNascimento = nascimento.ToDateTime(TimeOnly.MinValue);
+        pessoa.Alergias = string.IsNullOrWhiteSpace(dados.Alergias) ? null : dados.Alergias.Trim();
+        if (!titular) pessoa.Parentesco = dados.Relacao;
+        if (!string.IsNullOrEmpty(dados.Cor)) pessoa.Cor = dados.Cor;
+
+        await _pacientes.AtualizarAsync(pessoa);
+        return Familiar((await _pacientes.BuscarPorIdAsync(pessoa.Id))!);
+    }
+
     // Seção 5.5: busca por nome ou CPF, filtros e a ficha com consultas, faltas e fila.
     // Só pessoas das contas vinculadas à clínica (Apêndice C); consultas, faltas e filas só desta clínica.
     public async Task<IEnumerable<PacienteDaClinicaResposta>?> ListarDaClinicaAsync(int idClinica, string? busca,

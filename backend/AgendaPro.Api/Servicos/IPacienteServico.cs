@@ -10,6 +10,7 @@ public interface IPacienteServico
     Task<IEnumerable<FamiliarResposta>> ListarFamiliaresAsync(int idConta);
     Task<ContaPacienteResposta> ObterContaAsync(int idConta);
     Task<FamiliarResposta> AdicionarFamiliarAsync(int idConta, FamiliarRequisicao dados);
+    Task<FamiliarResposta> AtualizarFamiliarAsync(int idConta, int idPessoa, FamiliarRequisicao dados);
 
     // Pacientes da clínica com a ficha. null = outra clínica: o controller responde Forbid()
     Task<IEnumerable<PacienteDaClinicaResposta>?> ListarDaClinicaAsync(int idClinica, string? busca, string? filtro, UsuarioLogado logado);
