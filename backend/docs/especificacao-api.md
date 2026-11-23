@@ -361,6 +361,7 @@ Apêndice Q.
 | Rota | Mudança |
 |---|---|
 | Todas as que gravam | Dois pedidos simultâneos que gravariam o mesmo dado (CPF, e-mail, CNPJ, CRM…): o segundo recebe **409** com a mesma mensagem da checagem normal, em vez de 500 (ver a nota abaixo do Quadro 5.1) |
+| POST /api/pacientes, POST /api/clinicas (dono), POST /api/clinicas/{id}/medicos, POST /api/clinicas/{id}/equipe | O e-mail precisa ter o formato `nome@dominio.ext` (um `@`, sem espaço no meio, com ponto no domínio). Fora disso: **400** `{ "mensagem": "Informe um e-mail válido." }`. Espaços em volta continuam aceitos e são cortados |
 | PUT /api/medicos/{id} | O médico continua alterando os próprios dados, mas **não o CRM**. Se mandar um CRM diferente do atual: **403** `{ "mensagem": "Só a recepção pode alterar o CRM." }`. Mandar o mesmo CRM continua valendo. Recepção e dono alteram o CRM normalmente |
 
 ### Rotas novas

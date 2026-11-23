@@ -11,5 +11,6 @@ public class CadastroRecepcionistaRequisicao
 
     [Required(ErrorMessage = "Informe o e-mail.")]
     [StringLength(150, ErrorMessage = "O e-mail pode ter até 150 caracteres.")]
+    [RegularExpression(@"^\s*[^@\s]+@[^@\s]+\.[^@\s]+\s*$", ErrorMessage = "Informe um e-mail válido.")]
     public string Email { get; set; } = "";
 }
