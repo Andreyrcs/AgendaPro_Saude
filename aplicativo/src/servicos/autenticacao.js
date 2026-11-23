@@ -18,19 +18,14 @@ export async function entrar(email, senha) {
   const emailLimpo = normalizarEmail(email);
 
   if (config.USAR_API_REAL) {
-    // POST /api/auth/login → { mensagem, usuario: { idUsuario, nome, email }, token? }
-    try {
-      const resposta = await chamarApi('/api/auth/login', {
-        metodo: 'POST',
-        corpo: { email: emailLimpo, senha },
-      });
-      return { ...resposta.usuario, token: resposta.token || null };
-    } catch (erro) {
-      // A API responde 400 com outra frase; aqui a mensagem fica sempre a mesma,
-      // sem dizer se o erro foi no e-mail ou na senha. Erro de conexão passa adiante.
-      if (erro.message.startsWith('Não foi possível falar')) throw erro;
-      throw new Error(ERRO_LOGIN);
-    }
+    // POST /api/auth/login → { token, expiraEm, usuario: { idUsuario, nome, email, papel, clinicaId, medicoId } }
+    // A mensagem de erro é a da API, sem trocar (F8): "E-mail ou senha incorretos" no 401 e
+    // "Muitas tentativas. Aguarde um minuto e tente de novo." no 429.
+    const resposta = await chamarApi('/api/auth/login', {
+      metodo: 'POST',
+      corpo: { email: emailLimpo, senha },
+    });
+    return { ...resposta.usuario, token: resposta.token || null };
   }
 
   await esperar();

@@ -52,11 +52,29 @@
     const texto = await resposta.text();
     let dados = null;
     try { dados = texto ? JSON.parse(texto) : null; } catch (e) { dados = null; }
-    if (!resposta.ok) {
-      const mensagem = dados && dados.mensagem ? dados.mensagem : "Não foi possível concluir agora. Tente de novo.";
-      throw new ErroApi(resposta.status, mensagem);
-    }
+    if (!resposta.ok) throw erroDaResposta(resposta.status, dados, caminho);
     return dados; /* 204 (sem conteúdo) devolve null */
+  }
+
+  /* Como cada erro chega à tela (Quadro 5.1):
+     401 fora do login → a sessão acabou (token vencido, conta desativada): apaga a sessão e volta ao login.
+     403 sem mensagem  → perfil sem permissão para a rota.
+     429, 400, 404, 409 e 500 → a mensagem da API, sem trocar (por exemplo, a do erro 50008). */
+  const SESSAO_ACABOU = "Sua sessão terminou. Entre de novo.";
+  const SEM_PERMISSAO = "Você não tem permissão para fazer isso.";
+  function erroDaResposta(status, dados, caminho) {
+    const daApi = dados && dados.mensagem ? dados.mensagem : null;
+    if (status === 401 && caminho !== "/api/auth/login") {
+      apagarSessao();
+      voltarAoLogin();
+      return new ErroApi(401, SESSAO_ACABOU);
+    }
+    if (status === 403 && !daApi) return new ErroApi(403, SEM_PERMISSAO);
+    return new ErroApi(status, daApi || "Não foi possível concluir agora. Tente de novo.");
+  }
+  function voltarAoLogin() {
+    const pagina = location.pathname.split("/").pop() || "index.html";
+    if (pagina !== "login.html") location.replace("login.html?expirou=1");
   }
 
   /* Data no formato da API (AAAA-MM-DD) no fuso do computador. Nunca toISOString(): em UTC, perto da
@@ -160,7 +178,8 @@
     if (!papeis) return true;
     const s = sessao();
     let destino = null;
-    if (!sessaoValida(s) || !papeis.includes(s.papel)) destino = "login.html";
+    if (s && s.token && !sessaoValida(s)) destino = "login.html?expirou=1"; /* o token venceu (8 h na equipe, 30 dias no paciente) */
+    else if (!sessaoValida(s) || !papeis.includes(s.papel)) destino = "login.html";
     else if (s.papel === "paciente" && !s.clinicaId && pagina !== "escolher-clinica.html") destino = "escolher-clinica.html";
     if (!destino) return true;
     if (s && !sessaoValida(s)) apagarSessao();

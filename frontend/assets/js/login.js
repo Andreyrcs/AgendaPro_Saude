@@ -171,6 +171,16 @@
                     history.replaceState(null, '', 'login.html');
                 }
 
+                /* ─── Sessão que terminou (token vencido ou removido): o api.js manda para cá ─── */
+                if (
+                    new URLSearchParams(window.location.search).get(
+                        'expirou',
+                    ) === '1'
+                ) {
+                    mostrarErroGeral('Sua sessão terminou. Entre de novo.');
+                    history.replaceState(null, '', 'login.html');
+                }
+
                 /* ─── Limpar erro ao digitar ─── */
                 emailEl.addEventListener('input', function () {
                     emailEl.classList.remove('campo__entrada--erro');

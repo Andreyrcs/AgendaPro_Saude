@@ -4,7 +4,7 @@
 import { brParaIso } from './datas';
 
 export const ERRO_PREENCHA = 'Preencha e-mail e senha.';
-export const ERRO_LOGIN = 'E-mail ou senha incorretos.';
+export const ERRO_LOGIN = 'E-mail ou senha incorretos'; // o mesmo texto da API (Quadro 4.1), sem ponto
 
 // Código da clínica: 3 letras, hífen e 4 números (ex.: IPE-4821)
 export function normalizarCodigo(texto) {

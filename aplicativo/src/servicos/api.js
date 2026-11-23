@@ -16,11 +16,20 @@ export class ErroApi extends Error {
   }
 }
 
+const SESSAO_ACABOU = 'Sua sessão terminou. Entre de novo.';
+const SEM_PERMISSAO = 'Você não tem permissão para fazer isso.';
+
 // Token JWT da sessão: o login guarda aqui e toda requisição passa a enviá-lo.
 let tokenAtual = null;
+// O que fazer quando a API diz que a sessão acabou (401): o SessaoContext registra o sair()
+let aoExpirar = null;
 
 export function definirToken(token) {
   tokenAtual = token || null;
+}
+
+export function definirAoExpirar(funcao) {
+  aoExpirar = funcao;
 }
 
 // Exemplo: chamarApi('/api/auth/login', { metodo: 'POST', corpo: { email, senha } })
@@ -56,7 +65,16 @@ export async function chamarApi(caminho, { metodo = 'GET', corpo } = {}) {
     dados = null;
   }
   if (!resposta.ok) {
-    throw new ErroApi(resposta.status, (dados && dados.mensagem) || ERRO_GENERICO);
+    const daApi = dados && dados.mensagem;
+    // 401 fora do login: token vencido ou conta desativada. Sai da conta e volta ao Login (F9).
+    if (resposta.status === 401 && caminho !== '/api/auth/login') {
+      if (aoExpirar) aoExpirar();
+      throw new ErroApi(401, SESSAO_ACABOU);
+    }
+    // 403 sem mensagem: perfil sem permissão. Com mensagem (ex.: "Você só pode gerenciar a sua família."), ela vale.
+    if (resposta.status === 403 && !daApi) throw new ErroApi(403, SEM_PERMISSAO);
+    // 400, 404, 409, 429 e 500: a mensagem da API, sem trocar
+    throw new ErroApi(resposta.status, daApi || ERRO_GENERICO);
   }
   return dados;
 }
