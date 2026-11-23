@@ -47,6 +47,17 @@ public class EspecialidadesController : ApiControllerBase
         return StatusCode(StatusCodes.Status201Created, resposta);
     }
 
+    // L5: editar o nome e a duração de uma especialidade da própria clínica
+    [Authorize(Roles = "recepcao,dono")]
+    [HttpPut("api/especialidades/{id:int}")]
+    public async Task<ActionResult<EspecialidadeResposta>> Atualizar(int id, CadastroEspecialidadeRequisicao dados)
+    {
+        var resposta = await _servico.AtualizarAsync(id, dados, Logado);
+        if (resposta is null)
+            return Forbid();
+        return Ok(resposta);
+    }
+
     [Authorize(Roles = "paciente,recepcao,dono")]
     [HttpGet("api/especialidades/{id:int}/horarios-livres")]
     public async Task<ActionResult<IEnumerable<HorariosLivresResposta>>> HorariosLivres(int id)

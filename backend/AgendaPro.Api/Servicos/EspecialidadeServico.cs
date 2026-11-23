@@ -64,6 +64,24 @@ public class EspecialidadeServico : IEspecialidadeServico
         return Resposta(especialidade);
     }
 
+    // L5: a recepção e o dono corrigem o nome ou a duração. A duração nova vale para os horários e agendamentos
+    // daqui para a frente; as consultas já marcadas guardam o próprio horário de fim.
+    public async Task<EspecialidadeResposta?> AtualizarAsync(int id, CadastroEspecialidadeRequisicao dados, UsuarioLogado logado)
+    {
+        var especialidade = await BuscarOuFalharAsync(id);
+        if (logado.IdClinica != especialidade.IdClinica)
+            return null;
+
+        var nome = dados.Nome.Trim();
+        if (await _repositorio.NomeExisteNaClinicaAsync(especialidade.IdClinica, nome, id))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Essa especialidade já existe nesta clínica.");
+
+        especialidade.Nome = nome;
+        especialidade.DuracaoPadrao = dados.Duracao!.Value;
+        await _repositorio.AtualizarAsync(especialidade);
+        return Resposta(especialidade);
+    }
+
     // Os mesmos horários "livre" da agenda da clínica (clinica-dados.js:119-121 e :244-245):
     // de agora até hoje + 2 meses; grade a partir do início do expediente, de DuracaoPadrao em DuracaoPadrao,
     // pulando o almoço sem reiniciar a grade; sem feriados; sem horário que encoste numa consulta ativa.

@@ -38,13 +38,28 @@ public class EspecialidadeRepositorio : IEspecialidadeRepositorio
         return await conexao.QuerySingleOrDefaultAsync<Especialidade>(sql, new { Id = id });
     }
 
-    public async Task<bool> NomeExisteNaClinicaAsync(int idClinica, string nome)
+    // ignorarId: na edição, a própria especialidade não conta como repetida
+    public async Task<bool> NomeExisteNaClinicaAsync(int idClinica, string nome, int? ignorarId = null)
     {
-        const string sql = "SELECT COUNT(1) FROM Especialidades WHERE IdClinica = @IdClinica AND Nome_Espec = @Nome;";
+        const string sql = @"
+            SELECT COUNT(1) FROM Especialidades
+            WHERE IdClinica = @IdClinica AND Nome_Espec = @Nome
+              AND (@Ignorar IS NULL OR Id_Especialidade <> @Ignorar);";
 
         using var conexao = _fabrica.CriarConexao();
-        var quantidade = await conexao.ExecuteScalarAsync<int>(sql, new { IdClinica = idClinica, Nome = nome });
+        var quantidade = await conexao.ExecuteScalarAsync<int>(sql, new { IdClinica = idClinica, Nome = nome, Ignorar = ignorarId });
         return quantidade > 0;
+    }
+
+    public async Task AtualizarAsync(Especialidade especialidade)
+    {
+        const string sql = @"
+            UPDATE Especialidades
+            SET Nome_Espec = @Nome, DuracaoPadrao = @DuracaoPadrao
+            WHERE Id_Especialidade = @Id;";
+
+        using var conexao = _fabrica.CriarConexao();
+        await conexao.ExecuteAsync(sql, especialidade);
     }
 
     public async Task<int> CriarAsync(Especialidade especialidade)
