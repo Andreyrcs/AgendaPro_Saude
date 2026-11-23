@@ -1,5 +1,5 @@
-/* AgendaPro Saúde — tela de login: confere os campos, entra pelo api.js e leva cada papel à sua área.
-   "Acesso rápido" entra com as contas da carga inicial (as mesmas do api.js). */
+/* AgendaPro Saúde — tela de login: confere os campos, entra pela API (api.js: POST /api/auth/login)
+   e leva cada papel à sua área. A mensagem de erro é a da API, sem trocar (F8). */
  (function () {
                 'use strict';
 
@@ -11,14 +11,6 @@
                     .forEach(function (el) {
                         el.innerHTML = A.marca(Number(el.dataset.marca));
                     });
-
-                /* ─── Acesso rápido: contas da carga inicial ─── */
-                var CONTAS = {
-                    paciente: { email: 'juliana.santos@email.com', senha: 'paciente123' },
-                    medico: { email: 'paulo.menezes@clinicaipe.com.br', senha: 'medico123' },
-                    recepcao: { email: 'recepcao@clinicaipe.com.br', senha: 'recepcao123' },
-                    recepcaoJacaranda: { email: 'recepcao@clinicajacaranda.com.br', senha: 'recepcao123' },
-                };
 
                 var emailEl = document.getElementById('email');
                 var senhaEl = document.getElementById('senha');
@@ -165,26 +157,6 @@
                             mostrarErroGeral(e.message);
                         });
                 }
-
-                /* ─── Acesso rápido ─── */
-                document
-                    .querySelectorAll('[data-demo]')
-                    .forEach(function (btn) {
-                        btn.addEventListener('click', function () {
-                            var perfil = btn.dataset.demo;
-                            var conta = CONTAS[perfil];
-                            if (!conta) return;
-
-                            limparErros();
-                            emailEl.value = conta.email;
-                            senhaEl.value = conta.senha;
-                            anunciar('Entrando...');
-
-                            setTimeout(function () {
-                                fazerLogin(conta);
-                            }, 300);
-                        });
-                    });
 
                 /* ─── Mensagem de sucesso vindo do cadastro ─── */
                 if (
