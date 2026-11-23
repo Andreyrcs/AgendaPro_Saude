@@ -1,0 +1,20 @@
+GET    /api/consultas/88                                          -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+DELETE /api/consultas/88                                          -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+PUT    /api/consultas/88/presenca                                 -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+GET    /api/pacientes/80                                          -> 403 (sem corpo)
+GET    /api/pacientes/80/familiares                               -> 403 (sem corpo)
+POST   /api/pacientes/80/familiares                               -> 403 (sem corpo)
+PUT    /api/pacientes/79/familiares/48                            -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+GET    /api/pacientes/80/consultas                                -> 403 (sem corpo)
+GET    /api/pacientes/80/situacao                                 -> 403 (sem corpo)
+GET    /api/pacientes/80/lista-espera                             -> 403 (sem corpo)
+GET    /api/pacientes/80/acompanhamento                           -> 403 (sem corpo)
+GET    /api/pacientes/80/prevencao                                -> 403 (sem corpo)
+GET    /api/pacientes/80/notificacoes                             -> 403 (sem corpo)
+PUT    /api/pacientes/80/notificacoes/lidas                       -> 403 (sem corpo)
+GET    /api/pacientes/80/clinicas                                 -> 403 (sem corpo)
+POST   /api/consultas                                             -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+POST   /api/lista-espera                                          -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+DELETE /api/lista-espera/24                                       -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+PUT    /api/lista-espera/24/vaga                                  -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+PUT    /api/prevencao/8                                           -> 403 {"mensagem":"Você só pode gerenciar a sua família."}

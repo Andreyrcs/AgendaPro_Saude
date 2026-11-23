@@ -1,0 +1,38 @@
+  1 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  2 GET    /api/pacientes/109/clinicas -> 200  [Bearer]  
+  3 GET    /api/pacientes/109/familiares -> 200  [Bearer]  [{"id":64,"nome":"Paciente <img src=x onerror=alert(6)>","curto":"Paciente","cpf":"33800581493","relacao":"Titular","nascimento":"1980-02-02","cor":"#CFE2F6","a
+  4 GET    /api/pacientes/109/lista-espera -> 200  [Bearer]  null
+  5 GET    /api/pacientes/109/acompanhamento -> 200  [Bearer]  {"retornos":[],"exames":[]}
+  6 GET    /api/pacientes/109/consultas -> 200  [Bearer]  {"proximas":[{"id":87,"data":"2026-11-25","hora":"09:00","sala":"<img src=x onerror=alert(5)>","status":"confirmada","motivo":"Motivo <img src=x onerror=alert(1
+  7 GET    /api/pacientes/109/situacao -> 200  [Bearer]  {"faltas":0,"restricao":"normal","ate":null}
+  8 GET    /api/pacientes/109/notificacoes -> 200  [Bearer]  []
+  9 GET    /api/pacientes/109/prevencao -> 200  [Bearer]  [{"id":1,"mes":"2026-10","campanha":"Outubro Rosa","tema":"Prevenção do câncer de mama","exames":[{"id":1,"idCampanha":1,"titulo":"Mamografia","nota":"A cada 2 
+ 10 GET    /api/clinicas/25/especialidades -> 200  [Bearer]  [{"id":13,"nome":"Clínica geral <img src=x onerror=alert(3)>","duracao":30},{"id":14,"nome":"Pediatria","duracao":30}]
+ 11 GET    /api/feriados?de=2026-10-01&ate=2027-05-31 -> 200  [Bearer]  []
+ 12 GET    /api/especialidades/13/horarios-livres -> 200  [Bearer]  [{"medico":{"id":16,"nome":"Dr. <img src=x onerror=alert(4)>","sala":"<img src=x onerror=alert(5)>"},"dias":[{"data":"2026-11-24","horas":["08:00","08:30","09:0
+ 13 GET    /api/especialidades/14/horarios-livres -> 200  [Bearer]  []
+ 14 POST   /api/pacientes/109/familiares -> 201  [Bearer]  {"id":67,"nome":"<img src=x onerror=alert(1)>","curto":"<img","cpf":"97450811243","relacao":"Filho(a)","nascimento":"2015-05-05","cor":"#E3F2DC","alergias":null
+ 15 GET    /api/pacientes/109/acompanhamento -> 200  [Bearer]  {"retornos":[],"exames":[]}
+ 16 GET    /api/pacientes/109/familiares -> 200  [Bearer]  [{"id":64,"nome":"Paciente <img src=x onerror=alert(6)>","curto":"Paciente","cpf":"33800581493","relacao":"Titular","nascimento":"1980-02-02","cor":"#CFE2F6","a
+ 17 GET    /api/pacientes/109/consultas -> 200  [Bearer]  {"proximas":[{"id":87,"data":"2026-11-25","hora":"09:00","sala":"<img src=x onerror=alert(5)>","status":"confirmada","motivo":"Motivo <img src=x onerror=alert(1
+ 18 GET    /api/pacientes/109/notificacoes -> 200  [Bearer]  []
+ 19 GET    /api/pacientes/109/prevencao -> 200  [Bearer]  [{"id":1,"mes":"2026-10","campanha":"Outubro Rosa","tema":"Prevenção do câncer de mama","exames":[{"id":1,"idCampanha":1,"titulo":"Mamografia","nota":"A cada 2 
+ 20 GET    /api/pacientes/109/situacao -> 200  [Bearer]  {"faltas":0,"restricao":"normal","ate":null}
+ 21 GET    /api/feriados?de=2026-10-01&ate=2027-05-31 -> 200  [Bearer]  []
+ 22 GET    /api/pacientes/109/lista-espera -> 200  [Bearer]  null
+ 23 GET    /api/clinicas/25/especialidades -> 200  [Bearer]  [{"id":13,"nome":"Clínica geral <img src=x onerror=alert(3)>","duracao":30},{"id":14,"nome":"Pediatria","duracao":30}]
+ 24 GET    /api/especialidades/13/horarios-livres -> 200  [Bearer]  [{"medico":{"id":16,"nome":"Dr. <img src=x onerror=alert(4)>","sala":"<img src=x onerror=alert(5)>"},"dias":[{"data":"2026-11-24","horas":["08:00","08:30","09:0
+ 25 GET    /api/especialidades/14/horarios-livres -> 200  [Bearer]  []
+ 26 GET    /api/pacientes/109 -> 200  [Bearer]  {"nome":"Paciente <img src=x onerror=alert(6)>","cpf":"33800581493","email":"px.txgws@teste.com","telefone":"(15) 97000-0000","nascimento":"1980-02-02"}
+ 27 GET    /api/pacientes/109/notificacoes -> 200  [Bearer]  []
+ 28 GET    /api/pacientes/109/consultas -> 200  [Bearer]  {"proximas":[{"id":87,"data":"2026-11-25","hora":"09:00","sala":"<img src=x onerror=alert(5)>","status":"confirmada","motivo":"Motivo <img src=x onerror=alert(1
+ 29 GET    /api/pacientes/109/lista-espera -> 200  [Bearer]  null
+ 30 GET    /api/pacientes/109/situacao -> 200  [Bearer]  {"faltas":0,"restricao":"normal","ate":null}
+ 31 GET    /api/feriados?de=2026-10-01&ate=2027-05-31 -> 200  [Bearer]  []
+ 32 GET    /api/pacientes/109/familiares -> 200  [Bearer]  [{"id":64,"nome":"Paciente <img src=x onerror=alert(6)>","curto":"Paciente","cpf":"33800581493","relacao":"Titular","nascimento":"1980-02-02","cor":"#CFE2F6","a
+ 33 GET    /api/clinicas/25/especialidades -> 200  [Bearer]  [{"id":13,"nome":"Clínica geral <img src=x onerror=alert(3)>","duracao":30},{"id":14,"nome":"Pediatria","duracao":30}]
+ 34 GET    /api/pacientes/109/acompanhamento -> 200  [Bearer]  {"retornos":[],"exames":[]}
+ 35 GET    /api/pacientes/109/prevencao -> 200  [Bearer]  [{"id":1,"mes":"2026-10","campanha":"Outubro Rosa","tema":"Prevenção do câncer de mama","exames":[{"id":1,"idCampanha":1,"titulo":"Mamografia","nota":"A cada 2 
+ 36 GET    /api/especialidades/13/horarios-livres -> 200  [Bearer]  [{"medico":{"id":16,"nome":"Dr. <img src=x onerror=alert(4)>","sala":"<img src=x onerror=alert(5)>"},"dias":[{"data":"2026-11-24","horas":["08:00","08:30","09:0
+ 37 GET    /api/especialidades/14/horarios-livres -> 200  [Bearer]  []
+ 38 GET    /api/pacientes/109 -> 200  [Bearer]  {"nome":"Paciente <img src=x onerror=alert(6)>","cpf":"33800581493","email":"px.txgws@teste.com","telefone":"(15) 97000-0000","nascimento":"1980-02-02"}

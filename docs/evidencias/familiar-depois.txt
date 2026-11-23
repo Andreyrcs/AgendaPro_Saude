@@ -1,0 +1,19 @@
+﻿OK  P1 edita o familiar (nome, parentesco, nascimento, alergias, cor) -> HTTP 200 {"id":63,"nome":"Filho Editado","curto":"Filho","cpf":"71660546702","relacao":"Outro","nascimento":"2016-01-31","cor":"#AABBCC","alergias":"Amendoim","titular":false}
+OK    a resposta traz os dados novos — {"id":63,"nome":"Filho Editado","curto":"Filho","cpf":"71660546702","relacao":"Outro","nascimento":"2016-01-31","cor":"#AABBCC","alergias":"Amendoim","titular":false}
+OK  P1 edita o próprio titular (relação enviada é ignorada) -> HTTP 200 {"id":47,"nome":"Paciente 1 Editado","curto":"Paciente","cpf":"91861773978","relacao":"Titular","nascimento":"1990-05-10","cor":"#CFE2F6","alergias":null,"titular":true}
+OK    continua titular, com o nome novo — {"nome":"Paciente 1 Editado","relacao":"Titular"}
+OK    o nome da conta (GET /api/pacientes/{id}) acompanha o titular — Paciente 1 Editado
+OK  P1 volta o nome do titular -> HTTP 200 {"id":47,"nome":"Paciente 1","curto":"Paciente","cpf":"91861773978","relacao":"Titular","nascimento":"1990-05-10","cor":"#CFE2F6","alergias":null,"titular":true}
+OK  CPF de outra pessoa (o titular de P2) -> HTTP 400 {"mensagem":"Este CPF já está cadastrado."}
+OK    mensagem de CPF repetido — Este CPF já está cadastrado.
+OK  CPF inválido -> HTTP 400 {"mensagem":"CPF inválido."}
+OK  parentesco inválido -> HTTP 400 {"mensagem":"Escolha o parentesco."}
+OK  nascimento no futuro -> HTTP 400 {"mensagem":"A data de nascimento não pode ser no futuro."}
+OK  P1 tenta editar a pessoa de P2 pela própria URL -> HTTP 403 {"mensagem":"Você só pode gerenciar a sua família."}
+OK    mensagem "só a sua família" — Você só pode gerenciar a sua família.
+OK  P1 tenta usar a URL da conta de P2 -> HTTP 403 (sem corpo)
+OK  pessoa inexistente -> HTTP 404 {"mensagem":"Paciente não encontrado."}
+OK  recepção (perfil sem acesso) -> HTTP 403 (sem corpo)
+OK  sem token -> HTTP 401 (sem corpo)
+
+Todas as verificações bateram.

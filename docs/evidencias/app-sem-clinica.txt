@@ -1,0 +1,1 @@
+entrar() sem clínica → clinicaId = null | Navegacao mostra SemClinicaTela
