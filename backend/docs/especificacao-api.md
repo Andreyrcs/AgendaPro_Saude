@@ -347,3 +347,18 @@ Quadro T.1 – Itens de backlog do back-end
 | Integração com web e app | Troca dos dados simulados pelas chamadas à API, com teste de cada rota |
 
 Fonte: elaborado pelos autores (2026).
+
+---
+
+## ACRÉSCIMOS DEPOIS DA ENTREGA DO PIM (integração com a web e o app)
+
+O texto acima reproduz a documentação entregue. Esta seção reúne o que mudou na API durante a integração com o
+front. **O banco não mudou**: as tabelas, as colunas, a visão, as procedures e os triggers continuam iguais ao
+Apêndice Q.
+
+### Regras novas em rotas existentes
+
+| Rota | Mudança |
+|---|---|
+| Todas as que gravam | Dois pedidos simultâneos que gravariam o mesmo dado (CPF, e-mail, CNPJ, CRM…): o segundo recebe **409** com a mesma mensagem da checagem normal, em vez de 500 (ver a nota abaixo do Quadro 5.1) |
+| PUT /api/medicos/{id} | O médico continua alterando os próprios dados, mas **não o CRM**. Se mandar um CRM diferente do atual: **403** `{ "mensagem": "Só a recepção pode alterar o CRM." }`. Mandar o mesmo CRM continua valendo. Recepção e dono alteram o CRM normalmente |

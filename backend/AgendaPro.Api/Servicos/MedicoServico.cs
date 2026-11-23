@@ -92,6 +92,12 @@ public class MedicoServico : IMedicoServico
         await ConferirEspecialidadeAsync(dados.Especialidade!.Value, medico.IdClinica);
 
         var crm = dados.Crm.Trim().ToUpperInvariant();
+
+        // O CRM é o registro profissional conferido pela clínica: o médico edita os próprios dados de perfil
+        // (Apêndice G), mas só a recepção e o dono trocam o CRM. Mandar o mesmo CRM continua valendo.
+        if (logado.EhMedico && crm != medico.Crm)
+            throw new ErroApi(StatusCodes.Status403Forbidden, "Só a recepção pode alterar o CRM.");
+
         if (await _medicos.CrmExisteAsync(crm, medico.Id))
             throw new ErroApi(StatusCodes.Status400BadRequest, "Já existe um médico com este CRM.");
 
