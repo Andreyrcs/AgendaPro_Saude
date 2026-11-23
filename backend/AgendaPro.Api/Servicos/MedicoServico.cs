@@ -113,6 +113,39 @@ public class MedicoServico : IMedicoServico
         return Resposta(completo, expediente);
     }
 
+    // L2: perfil do médico (CRM, especialidade, sala, telefone e expediente). O próprio médico ou a equipe da clínica.
+    public async Task<MedicoResposta?> ObterAsync(int id, UsuarioLogado logado)
+    {
+        var medico = await BuscarOuFalharAsync(id);
+        if (!PodeMexer(medico, logado))
+            return null;
+
+        var completo = (await _medicos.BuscarCompletoAsync(id))!.Value;
+        var expediente = await _horarios.ListarPorMedicosAsync([id]);
+        return Resposta(completo, expediente);
+    }
+
+    // L6: desativa a conta do médico (Usuarios.Ativo = 0), sem apagar nada. Ele some das listas e dos horários livres,
+    // não recebe consulta nem fila nova e não entra mais (o token vira 401). As consultas antigas continuam no histórico.
+    // Recusa enquanto houver consulta por atender ou gente na fila dele, para ninguém ficar com consulta ou fila presa.
+    public async Task<bool> DesativarAsync(int id, UsuarioLogado logado)
+    {
+        var medico = await BuscarOuFalharAsync(id);
+        if (logado.IdClinica != medico.IdClinica)
+            return false;
+
+        var (consultas, fila) = await _medicos.ContarCompromissosAsync(id);
+        if (consultas > 0)
+            throw new ErroApi(StatusCodes.Status400BadRequest,
+                "Este médico tem consultas marcadas. Cancele ou reagende antes de desativar.");
+        if (fila > 0)
+            throw new ErroApi(StatusCodes.Status400BadRequest,
+                "Este médico tem pacientes na lista de espera. Tire-os da fila antes de desativar.");
+
+        await _usuarios.DesativarAsync(medico.IdUsuario);
+        return true;
+    }
+
     // PUT /api/medicos/{id}/expediente: semana → dias 1 a 5, sábado → dia 6, domingo nunca (pagina-horarios.js:93)
     public async Task<bool> SalvarExpedienteAsync(int id, ExpedienteRequisicao dados, UsuarioLogado logado)
     {

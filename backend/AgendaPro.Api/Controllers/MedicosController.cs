@@ -37,6 +37,27 @@ public class MedicosController : ApiControllerBase
         return StatusCode(StatusCodes.Status201Created, resposta);
     }
 
+    // L2: perfil do médico, para a tela do próprio médico e para a equipe da clínica
+    [Authorize(Roles = "recepcao,dono,medico")]
+    [HttpGet("api/medicos/{id:int}")]
+    public async Task<ActionResult<MedicoResposta>> Obter(int id)
+    {
+        var resposta = await _servico.ObterAsync(id, Logado);
+        if (resposta is null)
+            return Forbid();
+        return Ok(resposta);
+    }
+
+    // L6: desativa o médico sem apagar o histórico
+    [Authorize(Roles = "recepcao,dono")]
+    [HttpDelete("api/medicos/{id:int}")]
+    public async Task<IActionResult> Desativar(int id)
+    {
+        if (!await _servico.DesativarAsync(id, Logado))
+            return Forbid();
+        return NoContent();
+    }
+
     [Authorize(Roles = "recepcao,dono,medico")]
     [HttpPut("api/medicos/{id:int}")]
     public async Task<ActionResult<MedicoResposta>> Atualizar(int id, AtualizacaoMedicoRequisicao dados)

@@ -5,9 +5,12 @@ namespace AgendaPro.Api.Repositorios;
 
 public class MedicoRepositorio : IMedicoRepositorio
 {
+    // Só médicos com a conta ativa (L6: o médico desativado some das listas e não recebe consulta nem fila nova;
+    // o histórico continua no banco e aparece nas consultas antigas, que não passam por aqui)
     private const string SelectMedico = @"
-        SELECT Id_Medico AS Id, IdUsuario, IdEspecialidade, IdClinica, Nome, CRM AS Crm, Sala
-        FROM Medicos";
+        SELECT M.Id_Medico AS Id, M.IdUsuario, M.IdEspecialidade, M.IdClinica, M.Nome, M.CRM AS Crm, M.Sala
+        FROM Medicos M
+        INNER JOIN Usuarios U ON U.Id_Usuario = M.IdUsuario AND U.Ativo = 1";
 
     // Três blocos de colunas, separados pelas colunas "Id" (multi-mapeamento do Dapper)
     private const string SelectCompleto = @"
@@ -35,7 +38,7 @@ public class MedicoRepositorio : IMedicoRepositorio
 
     public async Task<Medico?> BuscarPorIdAsync(int id)
     {
-        const string sql = SelectMedico + " WHERE Id_Medico = @Id;";
+        const string sql = SelectMedico + " WHERE M.Id_Medico = @Id;";
 
         using var conexao = _fabrica.CriarConexao();
         return await conexao.QuerySingleOrDefaultAsync<Medico>(sql, new { Id = id });
@@ -43,7 +46,7 @@ public class MedicoRepositorio : IMedicoRepositorio
 
     public async Task<IEnumerable<Medico>> ListarPorEspecialidadeAsync(int idEspecialidade)
     {
-        const string sql = SelectMedico + " WHERE IdEspecialidade = @IdEspecialidade ORDER BY Nome;";
+        const string sql = SelectMedico + " WHERE M.IdEspecialidade = @IdEspecialidade ORDER BY M.Nome;";
 
         using var conexao = _fabrica.CriarConexao();
         return await conexao.QueryAsync<Medico>(sql, new { IdEspecialidade = idEspecialidade });
@@ -51,7 +54,7 @@ public class MedicoRepositorio : IMedicoRepositorio
 
     public async Task<IEnumerable<(Medico Medico, Especialidade Especialidade, Usuario Conta)>> ListarCompletosPorClinicaAsync(int idClinica)
     {
-        const string sql = SelectCompleto + " WHERE M.IdClinica = @IdClinica ORDER BY M.Nome;";
+        const string sql = SelectCompleto + " WHERE M.IdClinica = @IdClinica AND U.Ativo = 1 ORDER BY M.Nome;";
 
         using var conexao = _fabrica.CriarConexao();
         return await conexao.QueryAsync<Medico, Especialidade, Usuario, (Medico, Especialidade, Usuario)>(
@@ -66,6 +69,27 @@ public class MedicoRepositorio : IMedicoRepositorio
         var linhas = await conexao.QueryAsync<Medico, Especialidade, Usuario, (Medico, Especialidade, Usuario)>(
             sql, (m, e, u) => (m, e, u), new { Id = id }, splitOn: "Id,Id");
         return linhas.Cast<(Medico, Especialidade, Usuario)?>().SingleOrDefault();
+    }
+
+    // L6: o que impede desativar o médico. Consultas de hoje em diante ainda por atender
+    // (confirmada, na recepção, em atendimento) e pessoas na fila dele (aguardando ou com vaga oferecida).
+    public async Task<(int Consultas, int Fila)> ContarCompromissosAsync(int idMedico)
+    {
+        const string sql = @"
+            SELECT
+                (SELECT COUNT(1)
+                 FROM Consultas C
+                 INNER JOIN Status_Consulta S ON S.Id_Status = C.IdStatus
+                 WHERE C.IdMedico = @IdMedico
+                   AND C.DataConsulta >= CAST(GETDATE() AS DATE)
+                   AND S.Codigo_consulta IN ('CONFIRMADA', 'NA_RECEPCAO', 'EM_ATENDIMENTO')) AS Consultas,
+                (SELECT COUNT(1)
+                 FROM Lista_Espera
+                 WHERE IdMedico = @IdMedico
+                   AND StatusOferta IN ('AGUARDANDO', 'OFERECIDA')) AS Fila;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QuerySingleAsync<(int, int)>(sql, new { IdMedico = idMedico });
     }
 
     public async Task<bool> CrmExisteAsync(string crm, int? ignorarIdMedico)

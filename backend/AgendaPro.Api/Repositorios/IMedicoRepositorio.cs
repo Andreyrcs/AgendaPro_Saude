@@ -13,6 +13,7 @@ public interface IMedicoRepositorio
     Task<(Medico Medico, Especialidade Especialidade, Usuario Conta)?> BuscarCompletoAsync(int id);
 
     Task<bool> CrmExisteAsync(string crm, int? ignorarIdMedico);
+    Task<(int Consultas, int Fila)> ContarCompromissosAsync(int idMedico);
     Task<int> CriarComContaAsync(Usuario conta, Medico medico);
     Task AtualizarAsync(Medico medico, string? telefone);
 }

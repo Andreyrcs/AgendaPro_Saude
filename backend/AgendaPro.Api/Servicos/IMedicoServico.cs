@@ -9,4 +9,6 @@ public interface IMedicoServico
     Task<MedicoCadastradoResposta?> CadastrarAsync(int idClinica, CadastroMedicoRequisicao dados, UsuarioLogado logado);
     Task<MedicoResposta?> AtualizarAsync(int id, AtualizacaoMedicoRequisicao dados, UsuarioLogado logado);
     Task<bool> SalvarExpedienteAsync(int id, ExpedienteRequisicao dados, UsuarioLogado logado);
+    Task<MedicoResposta?> ObterAsync(int id, UsuarioLogado logado);
+    Task<bool> DesativarAsync(int id, UsuarioLogado logado);
 }
