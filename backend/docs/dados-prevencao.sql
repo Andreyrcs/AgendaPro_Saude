@@ -7,8 +7,9 @@
    (frontend/assets/js/dados.js:42-63 e aplicativo/src/dados/dadosFicticios.js:154-176), de outubro de 2026
    a abril de 2027, mais as duas sugestões gerais (IdCampanha nulo, valem para todo mês).
 
-   REAPLIQUE este arquivo sempre que o banco for recriado pelo script do Apêndice Q:
-       sqlcmd -S .\SQLEXPRESS -E -C -I -f 65001 -d AgendaPro_Saude -i backend\docs\dados-prevencao.sql
+   REAPLIQUE este arquivo sempre que o banco for recriado pelo script banco/agendapro_saude_sqlserver.sql:
+       sqlcmd -S localhost -E -C -I -f 65001 -d <nome do banco> -i backend\docs\dados-prevencao.sql
+   O banco é escolhido pelo -d (este arquivo não tem USE, para não gravar no banco errado).
    (-f 65001 lê o arquivo como UTF-8, por causa dos acentos.)
    Pode rodar mais de uma vez: o que já existe não é gravado de novo.
 
@@ -17,9 +18,6 @@
 
 SET QUOTED_IDENTIFIER ON;
 SET NOCOUNT ON;
-GO
-
-USE AgendaPro_Saude;
 GO
 
 -- Campanhas (um registro por mês: UQ_Campanhas_Mes_Ano). Nome NULL = mês sem campanha com nome.

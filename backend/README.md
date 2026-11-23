@@ -7,16 +7,33 @@ O que a web e o app precisam ajustar para usar a API está em [docs/ajustes-fron
 ## Como rodar
 
 1. **SDK do .NET 10** instalado (`dotnet --version`).
-2. **Banco:** SQL Server Express (instância `.\SQLEXPRESS`). Rode o script `banco/agendapro_saude_sqlserver2.0.sql`
-   (pasta `banco/` na raiz do repositório). Ele cria o banco `AgendaPro_Saude` com tabelas, procedures e triggers.
+2. **Banco:** SQL Server na instância padrão da máquina (`localhost`, autenticação do Windows). O script oficial é
+   `banco/agendapro_saude_sqlserver.sql` (pasta `banco/` na raiz do repositório). Ele cria o banco `AgendaPro_Saude`
+   com as tabelas, a visão, as procedures e os triggers, e grava só os dados do sistema (`Status_Consulta` e
+   `Parametros`). Na raiz do repositório:
+
+   ```
+   sqlcmd -S localhost -E -C -I -f 65001 -i banco\agendapro_saude_sqlserver.sql
+   sqlcmd -S localhost -E -C -I -f 65001 -d AgendaPro_Saude -i backend\docs\dados-prevencao.sql
+   ```
+
+   O segundo comando grava o catálogo de campanhas de prevenção (sem ele, a tela de prevenção fica vazia).
+   Para usar outro nome de banco (por exemplo `AgendaPro_Saude_App`), faça uma cópia do script trocando o nome nas
+   linhas do `IF DB_ID(...)`, do `CREATE DATABASE` e do `USE`, e passe o mesmo nome no `-d` e na connection string.
 3. **Segredos** (ficam fora do código, nos user-secrets). Na pasta `backend/AgendaPro.Api`:
 
    ```
-   dotnet user-secrets set "ConnectionStrings:AgendaPro" "Server=.\SQLEXPRESS;Database=AgendaPro_Saude;Trusted_Connection=True;TrustServerCertificate=True"
-   dotnet user-secrets set "Jwt:Chave" "uma-frase-secreta-com-pelo-menos-32-caracteres"
+   dotnet user-secrets set "ConnectionStrings:AgendaPro" "Server=localhost;Database=AgendaPro_Saude;Trusted_Connection=True;TrustServerCertificate=True"
+   dotnet user-secrets set "Jwt:Chave" "<chave aleatória>"
    ```
 
-   A chave do JWT precisa ter pelo menos 32 caracteres (assinatura HMAC-SHA256).
+   A chave do JWT precisa ter pelo menos 32 caracteres (assinatura HMAC-SHA256). Gere uma aleatória e nunca a
+   coloque em arquivo do repositório. No PowerShell:
+
+   ```
+   $b = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
+   dotnet user-secrets set "Jwt:Chave" ([Convert]::ToBase64String($b))
+   ```
 4. **Rodar**, na pasta `backend/AgendaPro.Api`:
 
    | Comando | Endereço | Para quê |
@@ -58,7 +75,8 @@ Públicas: `POST /api/auth/login`, `POST /api/pacientes` e `POST /api/clinicas`.
 
 ## Dados de teste
 
-Todos os dados são fictícios.
+Todos os dados são fictícios. **Estas contas não existem num banco criado pelo script**: foram criadas em testes
+locais. Num banco novo, crie a clínica e o dono por `POST /api/clinicas` e o paciente por `POST /api/pacientes`.
 
 | Conta | Senha | Perfil | Clínica |
 |---|---|---|---|
