@@ -73,26 +73,19 @@ Para que login e cadastro usem a API de verdade:
 
 1. Suba o backend escutando na rede (não só no `localhost`):
    ```bash
-   cd backend
-   dotnet run --urls http://0.0.0.0:5000
+   cd backend/AgendaPro.Api
+   dotnet run --launch-profile rede-local
    ```
+   A API fica em `http://0.0.0.0:5080` (porta **5080**; veja `backend/README.md`).
 2. Descubra o IP do computador: no Windows, `ipconfig` (procure "Endereço IPv4"); no Linux/Mac, `ip addr` ou `ifconfig`.
 3. Edite [`src/servicos/config.js`](src/servicos/config.js):
    ```js
    USAR_API_REAL: true,
-   ENDERECO_API: 'http://192.168.0.10:5000', // o IP do passo 2
+   ENDERECO_API: 'http://192.168.0.10:5080', // o IP do passo 2
    ```
-4. Crie a conta da Juliana no banco, uma vez só:
-   ```bash
-   curl -X POST http://192.168.0.10:5000/api/usuarios \
-     -H "Content-Type: application/json" \
-     -d '{"nome":"Juliana Santos","email":"juliana.santos@email.com","senha":"paciente123"}'
-   ```
-5. Feche e abra o app e entre com a conta da Juliana.
+4. Crie a conta pelo próprio app (tela Cadastro) ou entre com uma conta de paciente já criada.
 
-Se a API não responder em 8 segundos, o app avisa: *"Não foi possível falar com o servidor.
-Confira o endereço da API."* Se isso acontecer durante a apresentação, volte `USAR_API_REAL`
-para `false` e o app continua com o banco em memória.
+Se a API não responder em 8 segundos, o app avisa: *"Não foi possível falar com o servidor"*.
 
 > Por que o IP e não `localhost`? No celular, `localhost` é o próprio celular, e não o computador.
 

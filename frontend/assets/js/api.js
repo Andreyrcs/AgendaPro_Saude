@@ -15,6 +15,59 @@
   const so = (t) => String(t || "").replace(/\D/g, "");
   const novoId = (p) => p + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
+  /* ─── Acesso à API: toda chamada ao servidor passa por chamar() (seção 5.1) ───
+     O endereço vem de config.js (window.AGENDAPRO_CONFIG). Envia e recebe JSON, manda o token da sessão em
+     Authorization: Bearer, desiste depois do tempo limite e transforma a resposta de erro da API
+     ({ "mensagem": "..." }) num ErroApi com o código HTTP e a mensagem pronta para a tela. */
+  const CONFIG = window.AGENDAPRO_CONFIG || { API_URL: "http://localhost:5080", TEMPO_LIMITE_MS: 8000 };
+  const SEM_SERVIDOR = "Não foi possível falar com o servidor";
+
+  class ErroApi extends Error {
+    constructor(status, mensagem) {
+      super(mensagem);
+      this.name = "ErroApi";
+      this.status = status; /* 0 = sem resposta (servidor desligado, sem rede ou tempo esgotado) */
+    }
+  }
+
+  async function chamar(metodo, caminho, corpo) {
+    const cabecalhos = { Accept: "application/json" };
+    if (corpo !== undefined) cabecalhos["Content-Type"] = "application/json";
+    const s = sessao();
+    if (s && s.token) cabecalhos.Authorization = "Bearer " + s.token;
+
+    const controle = new AbortController();
+    const relogio = setTimeout(() => controle.abort(), CONFIG.TEMPO_LIMITE_MS);
+    let resposta;
+    try {
+      resposta = await fetch(CONFIG.API_URL + caminho, {
+        method: metodo,
+        headers: cabecalhos,
+        body: corpo === undefined ? undefined : JSON.stringify(corpo),
+        signal: controle.signal,
+      });
+    } catch (e) {
+      throw new ErroApi(0, SEM_SERVIDOR);
+    } finally {
+      clearTimeout(relogio);
+    }
+
+    const texto = await resposta.text();
+    let dados = null;
+    try { dados = texto ? JSON.parse(texto) : null; } catch (e) { dados = null; }
+    if (!resposta.ok) {
+      const mensagem = dados && dados.mensagem ? dados.mensagem : "Não foi possível concluir agora. Tente de novo.";
+      throw new ErroApi(resposta.status, mensagem);
+    }
+    return dados; /* 204 (sem conteúdo) devolve null */
+  }
+
+  /* Data no formato da API (AAAA-MM-DD) no fuso do computador. Nunca toISOString(): em UTC, perto da
+     meia-noite, o dia viraria o seguinte (ajustes-front.md, F25). */
+  function dataISO(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
   /* ─── CNPJ: 14 dígitos e os dois dígitos verificadores ─── */
   function digitoCNPJ(base) {
     const pesos = base.length === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
@@ -453,6 +506,7 @@
   const liberada = protegerPagina();
 
   window.API = {
+    chamar, ErroApi, dataISO, CONFIG,
     pronto, PAPEIS, liberada,
     sessao, usuarioAtual, clinicaAtual, destinoDe,
     entrar, sair, trocarSenha,
