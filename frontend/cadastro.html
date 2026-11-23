@@ -551,7 +551,7 @@
                         return;
                     }
 
-                    /* Cria a conta (api.js) */
+                    /* Cria a conta pela API (POST /api/pacientes) e já entra (api.js) */
                     btnCadastrar.classList.add('btn--carregando');
                     btnCadastrar.textContent = 'Criando conta...';
                     anunciar('Criando sua conta...');
@@ -564,14 +564,22 @@
                         cpf: cpfEl.value.replace(/\D/g, ''),
                         nascimento: (document.getElementById('nascimento') || {}).value || '',
                     })
-                        .then(function () {
-                            window.location.href = 'escolher-clinica.html';
+                        .then(function (r) {
+                            /* sem clínica ainda: escolher-clinica.html */
+                            window.location.href = r.destino;
                         })
                         .catch(function (e) {
                             btnCadastrar.classList.remove('btn--carregando');
                             btnCadastrar.textContent = 'Criar conta';
+                            /* sem servidor, limite de tentativas ou erro inesperado: aviso geral */
+                            if (!e.status || e.status === 429 || e.status >= 500) {
+                                document.getElementById('erro-geral-texto').textContent = e.message;
+                                document.getElementById('erro-geral').classList.add('erro-geral--visivel');
+                                anunciar(e.message);
+                                return;
+                            }
                             /* cada erro aparece no campo dele */
-                            var campo = /CPF/.test(e.message) ? 'cpf' : /senha/i.test(e.message) ? 'senha' : 'email';
+                            var campo = /CPF/.test(e.message) ? 'cpf' : /senha/i.test(e.message) ? 'senha' : /nascimento/i.test(e.message) ? 'nascimento' : 'email';
                             mostrarErroCampo(campo, e.message);
                             document.getElementById(campo).focus();
                             anunciar(e.message);

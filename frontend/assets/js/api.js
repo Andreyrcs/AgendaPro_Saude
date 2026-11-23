@@ -210,6 +210,15 @@
       if (s.papel === "dono" || s.papel === "recepcao") {
         s.clinica = await chamar("GET", "/api/clinicas/" + s.clinicaId);
         gravarSessao(s);
+      } else if (s.papel === "paciente") {
+        /* F7: no token do paciente a clínica vem nula. As clínicas dele decidem o destino:
+           nenhuma → escolher-clinica.html; uma ou mais → a última que ele usou neste navegador, ou a primeira. */
+        const minhas = await chamar("GET", "/api/pacientes/" + s.usuarioId + "/clinicas");
+        const ultima = lerClinicaEscolhida(s.usuarioId);
+        const c = minhas.find((x) => x.id === ultima) || minhas[0] || null;
+        s.clinicaId = c ? c.id : null;
+        s.clinica = c;
+        gravarSessao(s);
       }
     } catch (e) {
       apagarSessao();
@@ -230,6 +239,78 @@
     if (!u) throw new Error("Entre de novo para trocar a senha.");
     exigirSenha(nova);
     await chamar("PUT", "/api/usuarios/" + u.id + "/senha", { senhaAtual: atual, novaSenha: nova });
+  }
+
+  /* ─── Cadastros (rotas públicas): respondem 201 sem token, então o cadastro entra em seguida (F10) ─── */
+
+  /* POST /api/pacientes  corpo { nome, email, senha, telefone, cpf (11 dígitos), nascimento (AAAA-MM-DD), alergias?, codigo? }
+     Cria a conta e o titular; com o código, já vincula à clínica. Devolve o resultado do login (com o destino). */
+  async function cadastrarPaciente(dados) {
+    exigirSenha(dados.senha);
+    await chamar("POST", "/api/pacientes", {
+      nome: dados.nome.trim(), email: dados.email.trim(), senha: dados.senha,
+      telefone: dados.telefone || null, cpf: so(dados.cpf), nascimento: dados.nascimento,
+      alergias: dados.alergias || null, codigo: dados.codigo ? normalizarCodigo(dados.codigo) : null,
+    });
+    return entrar(dados.email, dados.senha);
+  }
+
+  /* POST /api/clinicas  corpo { clinica: { nome, cnpj, telefone, endereco, cidade, uf, publica }, dono: { nome, email, senha } }
+     Cria a clínica (com o código AAA-0000) e a conta do dono; depois entra como dono. */
+  async function cadastrarClinica(dados) {
+    exigirSenha(dados.dono.senha);
+    const r = await chamar("POST", "/api/clinicas", dados);
+    const login = await entrar(dados.dono.email, dados.dono.senha);
+    return { clinica: r.clinica, usuario: login.usuario, destino: login.destino };
+  }
+
+  /* ─── Clínicas do paciente (F7, F32) ─── */
+  const CHAVE_ESCOLHIDA = "agendapro.clinicaEscolhida.";
+  function lerClinicaEscolhida(idUsuario) {
+    try { return Number(localStorage.getItem(CHAVE_ESCOLHIDA + idUsuario)) || null; } catch (e) { return null; }
+  }
+  /* 'ipe4821' → 'IPE-4821' */
+  function normalizarCodigo(codigo) {
+    const t = String(codigo || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    return t.length > 3 ? t.slice(0, 3) + "-" + t.slice(3, 7) : t;
+  }
+
+  /* GET /api/clinicas?busca=  → só as públicas, pelo nome ou pela cidade (F32) */
+  async function buscarClinicas(termo) {
+    const busca = String(termo || "").trim();
+    return chamar("GET", "/api/clinicas" + (busca ? "?busca=" + encodeURIComponent(busca) : ""));
+  }
+
+  /* GET /api/clinicas/codigo/{codigo}  → pública ou privada */
+  async function clinicaPorCodigo(codigo) {
+    return chamar("GET", "/api/clinicas/codigo/" + encodeURIComponent(normalizarCodigo(codigo)));
+  }
+
+  /* GET /api/pacientes/{id}/clinicas */
+  async function clinicasDoPaciente() {
+    const u = usuarioAtual();
+    if (!u || u.papel !== "paciente") return [];
+    return chamar("GET", "/api/pacientes/" + u.id + "/clinicas");
+  }
+
+  /* Abre a clínica nas telas do paciente (sem gravar nada na API) e lembra a escolha neste navegador */
+  function usarClinica(c) {
+    const s = sessao();
+    s.clinicaId = c.id;
+    s.clinica = c;
+    gravarSessao(s);
+    try { localStorage.setItem(CHAVE_ESCOLHIDA + s.usuarioId, String(c.id)); } catch (e) { /* sem armazenamento */ }
+    aplicarClinicaNasTelas();
+    return c;
+  }
+
+  /* POST /api/pacientes/{id}/clinicas  corpo { codigo } (qualquer clínica) ou { clinicaId } (só as públicas)
+     201 = vínculo novo, 200 = já era vinculado. Depois, a clínica fica aberta nas telas. */
+  async function vincularClinica(escolha) {
+    const u = usuarioAtual();
+    const corpo = escolha.codigo ? { codigo: normalizarCodigo(escolha.codigo) } : { clinicaId: Number(escolha.clinicaId) };
+    const c = await chamar("POST", "/api/pacientes/" + u.id + "/clinicas", corpo);
+    return usarClinica(c);
   }
 
   /* ─── Clínica e equipe ─── */
@@ -275,7 +356,6 @@
   /* ════════════════════════════════════════════════════════════════════════════════════════════════
      LEGADO (sai nas próximas etapas): ainda guardado neste navegador, para as telas que continuam com
      dados simulados até serem ligadas à API.
-     - cadastro do paciente, da clínica e escolha de clínica → etapa 6
      - conta do médico e telefone do médico (medicos.html) → etapa 8
      - CPF dos pacientes da agenda simulada (pacientes.html, família do paciente) → etapas 7 e 8
      ════════════════════════════════════════════════════════════════════════════════════════════════ */
@@ -346,13 +426,6 @@
     gravar();
     return true;
   }
-  /* cadastro do paciente, da clínica e escolha de clínica: ainda simulados até a etapa 6 */
-  async function cadastrarClinica() { throw new Error("O cadastro da clínica é ligado à API na etapa 6."); }
-  async function cadastrarPaciente() { throw new Error("O cadastro do paciente é ligado à API na etapa 6."); }
-  async function buscarClinicas() { return []; }
-  async function clinicaPorCodigo() { throw new Error("A busca por código é ligada à API na etapa 6."); }
-  async function vincularClinica() { throw new Error("A escolha de clínica é ligada à API na etapa 6."); }
-  async function clinicasDoPaciente() { return []; }
   /* ════════════════════════════════════ fim do LEGADO ════════════════════════════════════ */
 
   /* O nome e os contatos da clínica aberta passam a valer em todas as telas.
@@ -377,7 +450,7 @@
     cadastrarClinica, atualizarClinica,
     listarEquipe, cadastrarRecepcionista, removerDaEquipe, cadastrarContaMedico, emailLivre,
     telefoneDoMedico, salvarTelefoneMedico,
-    cadastrarPaciente, buscarClinicas, clinicaPorCodigo, vincularClinica, clinicasDoPaciente,
+    cadastrarPaciente, buscarClinicas, clinicaPorCodigo, vincularClinica, clinicasDoPaciente, usarClinica, normalizarCodigo,
     validarCNPJ, formatarCNPJ, formatarTelefone,
     validarCPF, formatarCPF, cpfFicticio, cpfEmUso, cpfDe, guardarCPF, ERRO_CPF, ERRO_CPF_REPETIDO,
     UFS, validarUF, ERRO_UF, SENHA_MINIMA, ERRO_SENHA,

@@ -1,10 +1,9 @@
 // Login e cadastro do paciente titular.
-// Já existem no backend: POST /api/auth/login (AuthController) e POST /api/usuarios (UsuariosController).
-// Ainda faltam (contrato em docs/relatorio-integracao.md): POST /api/pacientes (titular com nascimento,
-// alergias e parentesco "Titular"), GET /api/clinicas/codigo/{codigo} e POST /api/pacientes/{id}/clinicas.
+// Rotas: POST /api/auth/login, POST /api/pacientes (cria a conta e o titular numa chamada só e, com o
+// código, já vincula à clínica) e GET /api/pacientes/{id}/clinicas (backend/docs/especificacao-api.md).
 
 import { config } from './config';
-import { chamarApi } from './api';
+import { ErroApi, chamarApi, definirToken } from './api';
 import { cpfEmUso, esperar, usuariosLocais } from '../dados/bancoSimulado';
 import { clinicas } from '../dados/dadosFicticios';
 import { normalizarEmail } from '../utilitarios/texto';
@@ -12,8 +11,10 @@ import { ERRO_CPF, ERRO_CPF_REPETIDO, ERRO_LOGIN, cpfValido, normalizarCodigo, s
 
 const ERRO_CODIGO = 'Não achamos uma clínica com esse código. Confira com a recepção.';
 
+const SO_PACIENTE = 'Este aplicativo é dos pacientes. A equipe da clínica usa o site do AgendaPro Saúde.';
+
 // Senha: vai como o paciente digitou, por HTTPS; o servidor faz o hash com BCrypt (o app não faz hash).
-// Devolve o usuário logado: { idUsuario, nome, email, token? }
+// Devolve o usuário logado: { idUsuario, nome, email, papel, token, clinicaId, clinica }
 export async function entrar(email, senha) {
   const emailLimpo = normalizarEmail(email);
 
@@ -25,7 +26,19 @@ export async function entrar(email, senha) {
       metodo: 'POST',
       corpo: { email: emailLimpo, senha },
     });
-    return { ...resposta.usuario, token: resposta.token || null };
+    const usuario = { ...resposta.usuario, token: resposta.token };
+    if (usuario.papel !== 'paciente') throw new ErroApi(403, SO_PACIENTE);
+
+    // F7: para o paciente, a clínica não vem no login. As clínicas da conta vêm desta rota;
+    // o token é usado já aqui, antes de a sessão ser aberta.
+    definirToken(usuario.token);
+    try {
+      const clinicas = await chamarApi(`/api/pacientes/${usuario.idUsuario}/clinicas`);
+      return { ...usuario, clinicaId: clinicas.length ? clinicas[0].id : null, clinica: clinicas[0] || null };
+    } catch (erro) {
+      definirToken(null);
+      throw erro;
+    }
   }
 
   await esperar();
@@ -45,17 +58,23 @@ export async function cadastrar(dados) {
   const cpf = soDigitos(dados.cpf);
 
   if (config.USAR_API_REAL) {
-    // POST /api/usuarios → { mensagem, idUsuario }  (existe; a senha vai como digitada e o servidor faz BCrypt)
-    // A API atual só guarda nome, e-mail e senha. Telefone, nascimento, alergias e o código da clínica
-    // só serão gravados quando existirem POST /api/pacientes e POST /api/pacientes/{id}/clinicas.
-    const resposta = await chamarApi('/api/usuarios', {
+    // POST /api/pacientes (F11): conta e titular numa chamada só; com o código, já vincula à clínica.
+    // Responde 201 SEM token, então o cadastro entra em seguida (F10).
+    // Erros vêm prontos da API, por exemplo "Este CPF já está cadastrado." (400, ou 409 na corrida: F12).
+    await chamarApi('/api/pacientes', {
       metodo: 'POST',
-      corpo: { nome, email, senha: dados.senha },
+      corpo: {
+        nome,
+        email,
+        senha: dados.senha,
+        telefone: dados.telefone || null,
+        cpf,
+        nascimento: dados.nascimento,
+        alergias: (dados.alergias || '').trim() || null,
+        codigo: codigo || null,
+      },
     });
-    // TODO: quando existirem no backend:
-    //   POST /api/pacientes  { idUsuario, nome, cpf, nascimento, alergias, parentesco: 'Titular', telefone }
-    //   if (codigo) POST /api/pacientes/{idUsuario}/clinicas  { codigo }
-    return { idUsuario: resposta.idUsuario, nome, email, token: resposta.token || null };
+    return entrar(email, dados.senha);
   }
 
   await esperar();

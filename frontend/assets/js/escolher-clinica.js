@@ -27,8 +27,14 @@
       '<span class="clinica-opcao__acao">' + (atual ? "Você está aqui" : "Escolher") + "</span></button></li>";
   }
 
+  let minhas = [];
   async function desenharMinhas() {
-    const minhas = await API.clinicasDoPaciente();
+    try {
+      minhas = await API.clinicasDoPaciente();
+    } catch (e) {
+      minhas = [];
+      anunciar(e.message);
+    }
     $("#minhas").hidden = !minhas.length;
     if (!minhas.length) return;
     const atual = API.clinicaAtual();
@@ -41,7 +47,15 @@
   async function buscar() {
     const termo = $("#busca").value;
     const meu = ++pedido;
-    const lista = await API.buscarClinicas(termo);
+    let lista;
+    try {
+      lista = await API.buscarClinicas(termo);
+    } catch (e) {
+      if (meu !== pedido) return;
+      $("#resultados").innerHTML = "";
+      $("#conta").textContent = e.message;
+      return;
+    }
     if (meu !== pedido) return;
     const atual = API.clinicaAtual();
     $("#resultados").innerHTML = lista.map((c) => itemHTML(c, atual && atual.id === c.id)).join("");
@@ -50,19 +64,24 @@
       : "Nenhuma clínica com esse nome ou cidade. Confira a escrita, ou peça o código à recepção da sua clínica.";
   }
 
-  async function escolher(id) {
+  /* Uma das minhas clínicas: só abre (pode ser privada, e o vínculo por id só vale para as públicas).
+     Uma clínica da busca: vincula pelo id. Pelo código: vincula pelo código (pública ou privada). */
+  async function escolher(escolha) {
     try {
-      const c = await API.vincularClinica(id);
+      const minha = escolha.clinicaId && minhas.find((c) => A.mesmoId(c.id, escolha.clinicaId));
+      const c = minha ? API.usarClinica(minha) : await API.vincularClinica(escolha);
       anunciar("Clínica escolhida: " + c.nome);
       location.href = "paciente-desktop.html";
+      return true;
     } catch (e) {
       anunciar(e.message);
+      throw e;
     }
   }
 
   document.addEventListener("click", (ev) => {
     const b = ev.target.closest(".clinica-opcao");
-    if (b) escolher(b.dataset.id);
+    if (b) escolher({ clinicaId: b.dataset.id }).catch(() => { /* a mensagem já foi anunciada */ });
   });
   $("#busca").addEventListener("input", buscar);
 
@@ -77,8 +96,7 @@
   $("#form-codigo").addEventListener("submit", async (ev) => {
     ev.preventDefault();
     try {
-      const c = await API.clinicaPorCodigo(codigo.value);
-      escolher(c.id);
+      await escolher({ codigo: codigo.value });
     } catch (e) {
       codigo.classList.add("campo__entrada--erro");
       codigo.setAttribute("aria-invalid", "true");
