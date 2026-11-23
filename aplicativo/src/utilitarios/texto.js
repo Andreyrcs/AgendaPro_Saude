@@ -8,6 +8,22 @@ export function semAcento(t) {
     .replace(/[̀-ͯ]/g, '');
 }
 
+// Ids da API são números, e os que chegam da tela (parâmetros de rota) podem vir como texto (F2):
+// por isso a comparação é sempre pelo texto do id.
+export function mesmoId(a, b) {
+  return a !== null && a !== undefined && b !== null && b !== undefined && String(a) === String(b);
+}
+
+// Dois nomes iguais sem considerar acento, maiúsculas ou espaços nas pontas ('Clínica geral' = 'clinica geral')
+export function mesmoNome(a, b) {
+  return semAcento(a).trim() === semAcento(b).trim();
+}
+
+// A pediatria é reconhecida pelo NOME: o id de cada especialidade muda de clínica para clínica (F2)
+export function ehPediatria(especialidade) {
+  return !!especialidade && mesmoNome(especialidade.nome, 'Pediatria');
+}
+
 // 'Dra. Helena Duarte' → 'HD' (ignora o título)
 export function iniciais(nome) {
   const partes = String(nome || '')

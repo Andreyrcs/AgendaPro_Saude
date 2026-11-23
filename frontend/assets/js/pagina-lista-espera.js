@@ -16,7 +16,7 @@
   const diasNaFila = (p) => Math.max(0, Math.round((C.data(D.hoje) - C.data(p.desde)) / 86400000));
 
   let atual = location.hash.slice(1);
-  if (!C.MEDICOS.includes(atual)) atual = C.MEDICOS.slice().sort((a, b) => filaDe(b).length - filaDe(a).length)[0];
+  if (!C.MEDICOS.some((m) => A.mesmoId(m, atual))) atual = C.MEDICOS.slice().sort((a, b) => filaDe(b).length - filaDe(a).length)[0];
 
   /* a próxima vaga de um médico, de agora em diante: a já oferecida à fila ou a que sobrou de um cancelamento */
   function proximaVaga(m) {
@@ -124,7 +124,7 @@
 
   /* "Oferecer horário" (POST /api/consultas/{id}/oferecer): só numa vaga */
   function oferecer(id) {
-    const v = C.consultas.find((k) => k.id === id);
+    const v = C.consultas.find((k) => A.mesmoId(k.id, id));
     if (!C.podeOferecer(v)) return;
     const lista = filaDe(v.medico);
     if (!lista.length) return;
@@ -165,7 +165,7 @@
   /* ─── Eventos ─── */
   $("#medicos").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-medico]");
-    if (b && b.dataset.medico !== atual) escolher(b.dataset.medico);
+    if (b && !A.mesmoId(b.dataset.medico, atual)) escolher(b.dataset.medico);
   });
   $("#detalhe").addEventListener("click", (ev) => {
     const o = ev.target.closest("[data-oferecer]");
@@ -175,7 +175,7 @@
   });
   window.addEventListener("hashchange", () => {
     const m = location.hash.slice(1);
-    if (C.MEDICOS.includes(m) && m !== atual) escolher(m);
+    if (C.MEDICOS.some((x) => A.mesmoId(x, m)) && !A.mesmoId(m, atual)) escolher(m);
   });
 
   const dlg = $("#dlg-adicionar");

@@ -464,12 +464,12 @@
     const c = ev.target.closest("[data-dica]");
     if (c) { mostrarDica(c, c.dataset.dica); return; }
     const b = ev.target.closest(".grade--semana .cbloco");
-    if (b) { const k = C.consultas.find((x) => x.id === b.dataset.id); mostrarDica(b, "<b>" + A.esc(k.horario === "livre" ? "Horário livre" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + curtoData(k.data) + " · " + medico(k.medico).nome + "<br>" + ESTADOS[chave(k)].rotulo + (k.presencaConfirmada && k.status === "confirmada" ? " · presença confirmada" : "")); return; }
+    if (b) { const k = C.consultas.find((x) => A.mesmoId(x.id, b.dataset.id)); mostrarDica(b, "<b>" + A.esc(k.horario === "livre" ? "Horário livre" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + curtoData(k.data) + " · " + medico(k.medico).nome + "<br>" + ESTADOS[chave(k)].rotulo + (k.presencaConfirmada && k.status === "confirmada" ? " · presença confirmada" : "")); return; }
     dica.hidden = true;
   });
   document.addEventListener("focusin", (ev) => {
     const b = ev.target.closest(".grade--semana .cbloco");
-    if (b) { const k = C.consultas.find((x) => x.id === b.dataset.id); mostrarDica(b, "<b>" + A.esc(k.horario === "livre" ? "Horário livre" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + medico(k.medico).nome); }
+    if (b) { const k = C.consultas.find((x) => A.mesmoId(x.id, b.dataset.id)); mostrarDica(b, "<b>" + A.esc(k.horario === "livre" ? "Horário livre" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + medico(k.medico).nome); }
     else dica.hidden = true;
   });
 
@@ -650,7 +650,7 @@
   $("#proximos-lista").addEventListener("click", (ev) => {
     const b = ev.target.closest("button");
     if (!b) return;
-    const k = C.consultas.find((x) => x.id === (b.dataset.chegou || b.dataset.chamar || b.dataset.ver));
+    const k = C.consultas.find((x) => A.mesmoId(x.id, b.dataset.chegou || b.dataset.chamar || b.dataset.ver));
     if (!k) return;
     if (b.dataset.ver) { mostrarNaAgenda(k); return; }
     if (b.dataset.chegou) { marcarChegada(k); devolverFoco(k.id, "[data-chamar]"); return; }
@@ -842,7 +842,7 @@
   vistaEl.addEventListener("pointerdown", (ev) => {
     const el = ev.target.closest(".cbloco");
     if (!el || ev.button !== 0 || est.sessao) return;
-    const k = C.consultas.find((x) => x.id === el.dataset.id);
+    const k = C.consultas.find((x) => A.mesmoId(x.id, el.dataset.id));
     const pista = $("#pista");
     const rp = pista.getBoundingClientRect();
     const r0 = el.getBoundingClientRect();
@@ -925,7 +925,7 @@
     const s = est.sessao;
     if (!s || !s.teclado) {
       const el = ev.target.closest(".cbloco");
-      if (el && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); abrirMenu(C.consultas.find((x) => x.id === el.dataset.id), el); }
+      if (el && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); abrirMenu(C.consultas.find((x) => A.mesmoId(x.id, el.dataset.id)), el); }
       return;
     }
     const n = colunas().length;

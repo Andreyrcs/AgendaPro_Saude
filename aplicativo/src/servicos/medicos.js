@@ -28,6 +28,12 @@ export function especialidadeNaClinica(usuario, nome) {
   return achada.id;
 }
 
+// O assistente sugere especialidades pelo NOME (os ids mudam de clínica para clínica, F2).
+// Devolve a especialidade com esse nome, ou null. Hoje procura na carga simulada; na etapa 10, nas da clínica.
+export function especialidadePeloNome(nome) {
+  return especialidades.find((e) => semAcento(e.nome) === semAcento(nome)) || null;
+}
+
 // Lê os horários sem esperar (o assistente também usa)
 export function horariosDaEspecialidade(idEspecialidade) {
   return medicos

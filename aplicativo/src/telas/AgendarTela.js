@@ -30,7 +30,7 @@ import { clinica } from '../dados/dadosFicticios';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 import { curto, extenso, relativo } from '../utilitarios/datas';
-import { nomeParaExibir } from '../utilitarios/texto';
+import { ehPediatria, nomeParaExibir } from '../utilitarios/texto';
 
 export default function AgendarTela({ route, navigation }) {
   const especialidade = route.params?.especialidade;
@@ -116,7 +116,7 @@ function EscolherHorario({ navigation, params }) {
   const horarios = soRecepcao ? [] : restrito ? dados.horarios.map((h) => ({ ...h, dias: [] })) : dados.horarios;
 
   // Regra: pediatria só atende menores de 18 anos
-  const elegivel = (p) => esp.id !== 'pediatria' || (p.idade !== null && p.idade < 18);
+  const elegivel = (p) => !ehPediatria(esp) || (p.idade !== null && p.idade < 18);
   const sugerida = familia.find((p) => p.id === params.pessoa && elegivel(p)) || familia.find(elegivel);
   const quem = familia.find((p) => p.id === quemEscolhido) || sugerida;
 
@@ -216,7 +216,7 @@ function EscolherHorario({ navigation, params }) {
           );
         })}
       </View>
-      {esp.id === 'pediatria' && (
+      {ehPediatria(esp) && (
         <Texto variante="meta" style={estilos.nota}>
           A pediatria atende crianças e adolescentes até 18 anos.
         </Texto>

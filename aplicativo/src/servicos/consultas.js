@@ -7,6 +7,7 @@ import {
 import { HOJE } from '../utilitarios/datas';
 import { STATUS_FUTUROS, avisoAte, restricaoDe } from '../utilitarios/status';
 import { somarDias } from '../utilitarios/datas';
+import { ehPediatria } from '../utilitarios/texto';
 
 const ERRO_OCUPADO = 'Este horário acabou de ser ocupado. Escolha outro.';
 
@@ -126,7 +127,7 @@ export async function marcarConsulta(usuario, dados) {
   if (situacao.tipo === 'so_recepcao') throw new Error('Por enquanto, agende pela recepção da clínica.');
 
   const ehCriancaOuAdolescente = pessoa.idade !== null && pessoa.idade < 18;
-  if (medico.esp === 'pediatria' && !ehCriancaOuAdolescente) {
+  if (ehPediatria(especialidadePorId(medico.esp)) && !ehCriancaOuAdolescente) {
     throw new Error('A pediatria atende só crianças e adolescentes até 18 anos.');
   }
 

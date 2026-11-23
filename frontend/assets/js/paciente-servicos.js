@@ -258,7 +258,7 @@
   function responderVaga(aceitar) {
     const e = D.espera;
     if (!e || !e.vaga) return;
-    const h = C.consultas.find((k) => k.id === e.vaga.id && k.horario === "oferecido");
+    const h = C.consultas.find((k) => A.mesmoId(k.id, e.vaga.id) && k.horario === "oferecido");
     if (h) C.responderVaga(h, aceitar);
     if (aceitar) { e.resolvida = true; }
     e.oferta = false;

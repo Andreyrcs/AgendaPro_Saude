@@ -384,7 +384,7 @@
   $("#conhecidos").innerHTML = nomes.map((n) => '<option value="' + A.esc(n) + '"></option>').join("");
   if (q.get("paciente")) $("#f-nome").value = q.get("paciente");
   const qm = q.get("medico");
-  if (qm && C.MEDICOS.includes(qm)) {
+  if (qm && C.MEDICOS.some((m) => A.mesmoId(m, qm))) {
     est.medico = qm;
     est.esp = K.medico(qm).esp;
     const qd = q.get("dia");

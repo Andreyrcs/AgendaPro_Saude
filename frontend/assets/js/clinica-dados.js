@@ -478,7 +478,7 @@
 
   /* falta justificada: a recepção retira (fica no histórico como retirada, não conta mais) */
   function retirarFalta(id, por, motivo) {
-    const f = agenda.faltas.find((x) => x.id === id);
+    const f = agenda.faltas.find((x) => String(x.id) === String(id));
     if (!f) return;
     f.retirada = true;
     f.retiradaPor = por || "";
@@ -551,7 +551,7 @@
     return x;
   }
   function mudarStatusExame(id, status) {
-    const x = agenda.exames.find((e) => e.id === id);
+    const x = agenda.exames.find((e) => String(e.id) === String(id));
     if (x) { x.status = status; salvar(); }
   }
   const retornosDe = (nomes) => agenda.retornos.filter((r) => [].concat(nomes).includes(r.paciente));

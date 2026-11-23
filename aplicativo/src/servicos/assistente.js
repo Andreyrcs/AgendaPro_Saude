@@ -12,8 +12,7 @@
 // para funcionar sem internet e nunca depender do servidor responder.
 
 import { semAcento } from '../utilitarios/texto';
-import { especialidadePorId } from '../dados/bancoSimulado';
-import { calcularPrimeiroHorario } from './medicos';
+import { calcularPrimeiroHorario, especialidadePeloNome } from './medicos';
 
 const CRISE = /(suicid|me matar|tirar (a )?minha vida|nao quero mais viver|acabar com tudo)/;
 
@@ -51,16 +50,17 @@ function descobrirQuem(t, familiares) {
   return titular;
 }
 
-// Sintoma → especialidades (a primeira é a mais indicada)
+// Sintoma → NOMES das especialidades (a primeira é a mais indicada). São nomes, e não ids, porque o id
+// de cada especialidade muda de clínica para clínica (F2); o nome é procurado nas especialidades da clínica.
 function escolherEspecialidades(t, crianca) {
-  if (/(ouvido|orelha|garganta|nariz|sinusite)/.test(t)) return crianca ? ['pediatria', 'otorrino'] : ['otorrino', 'clinica'];
-  if (/(pele|mancha|coceira|cocam|coca|espinha|acne|cabelo caindo|unha|pinta)/.test(t)) return crianca ? ['pediatria', 'dermatologia'] : ['dermatologia'];
-  if (/(costas|coluna|joelho|ombro|torci|tornozelo|fratur|osso)/.test(t)) return crianca ? ['pediatria', 'ortopedia'] : ['ortopedia', 'clinica'];
-  if (/(pressao|coracao|palpita|batedeira)/.test(t)) return ['cardiologia', 'clinica'];
-  if (/(olho|vista|enxerg|visao|oculos|quadro)/.test(t)) return ['oftalmologia'];
-  if (/(menstrua|gravid|preventivo|colica)/.test(t)) return ['ginecologia', 'clinica'];
-  if (/(ansied|ansios|triste|depress|nao durmo|sem dormir|insonia|estresse|panico)/.test(t)) return ['psiquiatria', 'clinica'];
-  return crianca ? ['pediatria'] : ['clinica'];
+  if (/(ouvido|orelha|garganta|nariz|sinusite)/.test(t)) return crianca ? ['Pediatria', 'Otorrinolaringologia'] : ['Otorrinolaringologia', 'Clínica geral'];
+  if (/(pele|mancha|coceira|cocam|coca|espinha|acne|cabelo caindo|unha|pinta)/.test(t)) return crianca ? ['Pediatria', 'Dermatologia'] : ['Dermatologia'];
+  if (/(costas|coluna|joelho|ombro|torci|tornozelo|fratur|osso)/.test(t)) return crianca ? ['Pediatria', 'Ortopedia'] : ['Ortopedia', 'Clínica geral'];
+  if (/(pressao|coracao|palpita|batedeira)/.test(t)) return ['Cardiologia', 'Clínica geral'];
+  if (/(olho|vista|enxerg|visao|oculos|quadro)/.test(t)) return ['Oftalmologia'];
+  if (/(menstrua|gravid|preventivo|colica)/.test(t)) return ['Ginecologia', 'Clínica geral'];
+  if (/(ansied|ansios|triste|depress|nao durmo|sem dormir|insonia|estresse|panico)/.test(t)) return ['Psiquiatria', 'Clínica geral'];
+  return crianca ? ['Pediatria'] : ['Clínica geral'];
 }
 
 // Devolve uma destas respostas:
@@ -75,9 +75,9 @@ export function analisarSintomas(texto, familiares) {
 
   const quem = descobrirQuem(t, familiares);
   const crianca = quem.idade !== null && quem.idade < 18;
-  const especialidades = escolherEspecialidades(t, crianca).map((id) => ({
-    ...especialidadePorId(id),
-    primeiroHorario: calcularPrimeiroHorario(id),
-  }));
+  const especialidades = escolherEspecialidades(t, crianca)
+    .map(especialidadePeloNome)
+    .filter(Boolean) // a clínica pode não atender alguma das sugeridas
+    .map((e) => ({ ...e, primeiroHorario: calcularPrimeiroHorario(e.id) }));
   return { tipo: 'sugestao', quem, especialidades };
 }

@@ -47,7 +47,7 @@
     }
 
     const pessoa = (id) => D.pessoas.find((p) => p.id === id);
-    const medico = (id) => D.medicos.find((m) => m.id === id);
+    const medico = (id) => D.medicos.find((m) => A.mesmoId(m.id, id));
     const esp = (id) => D.especialidades[id];
     const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
     const nomeCurto = (p) => (p.id === D.titular ? 'Você' : p.curto);
@@ -2109,7 +2109,7 @@
         const vou = ev.target.closest('[data-vou]');
         const nao = ev.target.closest('[data-naovou]');
         if (!vou && !nao) return;
-        const c = D.consultas.find((k) => k.id === (vou ? vou.dataset.vou : nao.dataset.naovou));
+        const c = D.consultas.find((k) => A.mesmoId(k.id, vou ? vou.dataset.vou : nao.dataset.naovou));
         if (!c) return;
         if (vou) {
             PACIENTE.confirmarPresenca(c);

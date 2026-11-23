@@ -179,6 +179,8 @@
     data: data, hoje: hoje, diasAte: diasAte, relativo: relativo, extenso: extenso, curto: curto,
     esc: esc, icone: icone, folha: folha, folhaMes: folhaMes, avatar: avatar,
     avatarMedico: avatarMedico, iniciais: iniciais, marca: marca, seloClinica: seloClinica,
+    /* Ids da API são números; os do HTML (data-id) chegam como texto. Compara sempre pelo texto (F2). */
+    mesmoId: function (a, b) { return a !== null && a !== undefined && b !== null && b !== undefined && String(a) === String(b); },
     movimentoReduzido: function () {
       return document.documentElement.dataset.movimento === "reduzido" ||
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;

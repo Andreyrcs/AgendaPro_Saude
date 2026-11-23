@@ -1389,7 +1389,7 @@
     const vou = ev.target.closest("[data-vou]");
     const nao = ev.target.closest("[data-naovou]");
     if (!vou && !nao) return;
-    const c = D.consultas.find((k) => k.id === (vou ? vou.dataset.vou : nao.dataset.naovou));
+    const c = D.consultas.find((k) => A.mesmoId(k.id, vou ? vou.dataset.vou : nao.dataset.naovou));
     if (!c) return;
     if (vou) {
       PACIENTE.confirmarPresenca(c);
