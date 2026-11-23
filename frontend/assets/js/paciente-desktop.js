@@ -1225,23 +1225,33 @@ window.PACIENTE.iniciar(function () {
 
     function renderEspera() {
         const e = D.espera;
-        if (!e || e.resolvida) {
+        if (!e) {
             return {
                 titulo: 'Lista de espera',
                 html:
                     tituloPagina('Lista de espera') +
-                    '<p class="cartao" style="padding:20px">Você não está em nenhuma fila agora.</p>',
+                    '<p class="cartao" style="padding:20px">Você não está em nenhuma fila agora. Quando não houver horário com o médico que você quer, toque em “Entrar na lista de espera” na tela de agendamento.</p>',
             };
         }
         const m = medico(e.medico);
+        const p = pessoa(e.pessoa);
         const ord = String(e.posicao);
         const html =
             tituloPagina('Lista de espera', esp(m.esp).nome + ' · ' + m.nome) +
+            (e.vaga
+                ? '<div class="cartao" style="padding:16px 20px;margin-bottom:16px"><p><b>Abriu uma vaga para você!</b> ' +
+                  A.extenso(e.vaga.data) +
+                  ', às ' +
+                  e.vaga.hora +
+                  '.</p><button type="button" class="botao botao--principal" id="ver-vaga" style="margin-top:8px">Ver a vaga</button></div>'
+                : '') +
             '<section class="espera-painel grupo" aria-labelledby="pos-frase">' +
             '<div class="espera-painel__linha"><span class="posicao" id="pos" aria-hidden="true">' +
             ord +
             '</span>' +
-            '<p class="espera-painel__frase" id="pos-frase">Você está na posição <span id="pos-txt">' +
+            '<p class="espera-painel__frase" id="pos-frase">' +
+            (p && !ehTitular(p) ? A.esc(p.curto) + ' está' : 'Você está') +
+            ' na posição <span id="pos-txt">' +
             ord +
             '</span><br>da fila</p></div>' +
             '<p class="espera-painel__detalhe"><b>' +
@@ -1257,59 +1267,48 @@ window.PACIENTE.iniciar(function () {
             '</section>' +
             '<div class="grade grade--2" style="gap:24px;margin-top:24px;align-items:start">' +
             '<div class="grupo">' +
-            '<div class="cartao lista-cartao">' +
-            interruptor(
-                'notificar',
-                'Notificação no app',
-                'Recomendado: é o aviso mais rápido',
-                e.notificar,
-            ) +
-            interruptor(
-                'sms',
-                'Mensagem SMS',
-                'Para o número terminado em 4471',
-                e.sms,
-            ) +
-            '</div></div>' +
+            '<ol class="passos cartao">' +
+            '<li><span>Se alguém cancelar, a vaga vai para a primeira pessoa da fila.</span></li>' +
+            '<li><span>O aviso aparece aqui, e você tem <b>30 minutos</b> para confirmar.</span></li>' +
+            '<li><span>Se não confirmar a tempo, a vaga passa para a próxima pessoa.</span></li>' +
+            '</ol></div>' +
             '<div class="grupo">' +
             '<div class="cartao" style="padding:16px 20px"><p><b>Como a vaga chega</b></p>' +
-            '<p class="item__sub">Quando a recepção cancela uma consulta com ' + m.nome + ', o horário é oferecido à 1ª pessoa da fila. Se for você, o aviso aparece aqui e você tem 30 minutos para confirmar.</p></div>' +
+            '<p class="item__sub">Quando uma consulta com ' + A.esc(m.nome) + ' é cancelada, o horário é oferecido à 1ª pessoa da fila. Se for você, o aviso aparece no Início e aqui. A página confere a cada 30 segundos enquanto está aberta.</p></div>' +
             '<div class="zona-perigo" style="margin-top:16px"><button type="button" class="botao botao--texto-perigo" id="sair-fila">Sair da fila</button>' +
             '<p style="font-size:0.875rem;color:var(--tinta-2);margin-top:4px">Você perde a sua posição.</p></div>' +
             '</div></div>';
 
         function montar(el) {
-            el.addEventListener('click', (ev) => {
-                const sw = ev.target.closest('[role="switch"]');
-                if (sw) {
-                    const ligado = sw.getAttribute('aria-checked') !== 'true';
-                    sw.setAttribute('aria-checked', String(ligado));
-                    e[sw.dataset.chave] = ligado;
-                }
-            });
-
-
+            const vv = el.querySelector('#ver-vaga');
+            if (vv) vv.addEventListener('click', abrirVaga);
             el.querySelector('#sair-fila').addEventListener('click', () => {
                 abrirGaveta(
                     '<h2 class="gaveta__titulo" id="gaveta-titulo">Sair da lista de espera?</h2>' +
                         '<p class="gaveta__texto">Você vai perder a posição ' +
                         e.posicao +
-                        ' na fila.</p>' +
+                        ' na fila. Se quiser voltar depois, entra no fim da fila.</p>' +
+                        '<p class="campo__erro" id="erro-sair" role="alert" hidden></p>' +
                         '<div class="gaveta__acoes"><button type="button" class="botao botao--principal" data-fechar>Continuar na fila</button></div>' +
                         '<div class="gaveta__acoes" style="margin-top:28px"><button type="button" class="botao botao--texto-perigo" id="confirmar-sair">Sair da fila</button></div>',
                     {
                         montar: (g2) =>
-                            g2
-                                .querySelector('#confirmar-sair')
-                                .addEventListener('click', () => {
-                                    PACIENTE.sairDaFila();
-                                    fecharGaveta();
-                                    aviso({
-                                        titulo: 'Você saiu da fila',
-                                        icone: 'info',
-                                    });
-                                    navegar('#inicio');
-                                }),
+                            g2.querySelector('#confirmar-sair').addEventListener('click', async (ev) => {
+                                const b = ev.currentTarget;
+                                b.disabled = true;
+                                try {
+                                    await PACIENTE.sairDaFila(); /* DELETE /api/lista-espera/{id} */
+                                } catch (e2) {
+                                    const x = g2.querySelector('#erro-sair');
+                                    x.textContent = e2.message;
+                                    x.hidden = false;
+                                    b.disabled = false;
+                                    return;
+                                }
+                                fecharGaveta();
+                                aviso({ titulo: 'Você saiu da fila', texto: 'Sua posição passou para a próxima pessoa.', icone: 'info' });
+                                navegar('#inicio');
+                            }),
                     },
                 );
             });
@@ -1320,18 +1319,15 @@ window.PACIENTE.iniciar(function () {
 
     function abrirVaga() {
         const e = D.espera;
-        if (!e || e.resolvida) return;
+        if (!e || !e.vaga) return;
         const m = medico(e.medico);
         const v = e.vaga;
-        let resta = 30 * 60;
         let timer = null;
         const fmt = (seg) =>
             Math.floor(seg / 60) +
             ' min ' +
             String(seg % 60).padStart(2, '0') +
             ' s';
-        const recusaHTML =
-            '<button type="button" class="botao botao--texto-perigo" id="vaga-nao">Não quero esta vaga</button>';
         abrirGaveta(
             '<h2 class="gaveta__titulo" id="gaveta-titulo">Abriu uma vaga para você</h2>' +
                 '<div class="gaveta__resumo">' +
@@ -1340,60 +1336,69 @@ window.PACIENTE.iniciar(function () {
                 A.esc(esp(m.esp).nome) +
                 '</b><br>' +
                 A.esc(m.nome) +
-                '<br><span class="num">' +
+                '<br>' +
+                cap(A.extenso(v.data)) +
+                ', às <span class="num">' +
                 v.hora +
                 '</span></div></div>' +
                 '<p class="contagem">' +
                 I('clock') +
                 '<span>Confirme em até <b class="num" id="contagem">' +
-                fmt(resta) +
+                fmt(PACIENTE.segundosDaVaga()) +
                 '</b></span></p>' +
+                '<p class="campo__erro" id="erro-vaga" role="alert" hidden></p>' +
                 '<div class="gaveta__acoes"><button type="button" class="botao botao--principal botao--largo" id="vaga-sim">Confirmar vaga</button></div>' +
-                '<div class="gaveta__recusa" id="recusa">' +
-                recusaHTML +
-                '</div>',
+                '<div class="gaveta__recusa" id="recusa"><button type="button" class="botao botao--texto-perigo" id="vaga-nao">Não quero esta vaga</button><p>A vaga vai para a próxima pessoa da fila, e você continua na fila.</p></div>',
             {
                 montar: (g) => {
                     const saida = g.querySelector('#contagem');
+                    const erro = (texto) => {
+                        const x = g.querySelector('#erro-vaga');
+                        x.textContent = texto;
+                        x.hidden = false;
+                    };
+                    /* a contagem usa o prazo da API (expiraEm): reabrir a gaveta não zera o tempo */
                     timer = setInterval(() => {
                         if (!saida.isConnected) {
                             clearInterval(timer);
                             return;
                         }
-                        resta = Math.max(0, resta - 1);
+                        const resta = PACIENTE.segundosDaVaga();
                         saida.textContent = fmt(resta);
-                    }, 1000);
-                    g.querySelector('#vaga-sim').addEventListener(
-                        'click',
-                        () => {
+                        if (resta <= 0) {
                             clearInterval(timer);
-                            const c = {
-                                id: 'v' + Date.now(),
-                                pessoa: e.pessoa,
-                                medico: e.medico,
-                                data: v.data,
-                                hora: v.hora,
-                                sala: 'Sala 6',
-                                status: 'confirmada',
-                                motivo: 'Vaga da lista de espera',
-                            };
-                            D.consultas.push(c);
-                            PACIENTE.responderVaga(true);
+                            g.querySelector('#vaga-sim').disabled = true;
+                            erro('O prazo terminou. A vaga foi para a próxima pessoa da fila, e você continua na fila.');
+                            PACIENTE.carregar().then(() => { if (estado.calAtivo) estado.calAtivo.atualizar(); }).catch(() => {});
+                        }
+                    }, 1000);
+                    g.querySelector('#vaga-sim').addEventListener('click', async (ev) => {
+                        const b = ev.currentTarget;
+                        b.disabled = true;
+                        try {
+                            const c = await PACIENTE.responderVaga(true); /* PUT /api/lista-espera/{id}/vaga { aceitar: true } */
+                            clearInterval(timer);
                             fecharGaveta(true);
                             if (estado.calAtivo) estado.calAtivo.atualizar();
                             sucessoConsulta(c, 'Vaga confirmada!');
-                        },
-                    );
-                    g.querySelector('#vaga-nao').addEventListener(
-                        'click',
-                        () => {
-                            clearInterval(timer);
-                            PACIENTE.responderVaga(false);
-                            fecharGaveta();
-                            if (estado.calAtivo) estado.calAtivo.atualizar();
-                            aviso({ titulo: 'Vaga recusada', texto: 'Você continua na fila.', icone: 'info' });
-                        },
-                    );
+                        } catch (e2) {
+                            b.disabled = false;
+                            erro(e2.message);
+                        }
+                    });
+                    g.querySelector('#vaga-nao').addEventListener('click', async () => {
+                        try {
+                            await PACIENTE.responderVaga(false); /* PUT /api/lista-espera/{id}/vaga { aceitar: false } */
+                        } catch (e2) {
+                            erro(e2.message);
+                            return;
+                        }
+                        clearInterval(timer);
+                        fecharGaveta();
+                        if (estado.calAtivo) estado.calAtivo.atualizar();
+                        aviso({ titulo: 'Vaga recusada', texto: 'Ela passou para a próxima pessoa da fila. Você continua na fila.', icone: 'info' });
+                        navegar();
+                    });
                 },
             },
         );
@@ -1401,30 +1406,16 @@ window.PACIENTE.iniciar(function () {
 
     function oferecerVaga() {
         const e = D.espera;
-        if (!e || e.resolvida) return;
+        if (!e || !e.vaga) return;
         const m = medico(e.medico);
-        e.posicao = 1;
-        e.oferta = true;
         if (estado.calAtivo) estado.calAtivo.atualizar();
         aviso({
             cabeca: 'AgendaPro Saúde · agora',
             titulo: 'Abriu uma vaga para você!',
-            texto:
-                A.esc(esp(m.esp).nome) +
-                ' com ' +
-                A.esc(m.nome) +
-                ', ' +
-                A.extenso(e.vaga.data) +
-                ', às ' +
-                e.vaga.hora +
-                '. Confirme em até 30 minutos.',
+            texto: esp(m.esp).nome + ' com ' + m.nome + ', ' + A.extenso(e.vaga.data) + ', às ' + e.vaga.hora + '. Confirme em até 30 minutos.',
             icone: 'bell-ring',
             acoes: [
-                {
-                    rotulo: 'Confirmar',
-                    classe: 'botao--principal',
-                    acao: abrirVaga,
-                },
+                { rotulo: 'Confirmar', classe: 'botao--principal', acao: abrirVaga },
                 {
                     rotulo: 'Ver na agenda',
                     classe: 'botao--secundario',
@@ -1440,13 +1431,12 @@ window.PACIENTE.iniciar(function () {
     function sucessoConsulta(c, titulo) {
         const m = medico(c.medico),
             p = pessoa(c.pessoa);
-        c.novo = true;
         abrirGaveta(
             '<div class="carimbo-palco" aria-hidden="true">' +
                 A.folha(c.data) +
                 '<span class="carimbo">Marcada</span></div>' +
                 '<h2 class="gaveta__titulo" id="gaveta-titulo" style="text-align:center">' +
-                (titulo || 'Consulta marcada!') +
+                A.esc(titulo || 'Consulta marcada!') +
                 '</h2>' +
                 '<div class="gaveta__resumo"><div><b>' +
                 cap(A.extenso(c.data)) +
@@ -1456,9 +1446,13 @@ window.PACIENTE.iniciar(function () {
                 A.esc(esp(m.esp).nome) +
                 ' com ' +
                 A.esc(m.nome) +
+                '<br>' +
+                A.esc(D.clinica.nome) +
+                (c.sala ? ' · ' + A.esc(c.sala) : '') +
                 '<br>Para ' +
-                (p.id === D.titular ? 'você' : p.tratamento) +
+                (ehTitular(p) ? 'você' : A.esc(p.tratamento)) +
                 '</div></div>' +
+                '<p class="gaveta__texto">Na véspera, esta página pede para você confirmar a presença. Se não puder ir, cancele pela Agenda.</p>' +
                 '<div class="gaveta__acoes">' +
                 '<button type="button" class="botao botao--principal" data-ver-carimbo="' +
                 c.data +
@@ -1468,22 +1462,16 @@ window.PACIENTE.iniciar(function () {
                 '<button type="button" class="botao botao--secundario" data-ir-inicio>Voltar ao início</button></div>',
             {
                 montar: (g) => {
-                    g.querySelector('[data-ver-carimbo]').addEventListener(
-                        'click',
-                        () => {
-                            estado.agendaAba = 'calendario';
-                            estado.pendente = { tipo: 'carimbo', data: c.data };
-                            fecharGaveta();
-                            navegar('#agenda');
-                        },
-                    );
-                    g.querySelector('[data-ir-inicio]').addEventListener(
-                        'click',
-                        () => {
-                            fecharGaveta();
-                            navegar('#inicio');
-                        },
-                    );
+                    g.querySelector('[data-ver-carimbo]').addEventListener('click', () => {
+                        estado.agendaAba = 'calendario';
+                        estado.pendente = { tipo: 'carimbo', data: c.data };
+                        fecharGaveta();
+                        navegar('#agenda');
+                    });
+                    g.querySelector('[data-ir-inicio]').addEventListener('click', () => {
+                        fecharGaveta();
+                        navegar('#inicio');
+                    });
                 },
             },
         );
@@ -1491,71 +1479,82 @@ window.PACIENTE.iniciar(function () {
 
     /* itemId: o item de prevenção que esta consulta resolve (vem do "Marcar" da Prevenção) */
     function renderAgendar(espId, pessoaId, itemId) {
-        const espObj = espId ? esp(espId) : null;
-        const titulo = espObj
-            ? 'Marcar consulta de ' + espObj.nome
-            : 'Marcar consulta';
-        const sub = espObj ? espObj.desc : null;
-
-        const medicos = espId
-            ? D.medicos.filter((m) => m.esp === espId)
-            : D.medicos;
-
-        const pessoaAtiva = pessoaId || D.titular;
+        const ids = Object.keys(D.especialidades);
+        if (!ids.length) {
+            return {
+                titulo: 'Marcar consulta',
+                html:
+                    tituloPagina('Marcar consulta', null) +
+                    '<p class="cartao" style="padding:20px">A clínica ainda não cadastrou especialidades. Para marcar agora, ligue para a recepção: ' +
+                    A.esc(D.clinica.telefone) +
+                    '.</p>',
+            };
+        }
+        const alvo = pessoa(pessoaId);
+        const espAtual = D.especialidades[espId] ? espId : espPadraoPara(alvo || pessoa(D.titular));
+        const espObj = esp(espAtual);
+        const pediatria = PACIENTE.ehPediatria(espObj.nome);
+        /* a pediatria (reconhecida pelo nome) atende só menores de 18 anos */
+        const elegivel = (p) => !pediatria || (p.idade !== null && p.idade < 18);
+        const medicos = D.medicos.filter((m) => A.mesmoId(m.esp, espAtual));
+        const pessoaAtiva = (alvo && elegivel(alvo) ? alvo : D.pessoas.find(elegivel) || pessoa(D.titular)).id;
         /* faltas sem aviso podem limitar o agendamento direto (o assistente e o 192 nunca são bloqueados) */
         const restricao = PACIENTE.avisoDeRestricao();
 
-        const SALAS = [
-            'Sala 1',
-            'Sala 2',
-            'Sala 3',
-            'Sala 4',
-            'Sala 5',
-            'Sala 6',
-            'Sala 7',
-        ];
+        function seletorEspecialidade() {
+            return (
+                '<div class="campo" style="max-width:420px;margin-bottom:16px"><label for="f-esp">Especialidade</label>' +
+                '<select id="f-esp">' +
+                ids
+                    .map((k) => '<option value="' + k + '"' + (A.mesmoId(k, espAtual) ? ' selected' : '') + '>' + A.esc(D.especialidades[k].nome) + '</option>')
+                    .join('') +
+                '</select></div>'
+            );
+        }
 
         function seletor(pAtiva) {
             return (
                 '<div class="filtros" role="group" aria-label="Para quem?" id="filtro-pessoa">' +
                 D.pessoas
-                    .map(
-                        (p) =>
+                    .map((p) => {
+                        const ok = elegivel(p);
+                        return (
                             '<button type="button" class="filtro" aria-pressed="' +
-                            (p.id === pAtiva) +
+                            A.mesmoId(p.id, pAtiva) +
                             '" data-pessoa="' +
                             p.id +
-                            '">' +
+                            '"' +
+                            (ok ? '' : ' disabled title="Fora da idade da pediatria"') +
+                            '>' +
                             A.avatar(p, 28) +
                             A.esc(nomeCurto(p)) +
-                            '</button>',
-                    )
+                            (ok ? '' : ' (fora da idade)') +
+                            '</button>'
+                        );
+                    })
                     .join('') +
-                '</div>'
+                '</div>' +
+                (pediatria ? '<p style="margin:8px 0 0;color:var(--tinta-2)">A pediatria atende crianças e adolescentes até 18 anos.</p>' : '')
             );
         }
 
         function listaMedicos(pAtiva) {
             if (!medicos.length) {
-                return '<p class="cartao" style="padding:20px">Nenhum médico disponível para esta especialidade.</p>';
+                return '<p class="cartao" style="padding:20px">Ainda não há médico com agenda nesta especialidade. Ligue para a clínica: ' + A.esc(D.clinica.telefone) + '.</p>';
             }
             return medicos
                 .map((m) => {
-                    const mEsp = esp(m.esp);
-                    const iniciais = m.nome
-                        .split(' ')
-                        .slice(0, 2)
-                        .map((n) => n[0])
-                        .join('');
-                    const horariosMediaco = D.horarios[m.id] || [];
-                    const slotsHTML = restricao
-                        ? '<span style="font-size:0.875rem;color:var(--tinta-2)">' +
-                          (restricao.tipo === 'so_fila'
-                              ? 'Agendamento direto indisponível · <a href="#espera">Entrar na lista de espera</a>'
-                              : 'Agende pela recepção da clínica') +
-                          '</span>'
-                        : horariosMediaco.length
-                        ? horariosMediaco
+                    const horarios = D.horarios[m.id] || [];
+                    const naFila = D.espera && A.mesmoId(D.espera.medico, m.id);
+                    const botaoFila = naFila
+                        ? 'Você já está na fila deste médico: <a href="#espera">posição ' + D.espera.posicao + '</a>'
+                        : '<button type="button" class="botao botao--menta botao--pequeno" data-fila="' + m.id + '">' + I('list-ordered') + 'Entrar na lista de espera</button>';
+                    const slotsHTML = restricao && restricao.tipo === 'so_recepcao'
+                        ? '<span style="font-size:0.875rem;color:var(--tinta-2)">Agende pela recepção da clínica.</span>'
+                        : restricao
+                        ? '<span style="font-size:0.875rem;color:var(--tinta-2)">Agendamento direto indisponível por enquanto. ' + botaoFila + '</span>'
+                        : horarios.length
+                        ? horarios
                               .map((bloco) =>
                                   bloco.horas
                                       .map(
@@ -1566,8 +1565,8 @@ window.PACIENTE.iniciar(function () {
                                               bloco.data +
                                               '" data-hora="' +
                                               h +
-                                              '" data-pessoa="' +
-                                              pAtiva +
+                                              '" aria-label="' +
+                                              A.esc(A.extenso(bloco.data) + ' às ' + h + ' com ' + m.nome) +
                                               '">' +
                                               A.curto(bloco.data) +
                                               ' ' +
@@ -1577,23 +1576,19 @@ window.PACIENTE.iniciar(function () {
                                       .join(''),
                               )
                               .join('')
-                        : '<span style="font-size:0.875rem;color:var(--tinta-2)">Sem horários disponíveis · ' +
-                          '<a href="#espera">Entrar na lista de espera</a></span>';
+                        : '<span style="font-size:0.875rem;color:var(--tinta-2)">Sem horários livres agora. ' + botaoFila + '</span>';
                     return (
                         '<div class="cartao" style="padding:16px;margin-bottom:12px">' +
                         '<div class="medico-cabeca">' +
-                        '<span class="medico-inicial" style="background:' +
-                        m.cor +
-                        ';color:#fff">' +
-                        iniciais +
-                        '</span>' +
+                        A.avatarMedico(m, 40) +
                         '<span><strong style="display:block">' +
                         A.esc(m.nome) +
                         '</strong><span style="font-size:0.875rem;color:var(--tinta-2)">' +
-                        A.esc(mEsp.nome) +
+                        A.esc(espObj.nome) +
+                        (m.sala ? ' · ' + A.esc(m.sala) : '') +
                         '</span></span>' +
                         '</div>' +
-                        '<div style="display:flex;flex-wrap:wrap;gap:8px">' +
+                        '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">' +
                         slotsHTML +
                         '</div>' +
                         '</div>'
@@ -1602,135 +1597,111 @@ window.PACIENTE.iniciar(function () {
                 .join('');
         }
 
+        const titulo = 'Marcar consulta de ' + espObj.nome;
         let html =
-            tituloPagina(titulo, sub) +
+            tituloPagina(titulo, null) +
+            seletorEspecialidade() +
             (restricao ? restricaoHTML(restricao) : '') +
             '<p style="margin:0 0 12px;color:var(--tinta-2)">' + PACIENTE.textoDasFaltas() + '</p>' +
             seletor(pessoaAtiva) +
-            '<div id="lista-medicos">' +
+            '<div id="lista-medicos" style="margin-top:16px">' +
             listaMedicos(pessoaAtiva) +
             '</div>';
 
         function montar(el) {
             let pAtiva = pessoaAtiva;
 
-            el.querySelector('#filtro-pessoa').addEventListener(
-                'click',
-                (ev) => {
-                    const b = ev.target.closest('[data-pessoa]');
-                    if (!b) return;
-                    pAtiva = b.dataset.pessoa;
-                    el.querySelectorAll('#filtro-pessoa [data-pessoa]').forEach(
-                        (x) =>
-                            x.setAttribute(
-                                'aria-pressed',
-                                String(x.dataset.pessoa === pAtiva),
-                            ),
-                    );
-                    el.querySelector('#lista-medicos').innerHTML =
-                        listaMedicos(pAtiva);
-                },
-            );
+            el.querySelector('#f-esp').addEventListener('change', (ev) => {
+                navegar('#agendar/' + ev.target.value + '/' + pAtiva + (itemId ? '/' + itemId : ''));
+            });
 
-            el.addEventListener('click', (ev) => {
+            el.querySelector('#filtro-pessoa').addEventListener('click', (ev) => {
+                const b = ev.target.closest('[data-pessoa]');
+                if (!b || b.disabled) return;
+                pAtiva = b.dataset.pessoa;
+                el.querySelectorAll('#filtro-pessoa [data-pessoa]').forEach((x) =>
+                    x.setAttribute('aria-pressed', String(x.dataset.pessoa === pAtiva)),
+                );
+            });
+
+            el.addEventListener('click', async (ev) => {
+                const bf = ev.target.closest('[data-fila]');
+                if (bf) {
+                    const m = medico(bf.dataset.fila);
+                    bf.disabled = true;
+                    try {
+                        const fila = await PACIENTE.entrarNaFila(pAtiva, m.id); /* POST /api/lista-espera { pessoa, medico } */
+                        navegar();
+                        aviso({ titulo: 'Você entrou na fila', texto: 'Posição ' + fila.posicao + ' na fila de ' + m.nome + '. Quando abrir uma vaga e for a sua vez, o aviso aparece aqui e você tem 30 minutos para confirmar.', icone: 'list-ordered' });
+                    } catch (e) {
+                        bf.disabled = false;
+                        aviso({ titulo: 'Não deu para entrar na fila', texto: e.message, icone: 'info' });
+                    }
+                    return;
+                }
                 const chip = ev.target.closest('.chip-horario');
                 if (!chip) return;
                 const mId = chip.dataset.medico;
                 const data = chip.dataset.data;
                 const hora = chip.dataset.hora;
-                const pId = chip.dataset.pessoa || pAtiva;
                 const m = medico(mId);
-                const mEsp = esp(m.esp);
-                const p = pessoa(pId);
+                const p = pessoa(pAtiva);
+                /* marcada a partir da Prevenção: a consulta fica ligada ao item */
+                const itemPrev = itemId ? PACIENTE.itemPrevencao(itemId) : null;
 
                 abrirGaveta(
                     '<h2 class="gaveta__titulo" id="gaveta-titulo">Confirmar agendamento</h2>' +
                         '<div class="gaveta__resumo">' +
                         A.folha(data, { menta: true }) +
                         '<div><b>' +
-                        A.esc(mEsp.nome) +
+                        A.esc(espObj.nome) +
                         '</b><br>' +
                         A.esc(m.nome) +
-                        '<br><span class="num">' +
+                        '<br>' +
+                        cap(A.extenso(data)) +
+                        ', às <span class="num">' +
                         hora +
                         '</span></div>' +
                         '</div>' +
                         '<p style="margin:0 0 16px;font-size:0.9375rem">' +
-                        I('user') +
+                        I('user-round') +
                         ' Para: <strong>' +
-                        (p.id === D.titular ? 'Você' : p.nome) +
+                        (ehTitular(p) ? 'Você' : A.esc(p.nome)) +
                         '</strong></p>' +
+                        (itemPrev ? '' : '<div class="campo"><label for="f-motivo">Motivo (opcional)</label><input id="f-motivo" type="text" maxlength="500" placeholder="Ex.: dor de garganta há 3 dias"></div>') +
                         '<p class="aviso-regra">' + I('info') + '<span>' + PACIENTE.textoDaRegra() + '</span></p>' +
+                        '<p class="campo__erro" id="erro-ag" role="alert" hidden></p>' +
                         '<div class="gaveta__acoes">' +
                         '<button type="button" class="botao botao--principal" id="confirmar-ag">Confirmar consulta</button>' +
                         '<button type="button" class="botao botao--secundario" data-fechar>Cancelar</button>' +
                         '</div>',
                     {
                         montar: (g) => {
-                            g.querySelector('#confirmar-ag').addEventListener(
-                                'click',
-                                () => {
-                                    /* outra pessoa pode ter marcado este horário agora há pouco (na recepção ou no app) */
-                                    const ocupado = window.CLIDADOS.consultas.some(
-                                        (k) =>
-                                            k.medico === mId &&
-                                            k.data === data &&
-                                            k.ini === window.CLIDADOS.hm(hora) &&
-                                            window.CLIDADOS.horarioDe(k) === 'ocupado',
-                                    );
-                                    if (ocupado) {
-                                        fecharGaveta();
-                                        aviso({
-                                            titulo: 'Horário indisponível',
-                                            texto: 'Este horário acabou de ser ocupado por outro paciente.',
-                                            icone: 'triangle-alert',
-                                        });
-                                        return;
-                                    }
-                                    const sala =
-                                        SALAS[
-                                            Math.floor(
-                                                Math.random() * SALAS.length,
-                                            )
-                                        ];
-                                    const c = {
-                                        id: 'ag-' + Date.now(),
-                                        pessoa: pId,
-                                        medico: mId,
-                                        data: data,
-                                        hora: hora,
-                                        sala: sala,
-                                        status: 'confirmada',
-                                        motivo: 'Consulta de ' + mEsp.nome,
-                                    };
-                                    /* marcada a partir da Prevenção: a consulta fica ligada ao item */
-                                    const itemPrev = itemId ? PACIENTE.itemPrevencao(itemId) : null;
-                                    if (itemPrev) c.motivo = itemPrev.titulo;
-                                    D.consultas.push(c);
-                                    PACIENTE.marcar(c);
-                                    if (itemPrev) PACIENTE.marcarItemPrevencao(itemPrev.id, 'agendado', c.id);
-                                    if (D.horarios[mId]) {
-                                        D.horarios[mId] = D.horarios[mId]
-                                            .map((bloco) => ({
-                                                ...bloco,
-                                                horas: bloco.horas.filter(
-                                                    (h2) =>
-                                                        !(
-                                                            bloco.data ===
-                                                                data &&
-                                                            h2 === hora
-                                                        ),
-                                                ),
-                                            }))
-                                            .filter(
-                                                (bloco) =>
-                                                    bloco.horas.length > 0,
-                                            );
-                                    }
+                            g.querySelector('#confirmar-ag').addEventListener('click', async (ev2) => {
+                                const b = ev2.currentTarget;
+                                if (b.disabled) return;
+                                b.disabled = true;
+                                b.textContent = 'Marcando…';
+                                const motivo = g.querySelector('#f-motivo');
+                                try {
+                                    const c = await PACIENTE.marcar({
+                                        pessoa: pAtiva, medico: mId, data, hora,
+                                        motivo: itemPrev ? itemPrev.titulo : motivo && motivo.value.trim() ? motivo.value.trim() : null,
+                                        itemPrevencao: itemPrev ? itemPrev.id : null,
+                                    });
                                     fecharGaveta(true);
                                     sucessoConsulta(c, 'Consulta marcada!');
-                                },
-                            );
+                                } catch (e) {
+                                    /* outra pessoa pode ter marcado este horário agora há pouco (erro 50008) */
+                                    const erro = g.querySelector('#erro-ag');
+                                    erro.textContent = e.message;
+                                    erro.hidden = false;
+                                    b.textContent = 'Confirmar consulta';
+                                    try { await PACIENTE.carregar(); } catch (e2) { /* a mensagem já explica */ }
+                                    el.querySelector('#lista-medicos').innerHTML = listaMedicos(pAtiva);
+                                    anunciar(e.message);
+                                }
+                            });
                         },
                     },
                 );
