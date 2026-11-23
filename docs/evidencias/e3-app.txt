@@ -1,0 +1,11 @@
+(node:8696) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/dev/AgendaPro_Saude/aplicativo/src/servicos/config.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\dev\AgendaPro_Saude\aplicativo\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+OK  login errado: mensagem da API, sem troca (F8) — {"nome":"ErroApi","status":401,"mensagem":"E-mail ou senha incorretos"}
+OK  token válido: 200 — 1 familiar(es)
+OK  403 sem corpo (conta de outro paciente): sem permissão, sem sair — {"nome":"ErroApi","status":403,"mensagem":"Você não tem permissão para fazer isso."}
+OK  403 com corpo: a mensagem da API — {"nome":"ErroApi","status":403,"mensagem":"Você só pode gerenciar a sua família."}
+OK  400 de negócio: a mensagem da procedure — {"nome":"ErroApi","status":400,"mensagem":"Não é permitido agendar em data ou horário passado."}
+OK  401 com token inválido: chama o sair() e avisa que a sessão terminou (F9) — {"nome":"ErroApi","status":401,"mensagem":"Sua sessão terminou. Entre de novo."} sair() chamado 1x
+OK  sem servidor: status 0 — {"nome":"ErroApi","status":0,"mensagem":"Não foi possível falar com o servidor"}

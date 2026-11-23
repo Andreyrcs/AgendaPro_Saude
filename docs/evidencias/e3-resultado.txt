@@ -1,0 +1,24 @@
+OK  token inválido: a chamada recebe 401 com a mensagem de sessão — {"status":401,"mensagem":"Sua sessão terminou. Entre de novo."}
+OK    volta ao login e a sessão é apagada — http://localhost:5500/login.html
+OK    o login mostra o aviso
+OK  token vencido: pacientes.html manda ao login com o aviso — http://localhost:5500/login.html
+OK  403: mensagem de sem permissão, e a sessão continua — {"status":403,"mensagem":"Você não tem permissão para fazer isso."}
+OK  400 de negócio: a mensagem da API sem troca — {"status":400,"mensagem":"Já existe um feriado nesta data."}
+
+rede da API:
+  1 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  2 GET    /api/clinicas/15 -> 200  [Bearer]  
+  3 GET    /api/clinicas/15 -> 401  [Bearer]  
+  4 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  5 GET    /api/clinicas/15 -> 200  [Bearer]  
+  6 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  7 GET    /api/clinicas/15 -> 200  [Bearer]  
+  8 PUT    /api/clinicas/15 -> 403  [Bearer]  
+  9 POST   /api/feriados -> 201  [Bearer]  {"id":6,"data":"2027-01-02","nome":"Teste etapa 3"}
+ 10 POST   /api/feriados -> 400  [Bearer]  {"mensagem":"Já existe um feriado nesta data."}
+ 11 DELETE /api/feriados/6 -> 204  [Bearer]  
+
+erros no console:
+[clinica.html] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[clinica.html] Failed to load resource: the server responded with a status of 403 (Forbidden)
+[clinica.html] Failed to load resource: the server responded with a status of 400 (Bad Request)

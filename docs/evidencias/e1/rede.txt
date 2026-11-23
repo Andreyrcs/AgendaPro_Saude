@@ -1,0 +1,2 @@
+  1 GET    /api/pacientes/1/familiares -> 401  [sem token]  
+  2 POST   /api/auth/login -> 401  [sem token]  {"mensagem":"E-mail ou senha incorretos"}

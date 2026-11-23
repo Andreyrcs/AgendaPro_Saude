@@ -1,0 +1,1 @@
+  1 POST   /api/auth/login -> 200  [sem token]  

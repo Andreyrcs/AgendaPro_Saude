@@ -1,0 +1,19 @@
+
+== dono
+  1 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  2 GET    /api/clinicas/15 -> 200  [Bearer]  
+  3 GET    /api/clinicas/15/equipe -> 200  [Bearer]  [{"idUsuario":75,"nome":"Dono a","email":"dono.a.mwtftj45@teste.com","papel":"dono"},{"idUsuario":78,"nome":"Recepção Teste","email":"recepcao.mwtftj45@teste.co
+
+== recepcao
+  1 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  2 GET    /api/clinicas/15 -> 200  [Bearer]  
+  3 GET    /api/clinicas/15/equipe -> 200  [Bearer]  [{"idUsuario":75,"nome":"Dono a","email":"dono.a.mwtftj45@teste.com","papel":"dono"},{"idUsuario":78,"nome":"Recepção Teste","email":"recepcao.mwtftj45@teste.co
+
+== medico
+  1 POST   /api/auth/login -> 200  [sem token]  
+
+== paciente
+  1 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  2 GET    /api/pacientes/79/clinicas -> 200  [Bearer]  
+  3 GET    /api/pacientes/79/clinicas -> 200  [Bearer]  [{"id":15,"nome":"Clínica Teste A","endereco":"Rua Teste, 100","telefone":"(15) 3333-0000","cnpj":"89.715.651/4098-19","cidade":"Sorocaba","uf":"SP","codigo":"T
+  4 GET    /api/clinicas -> 200  [Bearer]  [{"id":20,"nome":"Clínica Nova rsv6p","endereco":"Av. Nova, 200 - Centro","telefone":"(15) 99999-0000","cnpj":"25.214.791/6098-38","cidade":"Votorantim","uf":"S

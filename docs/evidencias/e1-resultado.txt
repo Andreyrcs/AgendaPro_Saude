@@ -1,0 +1,27 @@
+{
+  "config": {
+    "API_URL": "http://localhost:5080",
+    "TEMPO_LIMITE_MS": 8000
+  },
+  "semToken": {
+    "nome": "ErroApi",
+    "status": 401,
+    "mensagem": "Não foi possível concluir agora. Tente de novo."
+  },
+  "loginErrado": {
+    "nome": "ErroApi",
+    "status": 401,
+    "mensagem": "E-mail ou senha incorretos"
+  },
+  "dataISO_2359": "2026-11-22",
+  "dataISO_0001": "2026-11-23"
+}
+sem servidor: {"nome":"ErroApi","status":0,"mensagem":"Não foi possível falar com o servidor"}
+
+rede da API:
+  1 GET    /api/pacientes/1/familiares -> 401  [sem token]  
+  2 POST   /api/auth/login -> 401  [sem token]  {"mensagem":"E-mail ou senha incorretos"}
+erros no console: 
+[login.html] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[login.html] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[login.html] Failed to load resource: net::ERR_CONNECTION_REFUSED

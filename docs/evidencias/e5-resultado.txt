@@ -1,0 +1,8 @@
+OK  agenda tem consultas com data-id — 44 elementos
+OK  clicar numa consulta abre o menu dela (find com mesmoId) — 1 menu(s) aberto(s)
+OK  lista de espera: trocar de médico (comparação com mesmoId) — médico paulo
+OK  nenhum erro de JavaScript nas três telas
+
+rede da API:
+  1 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  2 GET    /api/clinicas/15 -> 200  [Bearer]  
