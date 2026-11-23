@@ -90,12 +90,12 @@ public class ClinicaRepositorio : IClinicaRepositorio
         const string sql = SelectClinica + @"
             WHERE C.Publica = 1
               AND (@Busca = ''
-                   OR C.Nome_Clinica COLLATE Latin1_General_CI_AI LIKE '%' + @Busca + '%'
-                   OR C.Cidade COLLATE Latin1_General_CI_AI LIKE '%' + @Busca + '%')
+                   OR C.Nome_Clinica COLLATE Latin1_General_CI_AI LIKE '%' + @Busca + '%' ESCAPE '\'
+                   OR C.Cidade COLLATE Latin1_General_CI_AI LIKE '%' + @Busca + '%' ESCAPE '\')
             ORDER BY C.Nome_Clinica;";
 
         using var conexao = _fabrica.CriarConexao();
-        return await conexao.QueryAsync<Clinica>(sql, new { Busca = busca });
+        return await conexao.QueryAsync<Clinica>(sql, new { Busca = TextoLike.Escapar(busca) });
     }
 
     public async Task<IEnumerable<Clinica>> ListarDaContaAsync(int idConta)

@@ -101,11 +101,12 @@ public class PacienteRepositorio : IPacienteRepositorio
     {
         const string sql = SelectPaciente + @"
             INNER JOIN Paciente_Clinica PC ON PC.IdUsuario = P.IdUsuario AND PC.IdClinica = @IdClinica
-            WHERE (@Nome IS NULL OR P.Nome_paciente COLLATE Latin1_General_CI_AI LIKE '%' + @Nome + '%')
-              AND (@Cpf IS NULL OR P.CPF LIKE '%' + @Cpf + '%')
+            WHERE (@Nome IS NULL OR P.Nome_paciente COLLATE Latin1_General_CI_AI LIKE '%' + @Nome + '%' ESCAPE '\')
+              AND (@Cpf IS NULL OR P.CPF LIKE '%' + @Cpf + '%' ESCAPE '\')
             ORDER BY P.Nome_paciente;";
 
         using var conexao = _fabrica.CriarConexao();
-        return await conexao.QueryAsync<Paciente>(sql, new { IdClinica = idClinica, Nome = nome, Cpf = cpf });
+        return await conexao.QueryAsync<Paciente>(sql,
+            new { IdClinica = idClinica, Nome = TextoLike.Escapar(nome), Cpf = TextoLike.Escapar(cpf) });
     }
 }
