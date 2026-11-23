@@ -50,9 +50,37 @@ public class HorarioRepositorio : IHorarioRepositorio
         const string sql = @"
             SELECT Id_Feriado AS Id, Data_Feriado AS Data, Nome_Feriado AS Nome
             FROM Feriados
-            WHERE Data_Feriado BETWEEN @De AND @Ate;";
+            WHERE Data_Feriado BETWEEN @De AND @Ate
+            ORDER BY Data_Feriado;";
 
         using var conexao = _fabrica.CriarConexao();
         return await conexao.QueryAsync<Feriado>(sql, new { De = de, Ate = ate });
+    }
+
+    public async Task<bool> FeriadoExisteNaDataAsync(DateTime data)
+    {
+        const string sql = "SELECT COUNT(1) FROM Feriados WHERE Data_Feriado = @Data;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.ExecuteScalarAsync<int>(sql, new { Data = data }) > 0;
+    }
+
+    public async Task<int> CriarFeriadoAsync(Feriado feriado)
+    {
+        const string sql = @"
+            INSERT INTO Feriados (Data_Feriado, Nome_Feriado)
+            OUTPUT INSERTED.Id_Feriado
+            VALUES (@Data, @Nome);";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QuerySingleAsync<int>(sql, feriado);
+    }
+
+    public async Task<bool> RemoverFeriadoAsync(int id)
+    {
+        const string sql = "DELETE FROM Feriados WHERE Id_Feriado = @Id;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.ExecuteAsync(sql, new { Id = id }) > 0;
     }
 }

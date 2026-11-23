@@ -76,6 +76,7 @@ builder.Services.AddScoped<IClinicaServico, ClinicaServico>();
 builder.Services.AddScoped<IAcessoServico, AcessoServico>();
 builder.Services.AddScoped<IHorarioRepositorio, HorarioRepositorio>();
 builder.Services.AddScoped<IMedicoServico, MedicoServico>();
+builder.Services.AddScoped<IFeriadoServico, FeriadoServico>();
 builder.Services.AddScoped<IConsultaRepositorio, ConsultaRepositorio>();
 builder.Services.AddScoped<IConsultaServico, ConsultaServico>();
 builder.Services.AddScoped<IListaEsperaRepositorio, ListaEsperaRepositorio>();

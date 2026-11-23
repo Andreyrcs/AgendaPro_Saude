@@ -71,6 +71,7 @@ public class ErroMiddleware
         if (Cita("'dbo.Especialidades'")) return "Essa especialidade já existe nesta clínica.";
         if (Cita("'dbo.Pessoa_Prevencao'")) return "Essa pessoa já está nesse item da prevenção.";
         if (Cita("'dbo.Lista_Espera'")) return "Paciente já está na lista de espera deste médico.";
+        if (Cita("'dbo.Feriados'")) return "Já existe um feriado nesta data.";
         return "Este cadastro já existe.";
     }
 
