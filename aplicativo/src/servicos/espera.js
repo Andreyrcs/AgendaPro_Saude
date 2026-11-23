@@ -86,7 +86,7 @@ export async function responderVaga(usuario, idFila, aceitar) {
   return montarConsulta(conta, consulta);
 }
 
-// TODO: troca pra chamada real quando o endpoint DELETE /api/lista-espera/{id}?idUsuarioLogado= existir
+// TODO (etapa 10): DELETE /api/lista-espera/{id} (o id da fila). O usuário sai do token.
 export async function sairDaFila(usuario, idFila) {
   await esperar();
   const conta = contaDe(usuario);

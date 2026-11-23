@@ -47,7 +47,7 @@ function acharConsulta(conta, idConsulta) {
   return consulta;
 }
 
-// TODO: troca pra chamada real quando o endpoint GET /api/consultas/{id}?idUsuarioLogado= existir
+// TODO (etapa 10): GET /api/consultas/{id}. O usuário sai do token: nenhum id do próprio usuário na URL ou no corpo.
 export async function buscarConsulta(usuario, idConsulta) {
   await esperar();
   const conta = contaDe(usuario);
@@ -86,7 +86,7 @@ export async function buscarSituacao(usuario) {
 // a "livre", ou vira "oferecido" se houver lista de espera para aquele médico. Nunca há custo.
 // Cancelar no dia, depois de ter dito "Vou", registra falta sem aviso.
 // Devolve { falta, oferecidoAFila }.
-// TODO: troca pra chamada real quando o endpoint DELETE /api/consultas/{id}?idUsuarioLogado= existir
+// TODO (etapa 10): DELETE /api/consultas/{id} → { falta, oferecidoAFila }. O usuário sai do token.
 export async function cancelarConsulta(usuario, idConsulta) {
   await esperar();
   const conta = contaDe(usuario);
