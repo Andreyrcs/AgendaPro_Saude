@@ -103,10 +103,10 @@
                         class="avatar-iniciais"
                         style="--tam: 36px; background: #d4e8f4"
                         aria-hidden="true"
-                        >PM</span
+                        ></span
                     >
                     <span class="lateral__rotulo"
-                        ><b>Dr. Paulo Menezes</b><br />Cardiologia</span
+                        ><b id="lateral-nome"></b><br /><span id="lateral-esp"></span></span
                     >
                 </a>
             </aside>
@@ -384,14 +384,10 @@
                                     class="avatar-iniciais perfil-avatar"
                                     style="--tam: 80px; background: #d4e8f4"
                                     aria-hidden="true"
-                                    >PM</span
+                                    ></span
                                 >
-                                <h2 class="perfil-nome" id="perfil-nome">
-                                    Dr. Paulo Menezes
-                                </h2>
-                                <p class="perfil-esp" id="perfil-esp">
-                                    Cardiologia
-                                </p>
+                                <h2 class="perfil-nome" id="perfil-nome"></h2>
+                                <p class="perfil-esp" id="perfil-esp"></p>
                                 <div
                                     class="perfil-resumo-numeros"
                                     id="perfil-stats"
@@ -463,6 +459,11 @@
                                 ></span>
                             </div>
                             <ol class="hist-lista" id="proximos-lista"></ol>
+                        </section>
+                        <section class="perfil-bloco" aria-label="Sair">
+                            <button type="button" class="botao botao--perigo" id="sair">
+                                <svg class="ic ic-sm" aria-hidden="true"><use href="#i-log-out" /></svg>Sair da conta
+                            </button>
                         </section>
                     </div>
                 </div>
@@ -585,7 +586,6 @@
         <script src="assets/js/api.js"></script>
         <script src="assets/js/comum.js"></script>
         <script src="assets/js/movimento.js"></script>
-        <script src="assets/js/clinica-dados.js"></script>
         <script src="assets/js/medico.js"></script>
     </body>
 </html>

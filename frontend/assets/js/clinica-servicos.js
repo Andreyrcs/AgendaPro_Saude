@@ -6,7 +6,7 @@
    Carga (em paralelo): a clínica (GET /api/clinicas/{id}, L1), os médicos, as especialidades, a lista de espera,
    a agenda (GET /api/clinicas/{id}/agenda?de=&ate=) e os feriados (GET /api/feriados?de=&ate=).
    O modelo usa os mesmos nomes do antigo clinica-dados.js (consultas, MEDICOS, DURACAO, expediente, livres...),
-   para as telas mudarem pouco. clinica-dados.js continua só no medico.html, até a Etapa 9.
+   para as telas mudarem pouco.
 
    Cada item de CLINICA.consultas é UM destes dois (como antes):
    - uma consulta: { status: confirmada | na_recepcao | em_atendimento | atendida | faltou | cancelada, paciente, pessoa }
