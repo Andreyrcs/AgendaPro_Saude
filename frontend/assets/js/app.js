@@ -60,8 +60,7 @@ window.PACIENTE.iniciar(function () {
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const nomeCurto = (p) => (A.mesmoId(p.id, D.titular) ? "Você" : p.curto);
   /* a especialidade de clínica geral (para "Marcar consulta" sem especialidade escolhida) e a de pediatria, pelo nome */
-  const semAcento = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
-  const espPeloNome = (nome) => Object.keys(D.especialidades).find((k) => semAcento(D.especialidades[k].nome) === nome);
+  const espPeloNome = (nome) => Object.keys(D.especialidades).find((k) => window.TRIAGEM.mesmaEspecialidade(D.especialidades[k].nome, nome));
   const espPadraoPara = (p) => (p && p.idade !== null && p.idade < 18 && espPeloNome("pediatria")) || espPeloNome("clinica geral") || Object.keys(D.especialidades)[0] || "";
   const ordenar = (lista) => lista.slice().sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora));
 
@@ -343,7 +342,7 @@ window.PACIENTE.iniciar(function () {
     if (r.tipo === "cvv") {
       return (
         '<div class="emergencia" role="alert">' +
-        '<p class="emergencia__titulo">' + I("heart-pulse") + "Você não está sozinha</p>" +
+        '<p class="emergencia__titulo">' + I("heart-pulse") + "Você não precisa passar por isso só</p>" +
         "<p>Converse agora com alguém do CVV, de graça, 24 horas por dia. Se houver risco imediato, ligue para o SAMU.</p>" +
         '<div class="acoes">' +
         '<a class="botao botao--perigo botao--largo" href="tel:188">' + I("phone") + "Ligar 188 (CVV)</a>" +
@@ -351,30 +350,7 @@ window.PACIENTE.iniciar(function () {
         "</div></div>"
       );
     }
-    const p = pessoa(r.quem);
-    const intro = A.mesmoId(p.id, D.titular)
-      ? "Entendi. Pelo que você contou, estas especialidades podem ajudar:"
-      : "Entendi. Para " + E(p.tratamento) + ", estas especialidades podem ajudar:";
-    /* o assistente sugere NOMES; cada um é procurado nas especialidades desta clínica */
-    const ids = r.esps.map((nome) => espPeloNome(semAcento(nome))).filter(Boolean);
-    const itens = ids.map((id) => {
-      const h = primeiroHorario(id);
-      const sub = h
-        ? "Próximo horário: " + A.relativo(h.data) + ", " + h.hora + " com " + E(h.medico.nome)
-        : "Sem horário livre agora. Você pode entrar na lista de espera.";
-      return (
-        '<a class="sugestao pressionavel" href="#agendar/' + id + "/" + r.quem + '">' +
-        '<span><span class="sugestao__esp" style="display:block">' + E(esp(id).nome) + '</span><span class="sugestao__sub" style="display:block">' + sub + "</span></span>" +
-        I("chevron-right") + "</a>"
-      );
-    }).join("");
-    return (
-      '<p class="balao balao--ele">' + intro + "</p>" +
-      (itens
-        ? '<div class="sugestoes">' + itens + "</div>"
-        : '<p class="balao balao--ele">Esta clínica não atende ' + E(r.esps.join(" nem ")) + ". Ligue para a clínica para saber onde procurar: " + E(D.clinica.telefone) + ".</p>") +
-      '<p class="balao balao--ele">Isto é uma orientação, não um diagnóstico. Se piorar, ou se aparecer febre alta, falta de ar ou dor forte, procure um pronto-socorro.</p>'
-    );
+    return window.TRIAGEM.sugestaoHTML(r, { A, I, ligarClinica, adicionar: "#familia/novo" });
   }
 
   function telaAssistente() {

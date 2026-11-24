@@ -336,9 +336,9 @@
     await carregar();
     return itemPrevencao(item.id);
   }
-  /* "Marcar": a especialidade pelo NOME na clínica aberta; devolve o id dela ou lança a mensagem */
+  /* "Marcar": a especialidade pelo NOME (parecido, como no assistente) na clínica aberta; devolve o id dela ou lança a mensagem */
   function especialidadeNaClinica(nome) {
-    const id = Object.keys(D.especialidades).find((k) => semAcento(D.especialidades[k].nome) === semAcento(nome));
+    const id = Object.keys(D.especialidades).find((k) => window.TRIAGEM.mesmaEspecialidade(D.especialidades[k].nome, nome));
     if (!id) throw new Error("Esta clínica não atende essa especialidade.");
     return id;
   }

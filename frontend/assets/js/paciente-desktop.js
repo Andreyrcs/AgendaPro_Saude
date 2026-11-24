@@ -55,8 +55,7 @@ window.PACIENTE.iniciar(function () {
     const nomeCurto = (p) => (A.mesmoId(p.id, D.titular) ? 'Você' : p.curto);
     const ehTitular = (p) => !!p && A.mesmoId(p.id, D.titular);
     /* especialidade pelo NOME (o id muda de clínica para clínica): clínica geral e pediatria */
-    const semAcento = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
-    const espPeloNome = (nome) => Object.keys(D.especialidades).find((k) => semAcento(D.especialidades[k].nome) === nome);
+    const espPeloNome = (nome) => Object.keys(D.especialidades).find((k) => window.TRIAGEM.mesmaEspecialidade(D.especialidades[k].nome, nome));
     const espPadraoPara = (p) => (p && p.idade !== null && p.idade < 18 && espPeloNome('pediatria')) || espPeloNome('clinica geral') || Object.keys(D.especialidades)[0] || '';
     const ordenar = (lista) =>
         lista
@@ -471,7 +470,7 @@ window.PACIENTE.iniciar(function () {
                 '<div class="emergencia" role="alert">' +
                 '<p class="emergencia__titulo">' +
                 I('heart-pulse') +
-                ' Você não está sozinho</p>' +
+                ' Você não precisa passar por isso só</p>' +
                 '<p>Converse agora com alguém do CVV, de graça, 24 horas por dia. Se houver risco imediato, ligue para o SAMU.</p>' +
                 '<a href="tel:188">' +
                 I('phone') +
@@ -481,37 +480,7 @@ window.PACIENTE.iniciar(function () {
                 ' Ligar 192 (SAMU)</a></div>'
             );
         }
-        /* o assistente sugere NOMES; cada um é procurado nas especialidades desta clínica */
-        const p = pessoa(r.quem) || pessoa(D.titular);
-        const ids = r.esps.map((nome) => espPeloNome(semAcento(nome))).filter(Boolean);
-        const intro = ehTitular(p)
-            ? 'Pelo que você descreveu, estas especialidades podem ajudar:'
-            : 'Para ' + A.esc(p.tratamento) + ', estas especialidades podem ajudar:';
-        return (
-            '<p class="balao balao--ele" style="max-width:none">' +
-            intro +
-            '</p>' +
-            (ids.length
-                ? ids
-                      .map(
-                          (id) =>
-                              '<a class="chip-esp pressionavel" href="#agendar/' +
-                              id +
-                              '/' +
-                              p.id +
-                              '">' +
-                              A.esc(esp(id).nome) +
-                              I('chevron-right') +
-                              '</a>',
-                      )
-                      .join('')
-                : '<p class="balao balao--ele" style="max-width:none">Esta clínica não atende ' +
-                  A.esc(r.esps.join(' nem ')) +
-                  '. Ligue para a clínica para saber onde procurar: ' +
-                  A.esc(D.clinica.telefone) +
-                  '.</p>') +
-            '<p class="balao balao--ele" style="max-width:none">Isto é uma orientação, não um diagnóstico. Se piorar, ou se aparecer febre alta, falta de ar ou dor forte, procure um pronto-socorro.</p>'
-        );
+        return window.TRIAGEM.sugestaoHTML(r, { A, I, ligarClinica, adicionar: '#adicionar-familiar', balao: ' style="max-width:none"' });
     }
 
     function renderAssistente() {
