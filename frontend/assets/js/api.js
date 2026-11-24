@@ -10,7 +10,6 @@
 
   const semAcento = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const so = (t) => String(t || "").replace(/\D/g, "");
-  const novoId = (p) => p + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   /* ─── Acesso à API: toda chamada ao servidor passa por chamar() (seção 5.1) ───
      O endereço vem de config.js (window.AGENDAPRO_CONFIG). Envia e recebe JSON, manda o token da sessão em
@@ -368,10 +367,8 @@
   }
 
   /* ════════════════════════════════════════════════════════════════════════════════════════════════
-     LEGADO (sai nas próximas etapas): ainda guardado neste navegador, para as telas que continuam com
-     dados simulados até serem ligadas à API.
-     - conta do médico e telefone do médico (medicos.html) → etapa 8
-     - CPF dos pacientes da agenda simulada (pacientes.html, família do paciente) → etapas 7 e 8
+     LEGADO (sai na 8d): ainda guardado neste navegador, para a tela que continua com dados simulados.
+     - CPF dos pacientes da agenda simulada (pacientes.html) → 8d
      ════════════════════════════════════════════════════════════════════════════════════════════════ */
   const CHAVE = "agendapro.api.v2";
   let banco = null;
@@ -383,16 +380,6 @@
   }
   function gravar() {
     try { localStorage.setItem(CHAVE, JSON.stringify(banco)); } catch (e) { /* sem armazenamento: vale só nesta visita */ }
-  }
-  function emailEmUso(email) {
-    return ler().usuarios.some((u) => u.email === email.toLowerCase().trim());
-  }
-  function emailLivre(email) { return !emailEmUso(email); }
-  function gerarSenhaProvisoria() {
-    const letras = "abcdefghjkmnpqrstuvwxyz";
-    let s = "";
-    for (let i = 0; i < 5; i++) s += letras[Math.floor(Math.random() * letras.length)];
-    return s + String(100 + Math.floor(Math.random() * 900));
   }
   /* CPF fictício e válido para os pacientes da carga inicial da agenda (sempre o mesmo para o mesmo nome) */
   function cpfFicticio(nome) {
@@ -420,26 +407,6 @@
     gravar();
     return so(cpf);
   }
-  async function cadastrarContaMedico(dados) {
-    const c = clinicaAtual();
-    if (emailEmUso(dados.email)) throw new Error("Este e-mail já tem uma conta.");
-    const senhaProvisoria = gerarSenhaProvisoria();
-    const u = { id: novoId("u"), nome: dados.nome.trim(), email: dados.email.toLowerCase().trim(), papel: "medico", clinicaId: c && c.id, medicoId: dados.medicoId, telefone: dados.telefone || "", provisoria: true };
-    ler().usuarios.push(u);
-    gravar();
-    return { usuario: u, senhaProvisoria };
-  }
-  function telefoneDoMedico(medicoId) {
-    const u = ler().usuarios.find((x) => x.papel === "medico" && x.medicoId === medicoId);
-    return u ? u.telefone || "" : "";
-  }
-  function salvarTelefoneMedico(medicoId, telefone) {
-    const u = ler().usuarios.find((x) => x.papel === "medico" && x.medicoId === medicoId);
-    if (!u) return false;
-    u.telefone = telefone || "";
-    gravar();
-    return true;
-  }
   /* ════════════════════════════════════ fim do LEGADO ════════════════════════════════════ */
 
   /* O nome e os contatos da clínica aberta passam a valer em todas as telas.
@@ -462,8 +429,7 @@
     sessao, usuarioAtual, clinicaAtual, destinoDe,
     entrar, sair, trocarSenha,
     cadastrarClinica, atualizarClinica, recarregarClinica,
-    listarEquipe, cadastrarRecepcionista, removerDaEquipe, cadastrarContaMedico, emailLivre,
-    telefoneDoMedico, salvarTelefoneMedico,
+    listarEquipe, cadastrarRecepcionista, removerDaEquipe,
     cadastrarPaciente, buscarClinicas, clinicaPorCodigo, vincularClinica, clinicasDoPaciente, usarClinica, normalizarCodigo,
     validarCNPJ, formatarCNPJ, formatarTelefone,
     validarCPF, formatarCPF, cpfFicticio, cpfEmUso, cpfDe, guardarCPF, ERRO_CPF, ERRO_CPF_REPETIDO,

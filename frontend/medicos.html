@@ -48,6 +48,7 @@
         </header>
 
         <div class="pagina">
+          <div class="credencial" id="credencial" hidden aria-live="polite"></div>
           <section class="painel" aria-labelledby="t-agenda">
             <div class="painel__cabeca">
               <h2 id="t-agenda">Com agenda nesta clínica</h2>
@@ -128,7 +129,10 @@
             <input id="f-sala" name="sala" autocomplete="off" placeholder="Ex.: Sala 3" />
           </div>
         </div>
+        <p class="campo__erro" id="e-medico" role="alert" hidden></p>
+        <p class="dialogo__texto" id="aviso-remover" hidden>O médico sai da agenda e das opções de agendamento e não entra mais no sistema. As consultas antigas continuam no histórico.</p>
         <div class="dialogo__acoes">
+          <button type="button" class="botao botao--perigo botao--pequeno" id="dlg-remover" hidden style="margin-right:auto">Remover médico</button>
           <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>
           <button type="submit" class="botao botao--principal botao--pequeno" id="dlg-ok">Cadastrar</button>
         </div>
@@ -144,7 +148,7 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/comum.js"></script>
     <script src="assets/js/movimento.js"></script>
-    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-servicos.js"></script>
     <script src="assets/js/clinica-casca.js"></script>
     <script src="assets/js/pagina-medicos.js"></script>
   </body>

@@ -128,13 +128,20 @@
   }
 
   function iniciais(nome) {
-    var partes = nome.replace(/^(Dra?\.|Psic\.)\s+/, "").split(" ").filter(Boolean);
+    var partes = String(nome || "").replace(/^(Dra?\.|Dr\(a\)\.|Psic\.)\s+/, "").split(" ").filter(Boolean);
+    if (!partes.length) return "";
     return (partes[0][0] + (partes.length > 1 ? partes[partes.length - 1][0] : "")).toUpperCase();
   }
 
   function avatarMedico(m, tamanho) {
     /* o nome do médico é digitado pela recepção: as iniciais passam por esc() antes de entrar no HTML */
     return '<span class="avatar-iniciais" style="--tam:' + tamanho + "px;background:" + esc(m.cor) + '" aria-hidden="true">' + esc(iniciais(m.nome)) + "</span>";
+  }
+
+  /* F15: a cor de cada médico é a da posição dele na lista de GET /api/clinicas/{id}/medicos (paleta --med-1… em tokens.css) */
+  var CORES_MEDICO = 8;
+  function corDoMedico(indice) {
+    return "var(--med-" + ((Math.max(0, Number(indice) || 0) % CORES_MEDICO) + 1) + ")";
   }
 
   /* Marca: uma folha de destacar com a cruz da saúde */
@@ -179,7 +186,7 @@
     MESES: MESES, MESES_LONGOS: MESES_LONGOS, SEMANA: SEMANA, SEMANA_CURTA: SEMANA_CURTA,
     data: data, hoje: hoje, diasAte: diasAte, relativo: relativo, extenso: extenso, curto: curto,
     esc: esc, icone: icone, folha: folha, folhaMes: folhaMes, avatar: avatar,
-    avatarMedico: avatarMedico, iniciais: iniciais, marca: marca, seloClinica: seloClinica,
+    avatarMedico: avatarMedico, corDoMedico: corDoMedico, iniciais: iniciais, marca: marca, seloClinica: seloClinica,
     /* Ids da API são números; os do HTML (data-id) chegam como texto. Compara sempre pelo texto (F2). */
     mesmoId: function (a, b) { return a !== null && a !== undefined && b !== null && b !== undefined && String(a) === String(b); },
     movimentoReduzido: function () {

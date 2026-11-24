@@ -2,13 +2,14 @@
    Monta o menu lateral com a página atual marcada, a folha de hoje no cabeçalho,
    os avisos que sobem do rodapé e o relógio ("agora" é a hora do computador).
    Nas páginas já ligadas à API, CLINICA.iniciar (clinica-servicos.js) chama CASCA.atualizar() depois de carregar:
-   o selo e o número da lista de espera passam a vir da API. As páginas ainda simuladas (até as etapas 8b a 8d)
-   continuam com clinica-dados.js (window.CLIDADOS). */
+   o selo, o número da lista de espera, os médicos, as especialidades e os horários livres passam a vir da API.
+   As páginas ainda simuladas continuam com clinica-dados.js (window.CLIDADOS) até serem ligadas. */
 (function () {
   "use strict";
 
   const D = window.DADOS;
-  const C = window.CLIDADOS || null; /* só nas páginas ainda simuladas */
+  const CL = window.CLINICA || null; /* páginas ligadas à API (clinica-servicos.js) */
+  const C = CL ? null : window.CLIDADOS || null; /* só nas páginas ainda simuladas */
   const A = window.AP;
   const M = window.MOV;
   const I = A.icone;
@@ -26,8 +27,9 @@
   /* minutos desde a meia-noite, pela hora do computador */
   const agora = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; };
 
-  const medico = (id) => D.medicos.find((m) => m.id === id);
-  const esp = (id) => D.especialidades[id];
+  const SEM_ESP = { nome: "", duracao: 30 };
+  const medico = (id) => (CL ? CL.medico(id) : D.medicos.find((m) => m.id === id));
+  const esp = (id) => (CL ? CL.esp(id) || SEM_ESP : D.especialidades[id]);
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   /* pessoas na lista de espera: da API, quando a página passou pelo portão; senão, da carga simulada */
   const totalFila = () => (window.CLINICA && window.CLINICA.carregada
@@ -200,8 +202,9 @@
     }
   });
 
-  /* ─── Horários livres de um médico num dia (a mesma regra da agenda; só nas páginas ainda simuladas) ─── */
+  /* ─── Horários livres de um médico num dia (a mesma regra da agenda) ─── */
   function livres(m, dia) {
+    if (CL) return CL.livres(m, dia);
     if (!C) return [];
     const e = C.expediente(m, dia);
     if (!e || dia < D.hoje) return [];
@@ -217,8 +220,8 @@
     }
     return lista;
   }
-  /* até onde a agenda está aberta para marcar (configuração da clínica, em clinica-dados.js) */
-  const ULTIMO_DIA = C ? C.ABRE_ATE : null;
+  /* até onde a agenda está aberta para marcar (2 meses à frente, a mesma conta da API) */
+  const ULTIMO_DIA = CL ? CL.ABRE_ATE : C ? C.ABRE_ATE : null;
 
   /* ─── Depois da carga da API (CLINICA.iniciar): rodapé, número da fila e selo com a clínica atualizada ─── */
   function atualizar() {

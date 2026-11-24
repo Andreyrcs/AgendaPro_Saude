@@ -76,7 +76,7 @@
     <dialog class="dialogo" id="dlg-esp" aria-labelledby="t-dlg">
       <form method="dialog" id="form-esp" novalidate>
         <h2 id="t-dlg">Nova especialidade</h2>
-        <p class="dialogo__texto">A descrição aparece no app para o paciente. Escreva sem termos técnicos.</p>
+        <p class="dialogo__texto">O nome aparece no app para o paciente. A duração vale para as consultas marcadas daqui para a frente.</p>
         <div class="campo" id="c-nome">
           <label for="f-nome">Nome</label>
           <input id="f-nome" name="nome" autocomplete="off" placeholder="Ex.: Endocrinologia" required />
@@ -90,10 +90,6 @@
             <option value="45">45 minutos</option>
             <option value="60">1 hora</option>
           </select>
-        </div>
-        <div class="campo">
-          <label for="f-desc">Para que serve</label>
-          <textarea id="f-desc" name="desc" placeholder="Ex.: Diabetes, tireoide e hormônios"></textarea>
         </div>
         <div class="dialogo__acoes">
           <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>
@@ -111,7 +107,7 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/comum.js"></script>
     <script src="assets/js/movimento.js"></script>
-    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-servicos.js"></script>
     <script src="assets/js/clinica-casca.js"></script>
     <script src="assets/js/pagina-especialidades.js"></script>
   </body>
