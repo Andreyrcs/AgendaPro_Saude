@@ -14,8 +14,6 @@ import { validarLogin } from '../utilitarios/validacao';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 
-// Acesso rápido: a conta da carga inicial (a mesma da web)
-const ACESSO_RAPIDO = { email: 'juliana.santos@email.com', senha: 'paciente123' };
 
 export default function LoginTela({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -40,12 +38,6 @@ export default function LoginTela({ navigation }) {
       setErro(e.message);
       setEnviando(false);
     }
-  }
-
-  function entrarRapido() {
-    setEmail(ACESSO_RAPIDO.email);
-    setSenha(ACESSO_RAPIDO.senha);
-    fazerLogin(ACESSO_RAPIDO.email, ACESSO_RAPIDO.senha);
   }
 
   return (
@@ -107,19 +99,6 @@ export default function LoginTela({ navigation }) {
             </Texto>
           </Pressable>
 
-          <View style={estilos.separador} />
-
-          <Texto variante="meta" style={estilos.centro}>
-            Acesso rápido
-          </Texto>
-          <Botao
-            titulo="Juliana Santos · paciente"
-            variante="secundario"
-            icone="user-check"
-            onPress={entrarRapido}
-            desativado={enviando}
-            accessibilityHint="Entra com a conta da Juliana Santos"
-          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -145,6 +124,4 @@ const estilos = StyleSheet.create({
   },
   erro: { backgroundColor: cores.domingoClaro, borderRadius: raios.folha, padding: espaco.m },
   link: { minHeight: TOQUE_MINIMO, alignItems: 'center', justifyContent: 'center' },
-  separador: { height: 1.5, backgroundColor: cores.linha },
-  centro: { textAlign: 'center' },
 });

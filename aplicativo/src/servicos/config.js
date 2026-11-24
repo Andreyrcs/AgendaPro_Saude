@@ -1,7 +1,8 @@
 // Configuração da conexão com a API (backend em ASP.NET).
 //
 // USAR_API_REAL
-//   true → todas as telas falam com a API (Apêndice L); só o assistente de triagem roda no aparelho
+//   true → todas as telas falam com a API (Apêndice L); só o assistente de triagem roda no aparelho.
+//   O banco simulado do começo do projeto foi retirado: não há mais caminho sem a API.
 //
 // ENDERECO_API
 //   No celular, "localhost" é o próprio celular, e não o computador.

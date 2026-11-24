@@ -107,7 +107,7 @@
 
     CLINICA.fila = bruto.fila || [];
     CLINICA.feriados = (bruto.feriados || []).map((f) => ({ id: String(f.id), data: f.data, nome: f.nome }));
-    /* A.folha() pinta domingo e feriado lendo DADOS.feriados: passa a ser o feriado real (sai na Etapa 11) */
+    /* A.folha() pinta domingo e feriado lendo DADOS.feriados: passa a ser o feriado real */
     if (window.DADOS) window.DADOS.feriados = CLINICA.feriados;
 
     const ativos = new Set(medicos.map((m) => m.id));

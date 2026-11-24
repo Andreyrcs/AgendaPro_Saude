@@ -1,7 +1,7 @@
-/* AgendaPro Saúde — dados iniciais da Clínica Ipê (carga inicial do sistema).
-   "Hoje" é a data real do computador. As datas abaixo são contadas a partir de hoje
-   (dia(3) = daqui a 3 dias), então a agenda sempre começa preenchida em volta do dia atual.
-   Quando a API estiver no ar, estes dados passam a vir do banco (ver docs/relatorio-integracao.md). */
+/* AgendaPro Saúde — constantes comuns às telas (nomes dos status, regras de presença e faltas) e os dados de
+   exemplo da ilustração do celular na página inicial (index.html, Figura B.1 da documentação).
+   As telas de verdade não usam dados de exemplo: tudo vem da API (paciente-servicos.js, clinica-servicos.js e
+   medico.js), e "clinica" começa vazia até api.js copiar a clínica da sessão. */
 (function () {
   "use strict";
 
@@ -9,7 +9,7 @@
   const iso = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
   const HOJE = iso(new Date());
 
-  /* Feriados nacionais (a clínica não abre) */
+  /* Feriados nacionais: a ilustração da página inicial e a folha do dia até a API responder (GET /api/feriados) */
   const FERIADOS = [
     { data: "2026-01-01", nome: "Confraternização Universal" }, { data: "2026-02-16", nome: "Carnaval" }, { data: "2026-02-17", nome: "Carnaval" },
     { data: "2026-04-03", nome: "Sexta-feira Santa" }, { data: "2026-04-21", nome: "Tiradentes" }, { data: "2026-05-01", nome: "Dia do Trabalho" },
@@ -33,66 +33,7 @@
     return s;
   }
   const mes = (n) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + n); return d.getFullYear() + "-" + pad(d.getMonth() + 1); };
-  const SEMANA = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
-  const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
-  const diaSemana = (s) => { const p = s.split("-").map(Number); return SEMANA[new Date(p[0], p[1] - 1, p[2]).getDay()]; };
-  const porExtenso = (s) => { const p = s.split("-").map(Number); return p[2] + " de " + MESES[p[1] - 1]; };
-
-  /* ─── Prevenção: o mesmo modelo do banco ───
-     Campanhas_Prevencao: um registro por mês. [Nome (pode ser vazio), Tema]. 1 = janeiro. */
-  const CAMPANHAS = {
-    1: ["Janeiro Branco", "Saúde mental"], 2: [null, "Volta às aulas"], 3: ["Março Lilás", "Prevenção do câncer do colo do útero"],
-    4: ["Vacinação contra a gripe", "Campanha anual"], 5: ["Maio Amarelo", "Segurança no trânsito"], 6: [null, "Inverno: cuidado com o pulmão"],
-    7: [null, "Férias de julho"], 8: ["Agosto Dourado", "Aleitamento materno"], 9: ["Setembro Amarelo", "Prevenção do suicídio"],
-    10: ["Outubro Rosa", "Prevenção do câncer de mama"], 11: ["Novembro Azul", "Saúde do homem"], 12: [null, "Antes das férias"],
-  };
-  /* Exames_Prevencao: as sugestões de cada campanha (Titulo, Nota, Especialidade = NOME da especialidade;
-     null = não se marca pela clínica, como vacina e dentista) */
-  const EXAMES_DO_MES = {
-    1: [{ titulo: "Consulta de saúde mental", nota: "Conversa sobre sono, humor e estresse", especialidade: "Psiquiatria" }],
-    2: [{ titulo: "Consulta anual com pediatra", nota: "Conferir a caderneta de vacinação", especialidade: "Pediatria" }],
-    3: [{ titulo: "Exame preventivo (Papanicolau)", nota: "Frequência conforme orientação médica", especialidade: "Ginecologia" }],
-    4: [{ titulo: "Vacina da gripe", nota: "Grupo prioritário: 60 anos ou mais", especialidade: null }],
-    10: [{ titulo: "Mamografia", nota: "A cada 2 anos, dos 50 aos 74 anos", especialidade: "Ginecologia" },
-         { titulo: "Consulta com ginecologista", nota: "Inclui o exame clínico das mamas", especialidade: "Ginecologia" }],
-    11: [{ titulo: "Exame de próstata (PSA)", nota: "Conforme orientação médica, a partir dos 50 anos", especialidade: "Clínica geral" }],
-  };
-  /* as sugestões gerais (IdCampanha nulo) valem para todo mês */
-  const EXAMES_GERAIS = [
-    { id: "exg-1", idCampanha: null, titulo: "Check-up anual com clínica geral", nota: "Uma vez por ano", especialidade: "Clínica geral" },
-    { id: "exg-2", idCampanha: null, titulo: "Revisão no dentista", nota: "A cada 6 meses", especialidade: null },
-  ];
-  /* Pessoa_Prevencao da carga inicial: [pessoa, título do exame] em cada mês */
-  const PREVENCAO_POR_MES = {
-    1: [["juliana", "Check-up anual com clínica geral"]],
-    2: [["davi", "Consulta anual com pediatra"], ["marina", "Consulta anual com pediatra"]],
-    3: [["juliana", "Exame preventivo (Papanicolau)"]],
-    4: [["cida", "Vacina da gripe"], ["kenji", "Vacina da gripe"]],
-    10: [["cida", "Mamografia"]],
-    11: [["kenji", "Check-up anual com clínica geral"]],
-    12: [["davi", "Revisão no dentista"], ["marina", "Revisão no dentista"]],
-  };
-  /* Cada mês: { id, mes: "AAAA-MM", campanha (Nome ou null), tema, exames: [Exames_Prevencao do mês], itens: [Pessoa_Prevencao] }
-     Item: { id, pessoa, exame (id), titulo, nota, especialidade, status, consulta? } (titulo, nota e especialidade vêm do exame) */
-  function prevencao() {
-    const lista = [];
-    for (let i = -1; i <= 5; i++) {
-      const m = mes(i);
-      const n = Number(m.slice(5));
-      const idCampanha = "camp-" + m;
-      const exames = (EXAMES_DO_MES[n] || []).map((e, j) => Object.assign({ id: "ex" + m + "-" + j, idCampanha }, e));
-      const todos = exames.concat(EXAMES_GERAIS);
-      lista.push({
-        id: idCampanha, mes: m, campanha: CAMPANHAS[n][0], tema: CAMPANHAS[n][1], exames,
-        itens: (PREVENCAO_POR_MES[n] || []).map(([pessoa, titulo], j) => {
-          const e = todos.find((x) => x.titulo === titulo);
-          return { id: "v" + m + "-" + j, pessoa, exame: e.id, titulo: e.titulo, nota: e.nota, especialidade: e.especialidade, status: "pendente" };
-        }),
-      });
-    }
-    return lista;
-  }
-
+  /* Consultas de exemplo: só a ilustração da página inicial (landing.js) */
   const consultas = [
     { id: "c1", pessoa: "davi", medico: "fernanda", data: dia(3), hora: "14:30", sala: "Sala 4", status: "confirmada", motivo: "Consulta de rotina" },
     { id: "c5", pessoa: "marina", medico: "rafael", data: dia(3), hora: "17:00", sala: "Sala 1", status: "confirmada", motivo: "Acompanhamento da rinite" },
@@ -133,17 +74,12 @@
       return new Date(p[0], p[1] - 1, p[2] - 1, 23, 59, 59);
     },
 
-    clinica: {
-      nome: "Clínica Ipê",
-      endereco: "Rua das Palmeiras, 410 — Centro",
-      telefone: "(11) 2345-0000",
-      telefoneLink: "+551123450000",
-    },
+    /* a clínica da sessão (api.js preenche) */
+    clinica: { nome: "", endereco: "", telefone: "", telefoneLink: "" },
 
     feriados: FERIADOS,
 
-    titular: "juliana",
-
+    /* Pessoas de exemplo: só a ilustração da página inicial (landing.js) */
     /* cpf: Pacientes.CPF, 11 dígitos, fictício e válido (dígitos verificadores corretos), sem repetir */
     pessoas: [
       {
@@ -178,124 +114,13 @@
       },
     ],
 
-    especialidades: {
-      clinica: { nome: "Clínica geral", desc: "Primeira consulta para quase tudo, check-ups e pedidos de exame", duracao: 30 },
-      pediatria: { nome: "Pediatria", desc: "Saúde de crianças e adolescentes até 18 anos", duracao: 30 },
-      otorrino: { nome: "Otorrinolaringologia", desc: "Ouvido, nariz e garganta", duracao: 30 },
-      dermatologia: { nome: "Dermatologia", desc: "Pele, cabelo e unhas", duracao: 30 },
-      cardiologia: { nome: "Cardiologia", desc: "Coração e pressão arterial", duracao: 40 },
-      ortopedia: { nome: "Ortopedia", desc: "Ossos, músculos e articulações", duracao: 30 },
-      oftalmologia: { nome: "Oftalmologia", desc: "Olhos e visão", duracao: 30 },
-      ginecologia: { nome: "Ginecologia", desc: "Saúde da mulher", duracao: 30 },
-      psiquiatria: { nome: "Psiquiatria", desc: "Saúde mental, ansiedade, sono e humor", duracao: 30 },
-    },
-    /* Especialidades são por clínica (Especialidades.IdClinica): cada clínica tem as suas, e o mesmo nome
-       pode existir em clínicas diferentes. clinica-dados.js deixa em DADOS.especialidades só as da clínica aberta. */
-    ESPECIALIDADES_DA_CLINICA: {
-      ipe: ["clinica", "pediatria", "otorrino", "dermatologia", "cardiologia", "ortopedia", "oftalmologia", "ginecologia", "psiquiatria"],
-      jacaranda: ["clinica", "pediatria", "ortopedia"],
-      aroeira: ["cardiologia", "dermatologia", "ginecologia"],
-    },
-
-    /* Todos os médicos cadastrados; "clinica" diz onde cada um atende.
-       api.js deixa em DADOS.medicos só os da clínica aberta na sessão. */
-    todosMedicos: [
-      { id: "helena", clinica: "ipe", nome: "Dra. Helena Duarte", esp: "clinica", cor: "#d9ecf8", crm: "CRM/SP 107919" },
-      { id: "fernanda", clinica: "ipe", nome: "Dra. Fernanda Lima", esp: "pediatria", cor: "#fde3d3", crm: "CRM/SP 115838" },
-      { id: "joao", clinica: "ipe", nome: "Dr. João Batista Moura", esp: "pediatria", cor: "#e3f2dc", crm: "CRM/SP 123757" },
-      { id: "rafael", clinica: "ipe", nome: "Dr. Rafael Nogueira", esp: "otorrino", cor: "#efe2f5", crm: "CRM/SP 131676" },
-      { id: "camila", clinica: "ipe", nome: "Dra. Camila Rocha", esp: "dermatologia", cor: "#f9e9b9", crm: "CRM/SP 139595" },
-      { id: "icaro", clinica: "ipe", nome: "Dr. Ícaro Bezerra", esp: "dermatologia", cor: "#d6efe6", crm: "CRM/SP 147514" },
-      { id: "paulo", clinica: "ipe", nome: "Dr. Paulo Menezes", esp: "cardiologia", cor: "#f7d9dc", crm: "CRM/SP 155433" },
-      { id: "andre", clinica: "ipe", nome: "Dr. André Nascimento", esp: "ortopedia", cor: "#dfe6f6", crm: "CRM/SP 163352" },
-      { id: "luana", clinica: "ipe", nome: "Dra. Luana Potiguara", esp: "oftalmologia", cor: "#e6f1d4", crm: "CRM/SP 171271" },
-      { id: "beatriz", clinica: "ipe", nome: "Dra. Beatriz Yamamoto", esp: "ginecologia", cor: "#fbe0ea", crm: "CRM/SP 179190" },
-      { id: "rosa", clinica: "ipe", nome: "Dra. Rosa Amaral", esp: "psiquiatria", cor: "#e2ecf0", crm: "CRM/SP 187109" },
-      { id: "marcos", clinica: "jacaranda", nome: "Dr. Marcos Vieira", esp: "clinica", cor: "#d9ecf8", crm: "CRM/SP 195028" },
-      { id: "silvia", clinica: "jacaranda", nome: "Dra. Sílvia Prado", esp: "pediatria", cor: "#fde3d3", crm: "CRM/SP 202947" },
-      { id: "tomas", clinica: "jacaranda", nome: "Dr. Tomás Okada", esp: "ortopedia", cor: "#dfe6f6", crm: "CRM/SP 210866" },
-      { id: "renata", clinica: "aroeira", nome: "Dra. Renata Campos", esp: "cardiologia", cor: "#f7d9dc", crm: "CRM/SP 218785" },
-      { id: "igor", clinica: "aroeira", nome: "Dr. Igor Azevedo", esp: "dermatologia", cor: "#f9e9b9", crm: "CRM/SP 226704" },
-      { id: "lia", clinica: "aroeira", nome: "Dra. Lia Moreno", esp: "ginecologia", cor: "#fbe0ea", crm: "CRM/SP 234623" },
-    ],
+    /* preenchidos pela API nas telas do paciente (paciente-servicos.js) */
+    especialidades: {},
     medicos: [],
-
-    /* Horários livres para o paciente: vêm da agenda da clínica (paciente-servicos.js preenche) */
     horarios: {},
 
     /* tipo: "consulta" (padrão), "exame" ou "prevencao" — muda o selo no calendário */
     consultas,
 
-    passadas: [
-      { id: "p1", pessoa: "cida", medico: "paulo", data: dia(-18), hora: "10:30", sala: "Sala 5", status: "atendida", motivo: "Pressão alta", gerou: "Retorno em até 45 dias" },
-      { id: "p2", pessoa: "juliana", medico: "helena", data: dia(-35), hora: "08:00", sala: "Sala 2", status: "atendida", motivo: "Cansaço frequente", gerou: "Pedido de exames de sangue" },
-    ],
-
-    /* A Juliana espera vaga com a Dra. Camila. "vaga" só aparece quando a recepção cancela
-       uma consulta da Dra. Camila e ela é a 1ª da fila (clinica.js avisa pelo canal). */
-    espera: {
-      pessoa: "juliana", medico: "camila", posicao: 3, naFila: 7,
-      desde: dia(-14, false), notificar: true, sms: false,
-      vaga: null,
-    },
-
-    acompanhamento: {
-      retornos: [
-        { id: "r1", pessoa: "cida", titulo: "Retorno com cardiologista", medico: "paulo", esp: "cardiologia", prazo: dia(27), origem: "Pedido na consulta de " + porExtenso(dia(-18)) },
-      ],
-      exames: [
-        { id: "e1", pessoa: "juliana", titulo: "Hemograma e glicemia em jejum", pedidoPor: "helena", status: "pendente", obs: "Jejum de 8 horas", origem: "Pedido em " + porExtenso(dia(-35)) },
-        { id: "e2", pessoa: "kenji", titulo: "Eletrocardiograma", pedidoPor: "helena", status: "agendado", consulta: "c2", obs: "Levar exames anteriores" },
-      ],
-    },
-
-    /* Calendário de prevenção: do mês passado até 5 meses à frente, com as campanhas do Ministério da Saúde */
-    prevencao: prevencao(),
-    examesPrevencaoGerais: EXAMES_GERAIS,
-
-    /* Lista de espera de cada médico, em ordem de chegada.
-       A Juliana (titular do app) é a 3ª da fila da Dra. Camila Rocha. */
-    filas: {
-      camila: [
-        { nome: "Rita de Cássia Moura", desde: dia(-22, false), tel: "•••• 2210" },
-        { nome: "Benedito Alves", desde: dia(-18, false), tel: "•••• 8812" },
-        { nome: "Juliana Santos", desde: dia(-14, false), tel: "•••• 4471", app: true },
-        { nome: "Tainá Guajajara", desde: dia(-11, false), tel: "•••• 0193" },
-        { nome: "Osvaldo Pereira", desde: dia(-8, false), tel: "•••• 7765" },
-        { nome: "Lúcia Hiromi Sato", desde: dia(-5, false), tel: "•••• 3348" },
-        { nome: "Diego Marques", desde: dia(-2, false), tel: "•••• 5590" },
-      ],
-      paulo: [
-        { nome: "Sebastião Rocha", desde: dia(-15, false), tel: "•••• 6127" },
-        { nome: "Neide Fonseca", desde: dia(-12, false), tel: "•••• 9032" },
-        { nome: "Hamilton Ito", desde: dia(-7, false), tel: "•••• 1145" },
-        { nome: "Graça Nascimento", desde: dia(-3, false), tel: "•••• 4408" },
-      ],
-      fernanda: [
-        { nome: "Gael Cardoso (por Bruna Cardoso)", desde: dia(-6, false), tel: "•••• 2271" },
-        { nome: "Ayla Ribeiro (por Caio Ribeiro)", desde: dia(-4, false), tel: "•••• 6650" },
-      ],
-      luana: [
-        { nome: "Irene Barbosa", desde: dia(-10, false), tel: "•••• 3019" },
-        { nome: "Cauã Lima", desde: dia(-6, false), tel: "•••• 7782" },
-        { nome: "Antônia Silva", desde: dia(-1, false), tel: "•••• 5126" },
-      ],
-      andre: [{ nome: "Wellington Souza", desde: dia(-4, false), tel: "•••• 8890" }],
-      helena: [],
-      marcos: [{ nome: "Cristiane Lopes", desde: dia(-5, false), tel: "•••• 3381" }],
-      silvia: [],
-      tomas: [],
-      renata: [{ nome: "Aurélio Batista", desde: dia(-9, false), tel: "•••• 6604" }, { nome: "Sandra Kato", desde: dia(-2, false), tel: "•••• 1290" }],
-      igor: [],
-      lia: [],
-    },
-
-    notificacoes: [
-      { id: "n1", tipo: "lembrete", icone: "calendar-days", texto: "A consulta do Davi com a Dra. Fernanda Lima é " + diaSemana(consultas[0].data) + ", às 14:30.", quando: "Hoje, 08:00", nova: true },
-      { id: "n2", tipo: "fila", icone: "list-ordered", texto: "Você subiu para a posição 3 na fila de Dermatologia.", quando: "Ontem, 17:12", nova: true },
-      { id: "n3", tipo: "retorno", icone: "repeat", texto: "Dona Cida precisa marcar o retorno com o cardiologista até " + porExtenso(dia(27)) + ".", quando: "Há 3 dias", nova: false },
-      { id: "n4", tipo: "prevencao", icone: "calendar-heart", texto: "Lembrete de prevenção: confira o que a família tem para este mês.", quando: "Dia 1º", nova: false },
-    ],
   };
-  window.DADOS.medicos = window.DADOS.todosMedicos.filter((m) => m.clinica === "ipe");
 })();
