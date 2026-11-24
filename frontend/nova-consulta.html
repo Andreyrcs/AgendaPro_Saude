@@ -50,22 +50,12 @@
             <section class="painel passo" aria-labelledby="t-paciente">
               <h2 id="t-paciente">Paciente</h2>
               <div class="passo__corpo">
-                <div class="campos-dupla">
-                  <div class="campo" id="c-nome">
-                    <label for="f-nome">Nome completo</label>
-                    <input id="f-nome" name="nome" list="conhecidos" autocomplete="off" spellcheck="false" />
-                    <span class="campo__dica">Comece a digitar: quem já tem consulta aparece na lista.</span>
-                  </div>
-                  <div class="campo" id="c-motivo-consulta">
-                    <label for="f-motivo-consulta">Motivo da consulta (opcional)</label>
-                    <input id="f-motivo-consulta" name="motivoConsulta" autocomplete="off" maxlength="500" placeholder="Ex.: dor no joelho há uma semana" />
-                  </div>
-                  <div class="campo">
-                    <label for="f-tel">Telefone para contato</label>
-                    <input id="f-tel" name="tel" inputmode="tel" autocomplete="off" placeholder="(11) 90000-0000" />
-                  </div>
+                <div id="paciente-escolha"></div>
+                <div id="aviso-situacao" aria-live="polite"></div>
+                <div class="campo" id="c-motivo-consulta">
+                  <label for="f-motivo-consulta">Motivo da consulta (opcional)</label>
+                  <input id="f-motivo-consulta" name="motivoConsulta" autocomplete="off" maxlength="500" placeholder="Ex.: dor no joelho há uma semana" />
                 </div>
-                <datalist id="conhecidos"></datalist>
               </div>
             </section>
 
@@ -126,19 +116,8 @@
       <form method="dialog" id="form-fila" novalidate>
         <h2 id="t-dlg-fila">Entrar na lista de espera</h2>
         <p class="dialogo__texto" id="dlg-fila-texto"></p>
-        <div class="campo" id="c-fila-nome">
-          <label for="f-fila-nome">Nome do paciente</label>
-          <input id="f-fila-nome" name="nome" autocomplete="off" />
-        </div>
-        <div class="campo">
-          <label for="f-fila-tel">Telefone</label>
-          <input id="f-fila-tel" name="tel" inputmode="tel" autocomplete="off" placeholder="(11) 90000-0000" />
-        </div>
-        <fieldset class="campo" id="fila-qualquer" style="border:0;padding:0;margin:0">
-          <legend class="campo__rotulo">Com qual médico?</legend>
-          <div class="escolhas escolhas--lista" id="fila-opcoes"></div>
-        </fieldset>
         <label class="marcar"><input type="checkbox" name="app" /> A pessoa usa o app e recebe o aviso por lá</label>
+        <p class="campo__erro" id="e-fila" role="alert" hidden></p>
         <div class="dialogo__acoes">
           <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>
           <button type="submit" class="botao botao--principal botao--pequeno">Colocar na fila</button>
@@ -155,8 +134,9 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/comum.js"></script>
     <script src="assets/js/movimento.js"></script>
-    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-servicos.js"></script>
     <script src="assets/js/clinica-casca.js"></script>
+    <script src="assets/js/escolher-paciente.js"></script>
     <script src="assets/js/pagina-nova-consulta.js"></script>
   </body>
 </html>

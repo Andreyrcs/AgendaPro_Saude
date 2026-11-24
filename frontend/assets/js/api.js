@@ -8,7 +8,6 @@
   const CHAVE_SESSAO = "agendapro.sessao";
   const PAPEIS = { dono: "Responsável pela clínica", recepcao: "Recepção", medico: "Médico", paciente: "Paciente" };
 
-  const semAcento = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const so = (t) => String(t || "").replace(/\D/g, "");
 
   /* ─── Acesso à API: toda chamada ao servidor passa por chamar() (seção 5.1) ───
@@ -124,7 +123,6 @@
     return so(valor).slice(0, 11).replace(/^(\d{3})(\d)/, "$1.$2").replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1-$2");
   }
   const ERRO_CPF = "CPF inválido.";
-  const ERRO_CPF_REPETIDO = "Este CPF já está cadastrado.";
 
   /* ─── UF: as 27 siglas, sempre em 2 letras maiúsculas (Clinica.UF) ─── */
   const UFS = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"];
@@ -366,49 +364,6 @@
     await chamar("DELETE", "/api/clinicas/" + c.id + "/equipe/" + usuarioId);
   }
 
-  /* ════════════════════════════════════════════════════════════════════════════════════════════════
-     LEGADO (sai na 8d): ainda guardado neste navegador, para a tela que continua com dados simulados.
-     - CPF dos pacientes da agenda simulada (pacientes.html) → 8d
-     ════════════════════════════════════════════════════════════════════════════════════════════════ */
-  const CHAVE = "agendapro.api.v2";
-  let banco = null;
-  function ler() {
-    if (banco) return banco;
-    try { banco = JSON.parse(localStorage.getItem(CHAVE)); } catch (e) { banco = null; }
-    if (!banco || !Array.isArray(banco.clinicas)) banco = { clinicas: [], usuarios: [], vinculos: [] };
-    return banco;
-  }
-  function gravar() {
-    try { localStorage.setItem(CHAVE, JSON.stringify(banco)); } catch (e) { /* sem armazenamento: vale só nesta visita */ }
-  }
-  /* CPF fictício e válido para os pacientes da carga inicial da agenda (sempre o mesmo para o mesmo nome) */
-  function cpfFicticio(nome) {
-    let h = 7;
-    for (const ch of String(nome)) h = (h * 31 + ch.charCodeAt(0)) % 1000000007;
-    const base = String(100000000 + (h % 900000000));
-    const d1 = digitoCPF(base);
-    return base + d1 + digitoCPF(base + d1);
-  }
-  const FAMILIA_INICIAL = D.pessoas.map((p) => ({ cpf: p.cpf, nome: p.nome }));
-  function cpfsCadastrados() {
-    const b = ler();
-    if (!b.cpfs) { b.cpfs = FAMILIA_INICIAL.slice(); gravar(); }
-    return b.cpfs;
-  }
-  const cpfEmUso = (cpf) => cpfsCadastrados().some((x) => x.cpf === so(cpf));
-  function cpfDe(nome) {
-    const x = cpfsCadastrados().find((p) => p.nome === nome);
-    return x ? x.cpf : null;
-  }
-  function guardarCPF(cpf, nome) {
-    if (!validarCPF(cpf)) throw new Error(ERRO_CPF);
-    if (cpfEmUso(cpf)) throw new Error(ERRO_CPF_REPETIDO);
-    cpfsCadastrados().push({ cpf: so(cpf), nome });
-    gravar();
-    return so(cpf);
-  }
-  /* ════════════════════════════════════ fim do LEGADO ════════════════════════════════════ */
-
   /* O nome e os contatos da clínica aberta passam a valer em todas as telas.
      Os médicos das telas ainda simuladas continuam os da carga inicial até as etapas 7 a 9. */
   function aplicarClinicaNasTelas() {
@@ -432,7 +387,7 @@
     listarEquipe, cadastrarRecepcionista, removerDaEquipe,
     cadastrarPaciente, buscarClinicas, clinicaPorCodigo, vincularClinica, clinicasDoPaciente, usarClinica, normalizarCodigo,
     validarCNPJ, formatarCNPJ, formatarTelefone,
-    validarCPF, formatarCPF, cpfFicticio, cpfEmUso, cpfDe, guardarCPF, ERRO_CPF, ERRO_CPF_REPETIDO,
+    validarCPF, formatarCPF, ERRO_CPF,
     UFS, validarUF, ERRO_UF, SENHA_MINIMA, ERRO_SENHA,
   };
 })();

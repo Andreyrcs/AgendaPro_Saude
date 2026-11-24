@@ -627,3 +627,24 @@ O que a Fase 0 marcou como "pela metade" ou "não existe" e que ainda não foi r
      problema continua.
    - **D. Tabela de tokens revogados (`jti`).** Tabela nova, uma consulta a mais em toda requisição e limpeza
      periódica dos tokens vencidos. É a mais cara.
+
+Registradas na 8d (só front; nada mudou no back-end):
+
+3. **A recepção não cadastra paciente nem vincula uma conta à clínica.** A nova consulta e a lista de espera só acham
+   quem já escolheu a clínica (pelo código ou pela busca no site). Quem chega sem conta precisa se cadastrar antes.
+4. **A duração exibida é a atual da especialidade.** `ConsultaResposta` não traz a hora de fim, então uma consulta
+   antiga continua no banco com a duração da época, mas a agenda a desenha com a duração de hoje.
+5. **Uma fila por conta.** A regra impede que dois familiares da mesma conta esperem vaga ao mesmo tempo. A tela mostra
+   a mensagem da API ("Você já está numa lista de espera. Saia dela antes de entrar em outra.").
+6. **Não há rota para trocar de médico na fila.** A tela faz `DELETE /api/lista-espera/{id}` e depois
+   `POST /api/lista-espera` com o outro médico: a pessoa vai para o fim da fila nova. Se o segundo passo falhar, a tela
+   tenta devolvê-la à fila antiga (no fim) e avisa.
+
+## O que sobra para a Etapa 11 (depois da 8d)
+
+- `api.js`: o `D = window.DADOS` e o `aplicarClinicaNasTelas()` (o LEGADO saiu todo na 8d);
+- `clinica-servicos.js` preenche `window.DADOS.feriados` com os feriados reais, para a `A.folha()` pintar o dia;
+- `dados.js` inteiro (as telas ainda o carregam por `STATUS_CONSULTA` e `ESTADO_HORARIO`);
+- `clinica-dados.js` (só `medico.html`, até a Etapa 9);
+- os tokens `--id-juliana…`;
+- as chaves velhas do `localStorage` (`agendapro.agenda.v2.*`, `agendapro.clinica.v2.*`, `agendapro.api.v2`).

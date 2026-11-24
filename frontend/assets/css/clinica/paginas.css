@@ -1834,3 +1834,55 @@ a.botao {
 .retirar input {
     min-height: 44px;
 }
+
+/* ─── Escolher o paciente pelo id (nova consulta e lista de espera, 8d) ─── */
+.escolher-paciente {
+    display: grid;
+    gap: 8px;
+}
+.escolher-paciente__estado:empty {
+    display: none;
+}
+.escolher-paciente__estado {
+    font-size: 0.875rem;
+    color: var(--tinta-2);
+}
+.escolher-paciente__escolhido {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: var(--menta-2);
+    box-shadow: inset 0 0 0 2px var(--noite);
+}
+.escolher-paciente__escolhido[hidden],
+.escolher-paciente .campo[hidden] {
+    display: none;
+}
+.escolher-paciente__escolhido b {
+    display: block;
+}
+.escolher-paciente__escolhido small {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--tinta-2);
+}
+.aviso-situacao {
+    margin-top: 10px;
+}
+.pessoa__acoes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px 10px;
+}
+.trocar-medico {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px;
+    grid-column: 2 / -1;
+}

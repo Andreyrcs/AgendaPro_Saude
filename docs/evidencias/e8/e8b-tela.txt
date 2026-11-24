@@ -1,0 +1,54 @@
+# 8b pela tela — clínica A (id 5), dono. 23/11/2026, 23:55:59
+
+## Especialidades
+PASSOU  especialidades.html abre (estado vazio ou lista)
+PASSOU  o campo "Para que serve" (descrição) saiu (F16)
+PASSOU  POST criou "Clínica Geral 3ro13" com 30 min (GET /especialidades: 4)
+PASSOU  nome repetido mostra "Essa especialidade já existe nesta clínica." no campo
+PASSOU  PUT /especialidades/{id} (L5): nome e duração novos gravados
+PASSOU  depois de recarregar a página: nome e 30 min de volta
+
+## Médicos
+PASSOU  POST /clinicas/{id}/medicos: a senha provisória aparece uma vez em #credencial (não registrada aqui)
+PASSOU  a senha provisória não vai para o aviso (toast)
+PASSOU  o médico gravado na API: nome com Dr(a)., telefone e sala (id 4)
+PASSOU  sem expediente, aparece em "Sem horário nesta clínica"
+PASSOU  e-mail repetido: a mensagem da API aparece no campo do e-mail
+PASSOU  PUT /medicos/{id}: telefone e sala novos continuam depois de recarregar
+
+## Horários e feriados
+PASSOU  PUT /medicos/{id}/expediente (F4): seg–sex 08:00–17:00, almoço 12:00–13:00 → {"semana":{"inicio":"08:00","fim":"17:00"},"sabado":null,"almoco":{"inicio":"12:00","fim":"13:00"}}
+PASSOU  o médico passa para a tabela de quem tem expediente
+PASSOU  GET /horarios-livres sem o almoço: 2026-11-24 tem 16 horários (08:00 a 16:30)
+PASSOU  o feriado 2026-12-25 (Natal) não aparece nos horários livres
+PASSOU  "Dias sem atendimento" lista os feriados reais de GET /api/feriados (2026-12-25 Natal; 2027-01-01 Confraternização Universal)
+PASSOU  feriados só para leitura (nenhum botão de editar)
+
+## Remover médico (L6)
+PASSOU  antes: o segundo médico aparece em /horarios-livres
+PASSOU  o diálogo de edição tem o botão "Remover médico"
+PASSOU  o primeiro clique mostra o aviso e pede confirmação
+PASSOU  DELETE /medicos/{id}: some de /medicos e de /horarios-livres
+PASSOU  a tela não mostra mais o médico removido
+PASSOU  login do médico removido → 401 {"mensagem":"E-mail ou senha incorretos"}
+
+## Console e rede
+PASSOU  0 erros de JavaScript nas telas da 8b e nas da 8a
+PASSOU  0 alert
+PASSOU  93 chamadas à API, sem token: 0
+  1×  DELETE /api/medicos/{id} 204 [token]
+  12×  GET /api/clinicas/{id} 200 [token]
+  14×  GET /api/clinicas/{id}/agenda?… 200 [token]
+  1×  GET /api/clinicas/{id}/equipe 200 [token]
+  15×  GET /api/clinicas/{id}/especialidades 200 [token]
+  13×  GET /api/clinicas/{id}/lista-espera 200 [token]
+  17×  GET /api/clinicas/{id}/medicos 200 [token]
+  12×  GET /api/feriados?… 200 [token]
+  1×  POST /api/clinicas/{id}/especialidades 201 [token]
+  2×  POST /api/clinicas/{id}/medicos 201 [token]
+  1×  POST /api/clinicas/{id}/medicos 400 [token]
+  2×  PUT /api/especialidades/{id} 200 [token]
+  1×  PUT /api/medicos/{id} 200 [token]
+  1×  PUT /api/medicos/{id}/expediente 204 [token]
+
+TODAS AS VERIFICAÇÕES PASSARAM

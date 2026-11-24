@@ -1,15 +1,13 @@
 /* AgendaPro Saúde — casca comum das páginas da clínica.
    Monta o menu lateral com a página atual marcada, a folha de hoje no cabeçalho,
    os avisos que sobem do rodapé e o relógio ("agora" é a hora do computador).
-   Nas páginas já ligadas à API, CLINICA.iniciar (clinica-servicos.js) chama CASCA.atualizar() depois de carregar:
-   o selo, o número da lista de espera, os médicos, as especialidades e os horários livres passam a vir da API.
-   As páginas ainda simuladas continuam com clinica-dados.js (window.CLIDADOS) até serem ligadas. */
+   Todas as páginas da casca passam pelo portão CLINICA.iniciar (clinica-servicos.js), que chama CASCA.atualizar()
+   depois de carregar: o selo, o número da lista de espera, os médicos, as especialidades e os horários livres vêm
+   da API. */
 (function () {
   "use strict";
 
-  const D = window.DADOS;
-  const CL = window.CLINICA || null; /* páginas ligadas à API (clinica-servicos.js) */
-  const C = CL ? null : window.CLIDADOS || null; /* só nas páginas ainda simuladas */
+  const CL = window.CLINICA; /* clinica-servicos.js, carregado antes da casca */
   const A = window.AP;
   const M = window.MOV;
   const I = A.icone;
@@ -28,18 +26,13 @@
   const agora = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; };
 
   const SEM_ESP = { nome: "", duracao: 30 };
-  const medico = (id) => (CL ? CL.medico(id) : D.medicos.find((m) => m.id === id));
-  const esp = (id) => (CL ? CL.esp(id) || SEM_ESP : D.especialidades[id]);
+  const medico = (id) => CL.medico(id);
+  const esp = (id) => CL.esp(id) || SEM_ESP;
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  /* pessoas na lista de espera: da API, quando a página passou pelo portão; senão, da carga simulada */
-  const totalFila = () => (window.CLINICA && window.CLINICA.carregada
-    ? window.CLINICA.totalFila()
-    : D.medicos.reduce((s, m) => s + (D.filas[m.id] || []).length, 0));
+  /* pessoas na lista de espera (da API); antes da carga, o menu fica sem o número */
+  const totalFila = () => (CL.carregada ? CL.totalFila() : 0);
   const curtoData = (dia) => { const d = A.data(dia); return A.SEMANA_CURTA[d.getDay()] + ", " + d.getDate() + "/" + String(d.getMonth() + 1).padStart(2, "0"); };
   const semAcento = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-
-  /* médicos, especialidades e lista de espera das páginas ainda simuladas ficam guardados por clinica-dados.js */
-  const guardar = C ? C.guardar : null;
 
   /* ─── Preferências da conta (texto, movimento, menu recolhido) ─── */
   const CHAVE_PREF = "agendapro.recepcao.pref";
@@ -81,7 +74,7 @@
       const n = p.id === "fila" ? totalFila() : null;
       return '<li><a href="' + p.href + '"' + (p.id === atual ? ' aria-current="page"' : "") + ' data-dica-lateral="' + p.rotulo + (n ? " · " + n : "") + '">' +
         I(p.icone, "ic-sm") + '<span class="lateral__rotulo">' + p.rotulo + "</span>" +
-        (p.id === "fila" ? '<span class="lateral__conta num" id="nav-fila">' + n + "</span>" : "") + "</a></li>";
+        (p.id === "fila" ? '<span class="lateral__conta num" id="nav-fila">' + (CL.carregada ? n : "") + "</span>" : "") + "</a></li>";
     }).join("");
   }
   if (menu) desenharMenu();
@@ -148,7 +141,7 @@
   }
 
   const folhaHoje = document.getElementById("folha-hoje");
-  if (folhaHoje && !folhaHoje.innerHTML.trim()) folhaHoje.innerHTML = A.folha(D.hoje, { menta: true });
+  if (folhaHoje && !folhaHoje.innerHTML.trim()) folhaHoje.innerHTML = A.folha(CL.hoje, { menta: true });
 
   /* ─── Anúncio para leitores de tela ─── */
   const anunciador = document.getElementById("anunciador");
@@ -203,25 +196,9 @@
   });
 
   /* ─── Horários livres de um médico num dia (a mesma regra da agenda) ─── */
-  function livres(m, dia) {
-    if (CL) return CL.livres(m, dia);
-    if (!C) return [];
-    const e = C.expediente(m, dia);
-    if (!e || dia < D.hoje) return [];
-    const dur = C.DURACAO[m] || 30;
-    const ks = C.consultas.filter((k) => k.medico === m && k.data === dia && C.ativa(k));
-    const lista = [];
-    for (let t = e[0]; t + dur <= e[1]; t += dur) {
-      if (C.noAlmoco(m, t, dur)) continue; /* almoço do médico */
-      if (dia === D.hoje && t < agora()) continue;
-      const k = ks.find((x) => x.ini < t + dur && t < x.ini + x.dur);
-      if (k && C.horarioDe(k) !== "livre") continue;
-      lista.push({ ini: t, dur, vaga: k || null });
-    }
-    return lista;
-  }
+  const livres = (m, dia) => CL.livres(m, dia);
   /* até onde a agenda está aberta para marcar (2 meses à frente, a mesma conta da API) */
-  const ULTIMO_DIA = CL ? CL.ABRE_ATE : C ? C.ABRE_ATE : null;
+  const ULTIMO_DIA = CL.ABRE_ATE;
 
   /* ─── Depois da carga da API (CLINICA.iniciar): rodapé, número da fila e selo com a clínica atualizada ─── */
   function atualizar() {
@@ -237,6 +214,6 @@
   window.CASCA = {
     agora, medico, esp, cap, curtoData, semAcento, totalFila, livres, ULTIMO_DIA,
     toast, anunciar, abrirDialogo, fecharDialogo, desenharMenu, atualizar,
-    guardar, pref, mudarPref, conta,
+    pref, mudarPref, conta,
   };
 })();

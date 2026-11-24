@@ -64,22 +64,14 @@
     <dialog class="dialogo" id="dlg-adicionar" aria-labelledby="t-adicionar">
       <form method="dialog" id="form-adicionar" novalidate>
         <h2 id="t-adicionar">Adicionar à lista de espera</h2>
-        <p class="dialogo__texto">A pessoa entra no fim da fila e recebe a vaga quando chegar a vez dela.</p>
-        <div class="campo" id="c-nome">
-          <label for="f-nome">Nome do paciente</label>
-          <input id="f-nome" name="nome" autocomplete="off" required />
-        </div>
-        <div class="campos-dupla">
-          <div class="campo">
-            <label for="f-tel">Telefone</label>
-            <input id="f-tel" name="tel" inputmode="tel" autocomplete="off" placeholder="(11) 90000-0000" />
-          </div>
-          <div class="campo">
-            <label for="f-medico">Médico</label>
-            <select id="f-medico" name="medico"></select>
-          </div>
+        <p class="dialogo__texto">A pessoa entra no fim da fila e recebe a vaga quando chegar a vez dela. Cada conta fica em uma fila por vez.</p>
+        <div id="adicionar-paciente"></div>
+        <div class="campo">
+          <label for="f-medico">Médico</label>
+          <select id="f-medico" name="medico"></select>
         </div>
         <label class="marcar"><input type="checkbox" name="app" /> A pessoa usa o app e recebe o aviso por lá</label>
+        <p class="campo__erro" id="e-adicionar" role="alert" hidden></p>
         <div class="dialogo__acoes">
           <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>
           <button type="submit" class="botao botao--principal botao--pequeno" value="ok">Adicionar</button>
@@ -96,8 +88,9 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/comum.js"></script>
     <script src="assets/js/movimento.js"></script>
-    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-servicos.js"></script>
     <script src="assets/js/clinica-casca.js"></script>
+    <script src="assets/js/escolher-paciente.js"></script>
     <script src="assets/js/pagina-lista-espera.js"></script>
   </body>
 </html>
