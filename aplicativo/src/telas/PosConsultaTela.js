@@ -15,7 +15,7 @@ import useDadosDaTela from '../componentes/useDadosDaTela';
 import { useSessao } from '../contexto/SessaoContext';
 import { listarAcompanhamento } from '../servicos/acompanhamento';
 import { listarConsultas } from '../servicos/consultas';
-import { clinica } from '../dados/dadosFicticios';
+import { clinicaDaSessao } from '../utilitarios/texto';
 import { espaco } from '../estilos/espacos';
 import { diaEMes, diasAte } from '../utilitarios/datas';
 
@@ -23,6 +23,7 @@ const quem = (p) => (p.titular ? 'Você' : p.curto);
 
 export default function PosConsultaTela({ navigation }) {
   const { usuario } = useSessao();
+  const clinica = clinicaDaSessao(usuario);
   const { dados, erro, recarregar } = useDadosDaTela(async () => {
     const [acompanhamento, consultas] = await Promise.all([listarAcompanhamento(usuario), listarConsultas(usuario)]);
     return { ...acompanhamento, proximas: consultas.proximas.slice(0, 3) };
@@ -65,14 +66,14 @@ export default function PosConsultaTela({ navigation }) {
                 pequeno
                 onPress={() => navigation.navigate('Agendar', { especialidade: r.especialidade.id, pessoa: r.pessoa.id })}
               />
-              <Botao
+              {!!clinica.telefoneLink && <Botao
                 titulo="Ligar para a clínica"
                 variante="secundario"
                 icone="phone"
                 pequeno
                 accessibilityHint={`Liga para ${clinica.nome}, ${clinica.telefone}`}
                 onPress={() => Linking.openURL(clinica.telefoneLink)}
-              />
+              />}
             </Cartao>
           );
         })}

@@ -19,18 +19,17 @@ import { AvatarFamiliar, AvatarMedico } from '../componentes/Avatar';
 import { Carregando, MensagemErro } from '../componentes/Estados';
 import useDadosDaTela from '../componentes/useDadosDaTela';
 import { useSessao } from '../contexto/SessaoContext';
-import { buscarEspecialidade, listarEspecialidades, listarHorariosLivres, primeiroHorario } from '../servicos/medicos';
+import { buscarEspecialidade, calcularPrimeiroHorario, listarEspecialidades, listarHorariosLivres } from '../servicos/medicos';
 import { listarFamiliares } from '../servicos/familia';
 import { marcarConsulta, buscarSituacao } from '../servicos/consultas';
 import { AvisoRestricao } from '../componentes/Presenca';
 import { TEXTO_DA_REGRA, textoDasFaltas } from '../utilitarios/status';
 import { buscarMinhaFila, entrarNaFila } from '../servicos/espera';
 import { marcarItemPrevencao } from '../servicos/prevencao';
-import { clinica } from '../dados/dadosFicticios';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 import { curto, extenso, relativo } from '../utilitarios/datas';
-import { ehPediatria, nomeParaExibir } from '../utilitarios/texto';
+import { clinicaDaSessao, ehPediatria, nomeParaExibir } from '../utilitarios/texto';
 
 export default function AgendarTela({ route, navigation }) {
   const especialidade = route.params?.especialidade;
@@ -40,7 +39,8 @@ export default function AgendarTela({ route, navigation }) {
 
 // Passo 0: sem especialidade, mostra a lista para escolher
 function EscolherEspecialidade({ navigation, params }) {
-  const { dados, erro, recarregar } = useDadosDaTela(listarEspecialidades);
+  const { usuario } = useSessao();
+  const { dados, erro, recarregar } = useDadosDaTela(() => listarEspecialidades(usuario));
 
   return (
     <Tela titulo="Marcar consulta" subtitulo="Qual especialidade você procura?" voltar>
@@ -89,15 +89,14 @@ function EscolherHorario({ navigation, params }) {
   const [marcada, setMarcada] = useState(null); // consulta criada → tela de sucesso
 
   const { dados, erro, recarregar } = useDadosDaTela(async () => {
-    const [esp, familia, horarios, primeiro, fila, situacao] = await Promise.all([
+    const [esp, familia, horarios, fila, situacao] = await Promise.all([
       buscarEspecialidade(params.especialidade),
       listarFamiliares(usuario),
       listarHorariosLivres(params.especialidade),
-      primeiroHorario(params.especialidade),
       buscarMinhaFila(usuario),
       buscarSituacao(usuario),
     ]);
-    return { esp, familia, horarios, primeiro, fila, situacao };
+    return { esp, familia, horarios, primeiro: calcularPrimeiroHorario(horarios), fila, situacao };
   });
 
   if (!dados) {
@@ -254,7 +253,7 @@ function EscolherHorario({ navigation, params }) {
               <View style={estilos.flex}>
                 <Texto variante="negrito">{medico.nome}</Texto>
                 <Texto variante="meta">
-                  {clinica.nome} · {medico.sala}
+                  {clinicaDaSessao(usuario).nome}{medico.sala ? ` · ${medico.sala}` : ''}
                 </Texto>
               </View>
             </View>

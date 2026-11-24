@@ -1,8 +1,7 @@
 // Configuração da conexão com a API (backend em ASP.NET).
 //
 // USAR_API_REAL
-//   false → o app usa o banco em memória (src/dados/bancoSimulado.js) e funciona sem backend
-//   true  → login e cadastro chamam a API de verdade
+//   true → todas as telas falam com a API (Apêndice L); só o assistente de triagem roda no aparelho
 //
 // ENDERECO_API
 //   No celular, "localhost" é o próprio celular, e não o computador.
@@ -12,7 +11,7 @@
 //   (backend/README.md). Este é o único lugar do app com o endereço da API.
 
 export const config = {
-  USAR_API_REAL: false,
+  USAR_API_REAL: true,
   ENDERECO_API: 'http://192.168.0.10:5080',
   // Onde a web do AgendaPro está publicada (o cadastro abre a política de privacidade de lá)
   ENDERECO_WEB: 'http://192.168.0.10:5510',

@@ -12,7 +12,7 @@
 // para funcionar sem internet e nunca depender do servidor responder.
 
 import { semAcento } from '../utilitarios/texto';
-import { calcularPrimeiroHorario, especialidadePeloNome } from './medicos';
+import { listarEspecialidades, primeiroHorario } from './medicos';
 
 const CRISE = /(suicid|me matar|tirar (a )?minha vida|nao quero mais viver|acabar com tudo)/;
 
@@ -67,7 +67,10 @@ function escolherEspecialidades(t, crianca) {
 //   { tipo: 'emergencia' }
 //   { tipo: 'cvv' }
 //   { tipo: 'sugestao', quem: {familiar}, especialidades: [{ id, nome, desc, primeiroHorario }] }
-export function analisarSintomas(texto, familiares) {
+// A emergência e o CVV são decididos aqui, sem a API. Só a sugestão busca as especialidades da clínica
+// (GET /api/clinicas/{id}/especialidades) e o primeiro horário (GET /api/especialidades/{id}/horarios-livres);
+// se a API falhar, a sugestão vem sem cartões e o assistente continua respondendo.
+export async function analisarSintomas(usuario, texto, familiares) {
   const t = semAcento(texto);
 
   if (CRISE.test(t)) return { tipo: 'cvv' };
@@ -75,9 +78,18 @@ export function analisarSintomas(texto, familiares) {
 
   const quem = descobrirQuem(t, familiares);
   const crianca = quem.idade !== null && quem.idade < 18;
-  const especialidades = escolherEspecialidades(t, crianca)
-    .map(especialidadePeloNome)
-    .filter(Boolean) // a clínica pode não atender alguma das sugeridas
-    .map((e) => ({ ...e, primeiroHorario: calcularPrimeiroHorario(e.id) }));
+  const nomes = escolherEspecialidades(t, crianca);
+  let especialidades = [];
+  try {
+    const daClinica = await listarEspecialidades(usuario);
+    const achadas = nomes
+      .map((nome) => daClinica.find((e) => semAcento(e.nome) === semAcento(nome)))
+      .filter(Boolean); // a clínica pode não atender alguma das sugeridas
+    especialidades = await Promise.all(
+      achadas.map(async (e) => ({ ...e, primeiroHorario: await primeiroHorario(e.id).catch(() => null) })),
+    );
+  } catch (e) {
+    especialidades = [];
+  }
   return { tipo: 'sugestao', quem, especialidades };
 }

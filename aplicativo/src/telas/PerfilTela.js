@@ -15,13 +15,14 @@ import { usePreferencias } from '../contexto/PreferenciasContext';
 import useDadosDaTela from '../componentes/useDadosDaTela';
 import { buscarSituacao } from '../servicos/consultas';
 import { AvisoRestricao } from '../componentes/Presenca';
-import { clinica } from '../dados/dadosFicticios';
+import { clinicaDaSessao } from '../utilitarios/texto';
 import { TEXTO_DA_REGRA, textoDasFaltas } from '../utilitarios/status';
 import { cores } from '../estilos/cores';
 import { espaco, raios } from '../estilos/espacos';
 
 export default function PerfilTela() {
   const { usuario, sair } = useSessao();
+  const clinica = clinicaDaSessao(usuario);
   const { reduzirMovimento, sistemaPede, pacientePediu, definirReduzirMovimento } = usePreferencias();
 
   const [perguntandoSaida, setPerguntandoSaida] = useState(false);

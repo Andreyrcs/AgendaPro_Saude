@@ -1,27 +1,15 @@
-// Depois da consulta: retornos pedidos pelo médico e exames solicitados.
+// Depois da consulta: retornos pedidos pelo médico e exames solicitados (Apêndice L).
+// Rota: GET /api/pacientes/{id}/acompanhamento.
 
-import { contaDe, esperar, medicoPorId, especialidadePorId } from '../dados/bancoSimulado';
+import { chamarApi } from './api';
 
-// Formato:
+// Formato (o da API):
 // { retornos: [{ id, pessoa, titulo, medico, especialidade, prazo, origem }],
-//   exames:   [{ id, pessoa, titulo, pedidoPor, status: 'pendente'|'agendado', obs, origem }] }
-// TODO: troca pra chamada real quando o endpoint GET /api/pacientes/{id}/acompanhamento existir
+//   exames:   [{ id, pessoa, titulo, pedidoPor, status: 'pendente'|'realizado', obs, origem }] }
 export async function listarAcompanhamento(usuario) {
-  await esperar();
-  const conta = contaDe(usuario);
-  const pessoa = (id) => conta.familia.find((p) => p.id === id);
-
+  const r = await chamarApi(`/api/pacientes/${usuario.idUsuario}/acompanhamento`);
   return {
-    retornos: conta.acompanhamento.retornos
-      .map((r) => {
-        const medico = medicoPorId(r.medico);
-        return { ...r, pessoa: pessoa(r.pessoa), medico, especialidade: especialidadePorId(medico.esp) };
-      })
-      .sort((a, b) => a.prazo.localeCompare(b.prazo)),
-    exames: conta.acompanhamento.exames.map((e) => ({
-      ...e,
-      pessoa: pessoa(e.pessoa),
-      pedidoPor: medicoPorId(e.pedidoPor),
-    })),
+    retornos: [...r.retornos].sort((a, b) => a.prazo.localeCompare(b.prazo)),
+    exames: r.exames,
   };
 }

@@ -15,7 +15,7 @@ import { AvatarFamiliar } from '../componentes/Avatar';
 import { Carregando, EstadoVazio, MensagemErro } from '../componentes/Estados';
 import useDadosDaTela from '../componentes/useDadosDaTela';
 import { useSessao } from '../contexto/SessaoContext';
-import { listarConsultas, listarParaConfirmar, buscarSituacao, confirmarPresenca, cancelarConsulta } from '../servicos/consultas';
+import { listarConsultas, listarParaConfirmar, buscarSituacao, confirmarPresenca } from '../servicos/consultas';
 import { CartaoConfirmarPresenca, AvisoRestricao } from '../componentes/Presenca';
 import { textoDasFaltas } from '../utilitarios/status';
 import { buscarMinhaFila } from '../servicos/espera';
@@ -60,7 +60,7 @@ export default function InicioTela({ navigation }) {
         await confirmarPresenca(usuario, consulta.id);
         setAviso('Presença confirmada. Se não puder mais ir, avise; cancelar no dia da consulta conta como falta.');
       } else {
-        const r = await cancelarConsulta(usuario, consulta.id);
+        const r = await confirmarPresenca(usuario, consulta.id, false);
         setAviso((r.falta ? 'Consulta cancelada. Conta como falta sem aviso.' : 'Consulta cancelada, sem nenhuma consequência.') +
           (r.oferecidoAFila ? ' O horário foi oferecido a quem espera na lista.' : ''));
       }

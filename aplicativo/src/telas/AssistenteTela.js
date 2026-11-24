@@ -50,8 +50,8 @@ export default function AssistenteTela({ navigation }) {
     setMensagens((atuais) => [...atuais, novaMensagem('eu', { texto: limpo })]);
     setDigitando(true);
     // Pequena pausa de "digitando", mais curta para quem pediu menos movimento
-    setTimeout(() => {
-      const resposta = analisarSintomas(limpo, familia);
+    setTimeout(async () => {
+      const resposta = await analisarSintomas(usuario, limpo, familia);
       setMensagens((atuais) => [...atuais, novaMensagem('assistente', { resposta })]);
       setDigitando(false);
     }, reduzirMovimento ? 350 : 800);

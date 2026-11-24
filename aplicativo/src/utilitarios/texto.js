@@ -61,3 +61,16 @@ export function fraseDaFila(pessoa, posicao) {
 export function primeiroNome(nome) {
   return String(nome || '').trim().split(/\s+/)[0] || '';
 }
+
+// A clínica do paciente, guardada na sessão no login (GET /api/pacientes/{id}/clinicas).
+// Devolve { nome, endereco, telefone, telefoneLink }; campos que a clínica não informou ficam vazios.
+export function clinicaDaSessao(usuario) {
+  const c = (usuario && usuario.clinica) || {};
+  const numeros = String(c.telefone || '').replace(/\D/g, '');
+  return {
+    nome: c.nome || 'Sua clínica',
+    endereco: c.endereco || '',
+    telefone: c.telefone || '',
+    telefoneLink: numeros ? `tel:+55${numeros}` : '',
+  };
+}

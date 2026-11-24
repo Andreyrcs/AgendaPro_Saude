@@ -15,7 +15,7 @@ import { Carregando, MensagemErro } from '../componentes/Estados';
 import useDadosDaTela from '../componentes/useDadosDaTela';
 import { useSessao } from '../contexto/SessaoContext';
 import { buscarConsulta, cancelarConsulta, cancelarContaFalta } from '../servicos/consultas';
-import { clinica } from '../dados/dadosFicticios';
+import { clinicaDaSessao } from '../utilitarios/texto';
 import { cores } from '../estilos/cores';
 import { espaco } from '../estilos/espacos';
 import { extenso, relativo } from '../utilitarios/datas';
@@ -35,6 +35,7 @@ function Linha({ icone, titulo, texto }) {
 
 export default function ConsultaTela({ route, navigation }) {
   const { usuario } = useSessao();
+  const clinica = clinicaDaSessao(usuario);
   const { dados: c, erro, recarregar } = useDadosDaTela(() => buscarConsulta(usuario, route.params.id));
   const [perguntando, setPerguntando] = useState(false);
   const [cancelando, setCancelando] = useState(false);
@@ -96,8 +97,8 @@ export default function ConsultaTela({ route, navigation }) {
             <Texto variante="meta">{c.pessoa.relacao}</Texto>
           </View>
         </View>
-        <Linha icone="map-pin" titulo="Onde" texto={`${clinica.nome} · ${c.sala}\n${clinica.endereco}`} />
-        <Linha icone="file-text" titulo="Motivo" texto={c.motivo} />
+        <Linha icone="map-pin" titulo="Onde" texto={`${clinica.nome}${c.sala ? ` · ${c.sala}` : ''}${clinica.endereco ? `\n${clinica.endereco}` : ''}`} />
+        <Linha icone="file-text" titulo="Motivo" texto={c.motivo || 'Não informado'} />
         {c.pessoa.alergias && c.pessoa.alergias !== 'Nenhuma informada' && (
           <Linha icone="alert-circle" titulo="Alergias" texto={c.pessoa.alergias} />
         )}
