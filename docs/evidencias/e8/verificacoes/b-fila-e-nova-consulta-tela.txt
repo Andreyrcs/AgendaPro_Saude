@@ -1,0 +1,81 @@
+# 8d pela tela — clínica A (id 5), recepção. 24/11/2026, 10:39:25
+Dados criados pela API nesta rodada: médico 14 (seg–sex 08:00–17:00, almoço 12:00–13:00); pacientes P=31 (conta 54), Q=32 (conta 55), R=33 (conta 56).
+P: faltas nas consultas 59 e 60 (presença confirmada pelo paciente) → situação {"faltas":2,"restricao":"so_fila","ate":"2026-12-24"}; consulta 61 atendida com retorno sem data e exame 4. Consulta 62 cancelada com a fila vazia → {"falta":false,"oferecidoAFila":false}.
+
+## Nova consulta (paciente pelo id)
+PASSOU  saíram o nome digitado, o telefone e o datalist de nomes
+PASSOU  com menos de 3 letras, pede mais ("Digite pelo menos 3 letras ou números.")
+PASSOU  a busca pelo nome mostra a pessoa com o CPF mascarado: "Paula Ficha qqxwy CPF •••.•••.•••-43 · 38 anos · Titular"
+PASSOU  a situação da conta (F5, so_fila) aparece como aviso: "Pela regra de faltas, a conta de Paula Ficha qqxwy só marca pela lista de espera até 24 de dezembro. Pela recepção, a consulta pode ser marcada."
+PASSOU  a busca pelo CPF acha a mesma pessoa
+PASSOU  carregou os dias de Dr(a). Lia Fila qqxwy
+PASSOU  os horários da tela são os de GET /horarios-livres (F26), sem o almoço: 16 horários, 08:00 a 16:30
+PASSOU  12:00 e 12:30 (almoço) não aparecem
+PASSOU  horário ocupado por outra pessoa no meio do caminho: aparece a mensagem da API ("Este horário acabou de ser ocupado. Escolha outro.")
+PASSOU  depois do erro, os horários vêm de novo da API e 10:30 sumiu
+PASSOU  clique duplo em "Marcar consulta": um só POST /api/consultas (POST /api/consultas 201 [token])
+PASSOU  POST /api/consultas {pessoa,medico,data,hora,motivo} (F22): a consulta está na agenda da API com o id da pessoa e o motivo (consulta 65)
+PASSOU  a tela de sucesso mostra o paciente e o médico
+PASSOU  o diálogo da fila não pede nome, telefone nem "qualquer médico"
+PASSOU  o diálogo mostra o paciente escolhido: "Rosa Troca qqxwy na fila de Dr(a). Lia Fila qqxwy · Clínica Geral qpiig. Ninguém na frente: a próxima vaga é dela."
+PASSOU  POST /api/lista-espera {pessoa,medico,usaApp}: R está na fila de X (entrada 21)
+
+## Lista de espera
+PASSOU  o telefone aparece mascarado (•••• 2246)
+PASSOU  "Ver telefone" mostra o número daquela pessoa
+PASSOU  a VAGA de amanhã 11:00 aparece com "Oferecer horário" (há gente aguardando)
+PASSOU  "Trocar de médico" (DELETE + POST): R saiu da fila de X e entrou no fim da fila da Ana (posição 1)
+PASSOU  a tela passa para a fila da Ana e mostra R lá
+PASSOU  "Tirar da fila": o 1º clique pede confirmação
+PASSOU  DELETE /api/lista-espera/{id}: R saiu da fila
+PASSOU  o diálogo "Adicionar" não tem nome nem telefone digitados
+PASSOU  sem paciente escolhido, o diálogo pede para escolher
+PASSOU  P entrou na fila de X pela tela (posição 1)
+PASSOU  a mesma conta numa 2ª fila: a mensagem da API aparece no diálogo ("Você já está numa lista de espera. Saia dela antes de entrar em outra.")
+PASSOU  "Oferecer horário" → POST /consultas/{vaga}/oferecer: a vaga de amanhã 11:00 foi para P {"data":"2026-11-25","hora":"11:00"}
+PASSOU  a caixa da vaga mostra a quem foi oferecida
+PASSOU  quem já recebeu a vaga não tem "Trocar de médico"
+PASSOU  na nova consulta, 11:00 de amanhã aparece com cadeado (reservado à fila)
+
+## Pacientes e ficha
+PASSOU  a lista vem de GET /clinicas/{id}/pacientes (sem CPF fictício)
+PASSOU  buscar pelo CPF acha só P (31)
+PASSOU  a ficha abre com o nome e o CPF
+PASSOU  próximas consultas: a de amanhã 10:00
+PASSOU  histórico com as consultas passadas (atendida e faltas)
+PASSOU  as 2 faltas de GET /clinicas/{id}/faltas?paciente= aparecem
+PASSOU  o aviso de restrição da conta (GET /pacientes/{idConta}/situacao, F5)
+PASSOU  a fila: posição 1 com Dr(a). Lia Fila qqxwy
+PASSOU  retorno (encaminhado) e exame (pendente) pedidos pelo médico
+PASSOU  PUT /api/faltas/{id}/retirar {motivo}: a falta ficou retirada com o motivo (por Recepção A Teste)
+PASSOU  a restrição voltou a "normal": {"faltas":1,"restricao":"normal","ate":null}
+PASSOU  a ficha recarrega: o aviso some e a falta mostra "Retirada por"
+PASSOU  PUT /api/exames/{id} {status:"realizado"}: o exame ficou realizado na API
+PASSOU  a ficha mostra o exame como realizado
+PASSOU  "Marcar consulta" abre a nova consulta com P já escolhida (?paciente=31)
+
+## Console e rede
+PASSOU  0 erros de JavaScript
+PASSOU  0 alert
+PASSOU  77 chamadas, sem token: 0
+  5×  GET /api/clinicas/{id} 200 [token]
+  10×  GET /api/clinicas/{id}/agenda?… 200 [token]
+  5×  GET /api/clinicas/{id}/especialidades 200 [token]
+  4×  GET /api/clinicas/{id}/faltas?… 200 [token]
+  11×  GET /api/clinicas/{id}/lista-espera 200 [token]
+  5×  GET /api/clinicas/{id}/medicos 200 [token]
+  4×  GET /api/clinicas/{id}/pacientes 200 [token]
+  5×  GET /api/clinicas/{id}/pacientes?… 200 [token]
+  1×  POST /api/consultas 201 [token]
+  1×  POST /api/consultas 400 [token]
+  1×  POST /api/consultas/{id}/oferecer 200 [token]
+  4×  GET /api/especialidades/{id}/horarios-livres 200 [token]
+  1×  PUT /api/exames/{id} 200 [token]
+  1×  PUT /api/faltas/{id}/retirar 200 [token]
+  5×  GET /api/feriados?… 200 [token]
+  3×  POST /api/lista-espera 201 [token]
+  1×  POST /api/lista-espera 400 [token]
+  2×  DELETE /api/lista-espera/{id} 204 [token]
+  8×  GET /api/pacientes/{id}/situacao 200 [token]
+
+TODAS AS VERIFICAÇÕES PASSARAM

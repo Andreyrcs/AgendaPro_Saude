@@ -1,0 +1,99 @@
+# Verificação g — console sem erros de JavaScript (24/11/2026, 10:45:52)
+
+## donoA, 1440 px, Clínica A (com o ataque)
+   OK  clinica.html         erros de JS: 0
+   OK  lista-espera.html    erros de JS: 0
+   OK  pacientes.html       erros de JS: 0
+   OK  nova-consulta.html   erros de JS: 0
+   OK  medicos.html         erros de JS: 0
+   OK  horarios.html        erros de JS: 0
+   OK  especialidades.html  erros de JS: 0
+   OK  equipe.html          erros de JS: 0
+   OK  conta.html           erros de JS: 0
+OK  donoA 1440 px: 0 erros de JavaScript nas 9 telas
+
+## donoA, 390 px, Clínica A (com o ataque)
+   OK  clinica.html         erros de JS: 0
+   OK  lista-espera.html    erros de JS: 0
+   OK  pacientes.html       erros de JS: 0
+   OK  nova-consulta.html   erros de JS: 0
+   OK  medicos.html         erros de JS: 0
+   OK  horarios.html        erros de JS: 0
+   OK  especialidades.html  erros de JS: 0
+   OK  equipe.html          erros de JS: 0
+   OK  conta.html           erros de JS: 0
+OK  donoA 390 px: 0 erros de JavaScript nas 9 telas
+
+## recepA, 1440 px, Clínica A (com o ataque)
+   OK  clinica.html         erros de JS: 0
+   OK  lista-espera.html    erros de JS: 0
+   OK  pacientes.html       erros de JS: 0
+   OK  nova-consulta.html   erros de JS: 0
+   OK  medicos.html         erros de JS: 0
+   OK  horarios.html        erros de JS: 0
+   OK  especialidades.html  erros de JS: 0
+   OK  equipe.html          erros de JS: 0
+   OK  conta.html           erros de JS: 0
+OK  recepA 1440 px: 0 erros de JavaScript nas 9 telas
+
+## recepA, 390 px, Clínica A (com o ataque)
+   OK  clinica.html         erros de JS: 0
+   OK  lista-espera.html    erros de JS: 0
+   OK  pacientes.html       erros de JS: 0
+   OK  nova-consulta.html   erros de JS: 0
+   OK  medicos.html         erros de JS: 0
+   OK  horarios.html        erros de JS: 0
+   OK  especialidades.html  erros de JS: 0
+   OK  equipe.html          erros de JS: 0
+   OK  conta.html           erros de JS: 0
+OK  recepA 390 px: 0 erros de JavaScript nas 9 telas
+
+## donoC, 1440 px, Clínica C vazia (sem médico, especialidade, paciente nem fila)
+   OK  clinica.html         erros de JS: 0 | larg 1440
+   OK  lista-espera.html    erros de JS: 0 | larg 1440
+   OK  pacientes.html       erros de JS: 0 | larg 1440
+   OK  nova-consulta.html   erros de JS: 0 | larg 1440
+   OK  medicos.html         erros de JS: 0 | larg 1440
+   OK  horarios.html        erros de JS: 0 | larg 1440
+   OK  especialidades.html  erros de JS: 0 | larg 1440
+   OK  equipe.html          erros de JS: 0 | larg 1440
+   OK  conta.html           erros de JS: 0 | larg 1440
+OK  donoC 1440 px (clínica vazia): 0 erros de JavaScript nas 9 telas
+
+## donoC, 390 px, Clínica C vazia (sem médico, especialidade, paciente nem fila)
+   OK  clinica.html         erros de JS: 0 | larg 390
+   OK  lista-espera.html    erros de JS: 0 | larg 390
+   OK  pacientes.html       erros de JS: 0 | larg 390
+   OK  nova-consulta.html   erros de JS: 0 | larg 390
+   OK  medicos.html         erros de JS: 0 | larg 390
+   OK  horarios.html        erros de JS: 0 | larg 390
+   OK  especialidades.html  erros de JS: 0 | larg 390
+   OK  equipe.html          erros de JS: 0 | larg 390
+   OK  conta.html           erros de JS: 0 | larg 390
+OK  donoC 390 px (clínica vazia): 0 erros de JavaScript nas 9 telas
+
+## recepC, 1440 px, Clínica C vazia (sem médico, especialidade, paciente nem fila)
+   OK  clinica.html         erros de JS: 0 | larg 1440
+   OK  lista-espera.html    erros de JS: 0 | larg 1440
+   OK  pacientes.html       erros de JS: 0 | larg 1440
+   OK  nova-consulta.html   erros de JS: 0 | larg 1440
+   OK  medicos.html         erros de JS: 0 | larg 1440
+   OK  horarios.html        erros de JS: 0 | larg 1440
+   OK  especialidades.html  erros de JS: 0 | larg 1440
+   OK  equipe.html          erros de JS: 0 | larg 1440
+   OK  conta.html           erros de JS: 0 | larg 1440
+OK  recepC 1440 px (clínica vazia): 0 erros de JavaScript nas 9 telas
+
+## recepC, 390 px, Clínica C vazia (sem médico, especialidade, paciente nem fila)
+   OK  clinica.html         erros de JS: 0 | larg 390
+   OK  lista-espera.html    erros de JS: 0 | larg 390
+   OK  pacientes.html       erros de JS: 0 | larg 390
+   OK  nova-consulta.html   erros de JS: 0 | larg 390
+   OK  medicos.html         erros de JS: 0 | larg 390
+   OK  horarios.html        erros de JS: 0 | larg 390
+   OK  especialidades.html  erros de JS: 0 | larg 390
+   OK  equipe.html          erros de JS: 0 | larg 390
+   OK  conta.html           erros de JS: 0 | larg 390
+OK  recepC 390 px (clínica vazia): 0 erros de JavaScript nas 9 telas
+
+TODAS AS VERIFICAÇÕES PASSARAM

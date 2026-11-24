@@ -1,0 +1,57 @@
+# Verificação b (agenda) pela tela — clínica A (id 5), recepção. Relógio do navegador: 2026-11-24 13:20. 24/11/2026, 10:38:47
+Consultas criadas pela API (recepção): 52 2026-11-24 14:00 Joana Teste Silva; 53 2026-11-24 13:00 Carlos Teste Souza; 54 2026-11-24 15:00 Joana Teste Silva; 55 2026-11-25 09:00 Carlos Teste Souza
+
+## Agenda
+PASSOU  o dia de hoje mostra as consultas de hoje (a de amanhã não)
+PASSOU  o bloco tem o nome e o selo em texto: "Joana Teste Silva, 14:00 às 14:30, ter, 24/11, Dr(a). Rita Agenda qq7rt. Confirmada. Enter…"
+PASSOU  a coluna do médico usa a cor da posição dele (F15): --cor:var(--med-1)
+PASSOU  "Consultas hoje" calculado da agenda: 21 (a API tem 21 consultas hoje na clínica)
+
+## Chegada, desfazer e iniciar atendimento
+PASSOU  "Chegou" → PUT status na_recepcao (GET /consultas/52: na_recepcao)
+PASSOU  "Desfazer" → volta para confirmada
+PASSOU  menu → "Iniciar atendimento" (novo) → em_atendimento
+PASSOU  o bloco mostra o selo "Em atendimento"
+
+## Falta
+PASSOU  menu → "Marcar falta" → POST /falta (status faltou)
+PASSOU  a falta aparece em GET /clinicas/{id}/faltas?paciente= (registrada por Recepção A Teste)
+
+## O horário ocupa e libera (GET /especialidades/{id}/horarios-livres)
+PASSOU  criar ocupa: 14:00 e 15:00 de hoje e 09:00 de amanhã saíram dos livres; 16:00 de hoje e 09:30 de amanhã continuam
+
+## Remarcar arrastando (F34)
+PASSOU  arrastar 15:00 → 16:00: a consulta 54 ficou cancelada e a nova (id 57) está às 16:00, confirmada, com o mesmo motivo ("Exame de rotina")
+PASSOU  o horário antigo (15:00) voltou como vaga (status livre), porque a fila estava vazia
+PASSOU  remarcar libera e ocupa: 15:00 voltou para os livres e 16:00 saiu
+PASSOU  a tela usa o id novo devolvido pela API (bloco 57)
+
+## Cancelar com fila (F19) e oferecer horário (F20)
+PASSOU  cancelar → DELETE /consultas/55 (cancelada)
+PASSOU  o banco ofereceu a vaga à 1ª da fila sem a tela chamar "oferecer": {"data":"2026-11-25","hora":"09:00"}
+PASSOU  cancelar com fila: 09:00 de amanhã fica reservado à pessoa da fila (não volta para os livres enquanto ela decide)
+PASSOU  o aviso mostra a quem a vaga foi oferecida, como texto (nome com <img>)
+PASSOU  o horário aparece como "Oferecido à fila" na semana
+PASSOU  "Oferecer horário" na vaga das 15:00 → POST /oferecer: a API escolheu Joana (a 1ª da fila AGUARDANDO; a outra já tinha oferta)
+PASSOU  o bloco das 15:00 vira "oferecido" com o nome de quem recebeu
+PASSOU  a fila ao lado mostra o telefone mascarado (•••• 1234)
+PASSOU  "Ver telefone" mostra o número daquela pessoa
+
+## Console e rede
+PASSOU  0 erros de JavaScript
+PASSOU  0 alert (nome com <img onerror=alert> na agenda e na fila)
+PASSOU  0 <img> no DOM
+PASSOU  37 chamadas, sem token: 0
+  1×  DELETE /api/consultas/{id} 200 [token]
+  3×  GET /api/clinicas/{id} 200 [token]
+  11×  GET /api/clinicas/{id}/agenda?… 200 [token]
+  3×  GET /api/clinicas/{id}/especialidades 200 [token]
+  6×  GET /api/clinicas/{id}/lista-espera 200 [token]
+  3×  GET /api/clinicas/{id}/medicos 200 [token]
+  3×  GET /api/feriados?… 200 [token]
+  1×  POST /api/consultas/{id}/falta 201 [token]
+  1×  POST /api/consultas/{id}/oferecer 200 [token]
+  1×  PUT /api/consultas/{id} 200 [token]
+  4×  PUT /api/consultas/{id}/status 200 [token]
+
+TODAS AS VERIFICAÇÕES PASSARAM

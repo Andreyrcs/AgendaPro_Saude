@@ -1,0 +1,95 @@
+# Verificação d — isolamento entre clínicas (24/11/2026, 11:02:36)
+Clínica A = 5, Clínica B = 6. Os ids de B foram criados agora pela API com os tokens de B:
+especialidade 12, médico 20, pacientes 44 (conta 75) e 45 (conta 76), consultas 92 e 95, vaga 91, falta 20, exame 8, fila 28, recepcionista 20.
+
+## dono A
+   OK  GET    /api/clinicas/6                                                -> 403 (sem corpo)
+   OK  PUT    /api/clinicas/6                                                -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/agenda?de=2026-11-24&ate=2026-11-26            -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/pacientes                                      -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/faltas?paciente=44                             -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/equipe                                         -> 403 (sem corpo)
+   OK  POST   /api/clinicas/6/equipe                                         -> 403 (sem corpo)
+   OK  DELETE /api/clinicas/6/equipe/20                                      -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/medicos                                        -> 403 (sem corpo)
+   OK  POST   /api/clinicas/6/medicos                                        -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/especialidades                                 -> 403 (sem corpo)
+   OK  POST   /api/clinicas/6/especialidades                                 -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/lista-espera                                   -> 403 (sem corpo)
+   OK  GET    /api/consultas/92                                              -> 403 (sem corpo)
+   OK  PUT    /api/consultas/95/status                                       -> 403 (sem corpo)
+   OK  POST   /api/consultas/95/falta                                        -> 403 (sem corpo)
+   OK  PUT    /api/consultas/95                                              -> 403 (sem corpo)
+   OK  DELETE /api/consultas/95                                              -> 403 (sem corpo)
+   OK  POST   /api/consultas/91/oferecer                                     -> 403 (sem corpo)
+   OK  GET    /api/medicos/20                                                -> 403 (sem corpo)
+   OK  PUT    /api/medicos/20                                                -> 403 (sem corpo)
+   OK  PUT    /api/medicos/20/expediente                                     -> 403 (sem corpo)
+   OK  DELETE /api/medicos/20                                                -> 403 (sem corpo)
+   OK  GET    /api/medicos/20/agenda?data=2026-11-24                         -> 403 (sem corpo)
+   OK  PUT    /api/especialidades/12                                         -> 403 (sem corpo)
+   OK  DELETE /api/lista-espera/28                                           -> 403 (sem corpo)
+   OK  PUT    /api/faltas/20/retirar                                         -> 403 (sem corpo)
+   OK  PUT    /api/exames/8                                                  -> 403 (sem corpo)
+   OK  GET    /api/pacientes/75/situacao                                     -> 403 (sem corpo)
+   OK  POST   /api/consultas                                                 -> 404 {"mensagem":"Paciente não encontrado."}
+   OK  POST   /api/consultas                                                 -> 403 (sem corpo)
+   OK  POST   /api/lista-espera                                              -> 404 {"mensagem":"Paciente não encontrado."}
+   OK  POST   /api/lista-espera                                              -> 403 (sem corpo)
+   OK  PUT    /api/usuarios/20/senha                                         -> 403 (sem corpo)
+   OK  GET    /api/especialidades/12/horarios-livres                         -> 403 (sem corpo)
+
+## recepção A
+   OK  GET    /api/clinicas/6                                                -> 403 (sem corpo)
+   OK  PUT    /api/clinicas/6                                                -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/agenda?de=2026-11-24&ate=2026-11-26            -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/pacientes                                      -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/faltas?paciente=44                             -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/equipe                                         -> 403 (sem corpo)
+   OK  POST   /api/clinicas/6/equipe                                         -> 403 (sem corpo)
+   OK  DELETE /api/clinicas/6/equipe/20                                      -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/medicos                                        -> 403 (sem corpo)
+   OK  POST   /api/clinicas/6/medicos                                        -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/especialidades                                 -> 403 (sem corpo)
+   OK  POST   /api/clinicas/6/especialidades                                 -> 403 (sem corpo)
+   OK  GET    /api/clinicas/6/lista-espera                                   -> 403 (sem corpo)
+   OK  GET    /api/consultas/92                                              -> 403 (sem corpo)
+   OK  PUT    /api/consultas/95/status                                       -> 403 (sem corpo)
+   OK  POST   /api/consultas/95/falta                                        -> 403 (sem corpo)
+   OK  PUT    /api/consultas/95                                              -> 403 (sem corpo)
+   OK  DELETE /api/consultas/95                                              -> 403 (sem corpo)
+   OK  POST   /api/consultas/91/oferecer                                     -> 403 (sem corpo)
+   OK  GET    /api/medicos/20                                                -> 403 (sem corpo)
+   OK  PUT    /api/medicos/20                                                -> 403 (sem corpo)
+   OK  PUT    /api/medicos/20/expediente                                     -> 403 (sem corpo)
+   OK  DELETE /api/medicos/20                                                -> 403 (sem corpo)
+   OK  GET    /api/medicos/20/agenda?data=2026-11-24                         -> 403 (sem corpo)
+   OK  PUT    /api/especialidades/12                                         -> 403 (sem corpo)
+   OK  DELETE /api/lista-espera/28                                           -> 403 (sem corpo)
+   OK  PUT    /api/faltas/20/retirar                                         -> 403 (sem corpo)
+   OK  PUT    /api/exames/8                                                  -> 403 (sem corpo)
+   OK  GET    /api/pacientes/75/situacao                                     -> 403 (sem corpo)
+   OK  POST   /api/consultas                                                 -> 404 {"mensagem":"Paciente não encontrado."}
+   OK  POST   /api/consultas                                                 -> 403 (sem corpo)
+   OK  POST   /api/lista-espera                                              -> 404 {"mensagem":"Paciente não encontrado."}
+   OK  POST   /api/lista-espera                                              -> 403 (sem corpo)
+   OK  PUT    /api/usuarios/20/senha                                         -> 403 (sem corpo)
+   OK  GET    /api/especialidades/12/horarios-livres                         -> 403 (sem corpo)
+
+## SHA-256 das linhas da Clínica B no banco (antes → depois)
+   igual    Clinica                 1 linhas  6BF925B98FAA9D590C0480C4… → 6BF925B98FAA9D590C0480C4…
+   igual    Usuarios                9 linhas  25DE798087C87C92D15F66B6… → 25DE798087C87C92D15F66B6…
+   igual    Especialidades          5 linhas  679E37EC66377EEAA00EBCCE… → 679E37EC66377EEAA00EBCCE…
+   igual    Medicos                 5 linhas  F64683349F70F7969B2AFC0C… → F64683349F70F7969B2AFC0C…
+   igual    Horarios_Atendimento   25 linhas  00D85EC2BEA2D1240F121BB4… → 00D85EC2BEA2D1240F121BB4…
+   igual    Pacientes               2 linhas  D59A627544E367ABF8744741… → D59A627544E367ABF8744741…
+   igual    Consultas              29 linhas  B1409FAE2032D8DBFBFCBD75… → B1409FAE2032D8DBFBFCBD75…
+   igual    Lista_Espera            4 linhas  907AF6CC7C5A580E8C634130… → 907AF6CC7C5A580E8C634130…
+   igual    Faltas                  5 linhas  649CD20F745E707E321B8612… → 649CD20F745E707E321B8612…
+   igual    Exames                  4 linhas  380B1EFA67E3DA8F13E901B7… → 380B1EFA67E3DA8F13E901B7…
+   igual    Retornos                0 linhas  NULL… → NULL…
+   igual    Paciente_Clinica       11 linhas  0A7134DC3E91B2ED47CFF16C… → 0A7134DC3E91B2ED47CFF16C…
+   igual    Notificacoes            0 linhas  NULL… → NULL…
+
+OK  70 tentativas (35 rotas × 2 perfis): 66 × 403, 4 × 404, outras: 0
+OK  nada da Clínica B mudou (13 tabelas com o mesmo SHA-256 antes e depois)

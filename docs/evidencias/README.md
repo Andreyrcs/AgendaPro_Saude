@@ -70,3 +70,24 @@ zero na instância `.\SQLEXPRESS`. Nos arquivos de tela, cada verificação apar
 | `e8/e8a-curl.txt` | Rotas da 8a: o caso certo, 401 sem token, 403 da recepção nas ações só do dono, 403 do médico e do paciente, isolamento A × B (14 pedidos, todos 403, e a linha da clínica B com o mesmo SHA-256 antes e depois); no fim, o token antigo do dono depois da troca de senha (pendência) |
 | `e8/e8a-banco.txt` | Telefone, nome e código da clínica na tela conferidos no banco em hexadecimal; as recepcionistas removidas ficam com `Ativo=0` |
 | `e8/e8a-*.png` | equipe.html e conta.html com os nomes XSS, no computador e a 390 px (a senha provisória não aparece) |
+| `e8/e8b-tela.txt`, `e8/e8b-*.png` | 8b pela tela (23/11): especialidade sem "descrição" (F16), criar e editar (L5); médico com a senha provisória mostrada uma vez; expediente em HH:MM (F4) e horários livres sem o almoço; feriados só leitura; remover médico (L6) |
+| `e8/e8c-tela.txt`, `e8/e8c-*.png` | 8c pela tela (24/11): agenda com cor por médico (F15) e selo em texto; chegada e desfazer; "Iniciar atendimento"; falta; remarcar arrastando com o id novo (F34); cancelar oferece à fila sem a tela chamar "oferecer" (F19); oferecer horário (F20) |
+| `e8/e8d-tela.txt`, `e8/e8d-*.png` | 8d pela tela (24/11): paciente escolhido pelo id; situação da conta (F5); horários de `/horarios-livres`; horário ocupado no meio do caminho; clique duplo com um só POST; fila pela nova consulta; telefone mascarado; trocar de médico; tirar da fila; oferecer vaga; ficha com faltas, retirar falta e exame realizado |
+
+### Verificações da Etapa 8 (a até i), em `e8/verificacoes/`
+
+Colhidas em 24/11/2026, depois do commit da 8d, com a API e a web no ar. Os dados de teste foram criados na hora pela
+própria API (clínicas A e B, e uma clínica C vazia). Cada linha aparece como `OK`/`PASSOU` ou `XX`/`FALHOU`.
+
+| Arquivo | O que prova |
+|---|---|
+| `a-tela-x-banco.txt`, `a-ficha.png` | (a) Uma consulta (agenda e menu), um médico (medicos.html) e um paciente (ficha) iguais na tela e no banco, com os textos pedidos ao `sqlcmd` em hexadecimal |
+| `b-agenda-tela.txt`, `b-fila-e-nova-consulta-tela.txt`, `b-*.png` | (b) Criar, remarcar, cancelar e marcar falta, com `/horarios-livres` conferido antes e depois (o horário ocupa e libera); trocar de médico na lista de espera; oferecer vaga pela agenda e pela lista de espera |
+| `c-tela.txt`, `c-*.png` | (c) Cadastrar e editar especialidade e médico; expediente; o médico removido some de `/medicos`, de `/horarios-livres` e da nova consulta, o login dele dá 401 e o `POST /api/consultas` para ele dá 404 |
+| `d-isolamento.txt` | (d) Dono e recepção de A em 35 rotas com ids de B (inclusive as especialidades e os horários livres de B): 70 pedidos, 66 × 403 e 4 × 404; o SHA-256 das linhas de B em 13 tabelas é o mesmo antes e depois |
+| `d-especialidades-horarios.txt` | (d) As especialidades e os horários livres de A e de B com 9 tokens (equipe de A, B e C; paciente vinculado a A e a B; médico de A): 36 respostas, todas iguais ao esperado. Cada um só vê a própria clínica (`AcessoServico.PodeUsarClinicaAsync`) |
+| `e-perfil-errado.txt` | (e) Recepção nas ações só do dono; médico e paciente nas rotas do dono e da recepção; paciente sem vínculo com A e equipe da Clínica C nas especialidades e horários de A: 46 pedidos, todos 403. Em bloco separado, o que a mesma clínica pode ler (200) |
+| `f-xss.txt`, `f-*.png` | (f) `<img src=x onerror=alert(1)>` no nome do paciente, do médico e da especialidade, na sala e no motivo: 9 telas, dono e recepção, 1440 e 390 px: 0 `<img>`, 0 `alert`, sem rolagem lateral, texto literal |
+| `g-console.txt`, `g-vazia-*.png` | (g) 0 erros de JavaScript nas 9 telas do dono e da recepção, na clínica com dados e numa clínica vazia |
+| `h-token.txt`, `rede/` | (h) 915 chamadas das rodadas de tela: sem token só os 4 logins |
+| `i-checagemA.txt`, `i-paciente-mobile-390.png` | (i) Checagem A com login pela tela nos 4 perfis e as 6 páginas públicas: 32 de 32 |

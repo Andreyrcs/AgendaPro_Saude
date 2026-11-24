@@ -1,0 +1,68 @@
+# Verificação e — perfil errado (24/11/2026, 11:02:40)
+Todas as rotas abaixo são da Clínica A (5): o que muda é o perfil do token, ou a clínica dele (paciente sem vínculo com A e equipe da Clínica C).
+
+## Recepção A nas ações só do dono (dados da clínica e equipe)
+   OK  PUT    /api/clinicas/5                                            -> 403 (sem corpo)
+   OK  POST   /api/clinicas/5/equipe                                     -> 403 (sem corpo)
+   OK  DELETE /api/clinicas/5/equipe/18                                  -> 403 (sem corpo)
+
+## Médico (Dr(a). Ana Teste qpiig) nas rotas do dono e da recepção
+   OK  GET    /api/clinicas/5                                            -> 403 (sem corpo)
+   OK  PUT    /api/clinicas/5                                            -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/equipe                                     -> 403 (sem corpo)
+   OK  POST   /api/clinicas/5/equipe                                     -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/agenda?de=2026-11-24&ate=2026-11-24        -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/pacientes                                  -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/faltas?paciente=31                         -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/medicos                                    -> 403 (sem corpo)
+   OK  POST   /api/clinicas/5/medicos                                    -> 403 (sem corpo)
+   OK  POST   /api/clinicas/5/especialidades                             -> 403 (sem corpo)
+   OK  PUT    /api/especialidades/6                                      -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/lista-espera                               -> 403 (sem corpo)
+   OK  PUT    /api/medicos/14/expediente                                 -> 403 (sem corpo)
+   OK  DELETE /api/medicos/14                                            -> 403 (sem corpo)
+   OK  POST   /api/consultas/65/oferecer                                 -> 403 (sem corpo)
+   OK  PUT    /api/faltas/15/retirar                                     -> 403 (sem corpo)
+   OK  PUT    /api/medicos/14                                            -> 403 (sem corpo)
+
+## Paciente (conta 21) nas rotas do dono e da recepção
+   OK  GET    /api/clinicas/5                                            -> 403 (sem corpo)
+   OK  PUT    /api/clinicas/5                                            -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/equipe                                     -> 403 (sem corpo)
+   OK  POST   /api/clinicas/5/equipe                                     -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/agenda?de=2026-11-24&ate=2026-11-24        -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/pacientes                                  -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/faltas?paciente=31                         -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/medicos                                    -> 403 (sem corpo)
+   OK  POST   /api/clinicas/5/medicos                                    -> 403 (sem corpo)
+   OK  POST   /api/clinicas/5/especialidades                             -> 403 (sem corpo)
+   OK  PUT    /api/especialidades/6                                      -> 403 (sem corpo)
+   OK  GET    /api/clinicas/5/lista-espera                               -> 403 (sem corpo)
+   OK  PUT    /api/medicos/14/expediente                                 -> 403 (sem corpo)
+   OK  DELETE /api/medicos/14                                            -> 403 (sem corpo)
+   OK  POST   /api/consultas/65/oferecer                                 -> 403 (sem corpo)
+   OK  PUT    /api/faltas/15/retirar                                     -> 403 (sem corpo)
+   OK  PUT    /api/consultas/65/status                                   -> 403 (sem corpo)
+   OK  POST   /api/consultas/65/falta                                    -> 403 (sem corpo)
+   OK  PUT    /api/exames/4                                              -> 403 (sem corpo)
+   OK  GET    /api/medicos/14/agenda?data=2026-11-24                     -> 403 (sem corpo)
+
+## Paciente sem vínculo com A (conta 75, vinculada só a B) nas especialidades e horários de A
+   OK  GET    /api/clinicas/5/especialidades                             -> 403 (sem corpo)
+   OK  GET    /api/especialidades/6/horarios-livres                      -> 403 (sem corpo)
+
+## Dono da Clínica C nas especialidades e horários de A
+   OK  GET    /api/clinicas/5/especialidades                             -> 403 (sem corpo)
+   OK  GET    /api/especialidades/6/horarios-livres                      -> 403 (sem corpo)
+
+## Recepção da Clínica C nas especialidades e horários de A
+   OK  GET    /api/clinicas/5/especialidades                             -> 403 (sem corpo)
+   OK  GET    /api/especialidades/6/horarios-livres                      -> 403 (sem corpo)
+
+## Mesma clínica, perfil com acesso (permitido; fora da contagem acima)
+   OK  médico de A              GET /api/clinicas/5/especialidades               -> 200 (esperado 200)
+   OK  paciente vinculado a A   GET /api/clinicas/5/especialidades               -> 200 (esperado 200)
+   OK  paciente vinculado a A   GET /api/especialidades/6/horarios-livres        -> 200 (esperado 200)
+   OK  médico de A              GET /api/especialidades/6/horarios-livres        -> 403 (esperado 403: o perfil médico não tem esta rota)
+
+OK  46 pedidos: 46 × 403, outros: 0
