@@ -1,0 +1,126 @@
+       código da clínica: CON-9193
+OK     1 cadastro da clinica
+OK     2 dono entra
+OK     3 especialidade
+OK     4 medico
+OK     5 expediente
+OK     6 recepcionista
+OK     7 cadastro do paciente
+OK     8 clinica pelo codigo
+OK     9 agendar
+OK     10 recepcao: chegada
+OK     11 medico: finaliza
+OK     12 medico: pede exame
+OK     13 recepcao: exame realizado
+OK     14 paciente ve o exame
+
+CHAMADAS À API:
+dono      POST /api/clinicas -> 201
+dono      POST /api/auth/login -> 200
+dono      GET /api/clinicas/6 -> 200
+dono      GET /api/clinicas/6 -> 200
+dono      GET /api/clinicas/6/especialidades -> 200
+dono      GET /api/feriados?de=2026-10-26&ate=2027-11-24 -> 200
+dono      GET /api/clinicas/6/medicos -> 200
+dono      GET /api/clinicas/6/agenda?de=2026-10-26&ate=2027-01-24 -> 200
+dono      GET /api/clinicas/6/lista-espera -> 200
+dono      POST /api/clinicas/6/especialidades -> 201
+dono      GET /api/clinicas/6/especialidades -> 200
+dono      GET /api/clinicas/6/especialidades -> 200
+dono      GET /api/clinicas/6 -> 200
+dono      GET /api/feriados?de=2026-10-26&ate=2027-11-24 -> 200
+dono      GET /api/clinicas/6/medicos -> 200
+dono      GET /api/clinicas/6/agenda?de=2026-10-26&ate=2027-01-24 -> 200
+dono      GET /api/clinicas/6/lista-espera -> 200
+dono      POST /api/clinicas/6/medicos -> 201
+dono      GET /api/clinicas/6/medicos -> 200
+dono      GET /api/clinicas/6 -> 200
+dono      GET /api/clinicas/6/medicos -> 200
+dono      GET /api/clinicas/6/especialidades -> 200
+dono      GET /api/clinicas/6/agenda?de=2026-10-26&ate=2027-01-24 -> 200
+dono      GET /api/feriados?de=2026-10-26&ate=2027-11-24 -> 200
+dono      GET /api/clinicas/6/lista-espera -> 200
+dono      PUT /api/medicos/5/expediente -> 204
+dono      GET /api/clinicas/6/medicos -> 200
+dono      GET /api/clinicas/6/agenda?de=2026-10-26&ate=2027-01-24 -> 200
+dono      GET /api/clinicas/6/lista-espera -> 200
+dono      GET /api/feriados?de=2026-10-26&ate=2027-11-24 -> 200
+dono      GET /api/clinicas/6/especialidades -> 200
+dono      GET /api/clinicas/6 -> 200
+dono      GET /api/clinicas/6/medicos -> 200
+dono      GET /api/clinicas/6/equipe -> 200
+dono      POST /api/clinicas/6/equipe -> 201
+dono      GET /api/clinicas/6/equipe -> 200
+paciente  POST /api/pacientes -> 201
+paciente  POST /api/auth/login -> 200
+paciente  GET /api/pacientes/21/clinicas -> 200
+paciente  GET /api/pacientes/21/clinicas -> 200
+paciente  GET /api/clinicas -> 200
+paciente  POST /api/pacientes/21/clinicas -> 201
+paciente  GET /api/pacientes/21/notificacoes -> 200
+paciente  GET /api/pacientes/21/situacao -> 200
+paciente  GET /api/pacientes/21/prevencao -> 200
+paciente  GET /api/pacientes/21/lista-espera -> 200
+paciente  GET /api/pacientes/21/acompanhamento -> 200
+paciente  GET /api/feriados?de=2026-10-01&ate=2027-05-31 -> 200
+paciente  GET /api/clinicas/6/especialidades -> 200
+paciente  GET /api/pacientes/21/familiares -> 200
+paciente  GET /api/pacientes/21/consultas -> 200
+paciente  GET /api/especialidades/5/horarios-livres -> 200
+paciente  POST /api/consultas -> 201
+paciente  GET /api/pacientes/21/notificacoes -> 200
+paciente  GET /api/pacientes/21/situacao -> 200
+paciente  GET /api/clinicas/6/especialidades -> 200
+paciente  GET /api/pacientes/21/familiares -> 200
+paciente  GET /api/feriados?de=2026-10-01&ate=2027-05-31 -> 200
+paciente  GET /api/pacientes/21/prevencao -> 200
+paciente  GET /api/pacientes/21/acompanhamento -> 200
+paciente  GET /api/pacientes/21/lista-espera -> 200
+paciente  GET /api/pacientes/21/consultas -> 200
+paciente  GET /api/especialidades/5/horarios-livres -> 200
+recepcao  POST /api/auth/login -> 200
+recepcao  GET /api/clinicas/6 -> 200
+recepcao  GET /api/clinicas/6/especialidades -> 200
+recepcao  GET /api/clinicas/6 -> 200
+recepcao  GET /api/feriados?de=2026-10-26&ate=2027-11-24 -> 200
+recepcao  GET /api/clinicas/6/medicos -> 200
+recepcao  GET /api/clinicas/6/agenda?de=2026-10-26&ate=2027-01-24 -> 200
+recepcao  GET /api/clinicas/6/lista-espera -> 200
+recepcao  PUT /api/consultas/3/status -> 200
+recepcao  GET /api/clinicas/6/agenda?de=2026-10-26&ate=2027-01-24 -> 200
+medico    POST /api/auth/login -> 200
+medico    GET /api/feriados?de=2025-11-23&ate=2027-11-25 -> 200
+medico    GET /api/medicos/5 -> 200
+medico    GET /api/medicos/5/agenda?data=2026-11-24 -> 200
+medico    PUT /api/consultas/3/status -> 200
+medico    GET /api/medicos/5/agenda?data=2026-11-24 -> 200
+medico    POST /api/exames -> 201
+medico    GET /api/medicos/5/agenda?data=2026-11-24 -> 200
+recepcao  GET /api/clinicas/6/especialidades -> 200
+recepcao  GET /api/clinicas/6 -> 200
+recepcao  GET /api/feriados?de=2026-10-26&ate=2027-11-24 -> 200
+recepcao  GET /api/clinicas/6/medicos -> 200
+recepcao  GET /api/clinicas/6/agenda?de=2026-10-26&ate=2027-01-24 -> 200
+recepcao  GET /api/clinicas/6/lista-espera -> 200
+recepcao  GET /api/clinicas/6/pacientes -> 200
+recepcao  GET /api/pacientes/21/situacao -> 200
+recepcao  GET /api/clinicas/6/faltas?paciente=5 -> 200
+recepcao  GET /api/pacientes/21/situacao -> 200
+recepcao  PUT /api/exames/1 -> 200
+recepcao  GET /api/clinicas/6/faltas?paciente=5 -> 200
+recepcao  GET /api/clinicas/6/pacientes -> 200
+recepcao  GET /api/pacientes/21/situacao -> 200
+recepcao  GET /api/clinicas/6/faltas?paciente=5 -> 200
+paciente  GET /api/pacientes/21/notificacoes -> 200
+paciente  GET /api/pacientes/21/familiares -> 200
+paciente  GET /api/pacientes/21/prevencao -> 200
+paciente  GET /api/pacientes/21/consultas -> 200
+paciente  GET /api/pacientes/21/lista-espera -> 200
+paciente  GET /api/clinicas/6/especialidades -> 200
+paciente  GET /api/feriados?de=2026-10-01&ate=2027-05-31 -> 200
+paciente  GET /api/pacientes/21/situacao -> 200
+paciente  GET /api/pacientes/21/acompanhamento -> 200
+paciente  GET /api/especialidades/5/horarios-livres -> 200
+
+ERROS DE CONSOLE: nenhum
+FALHAS: nenhuma

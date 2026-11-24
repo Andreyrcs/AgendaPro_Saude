@@ -1,0 +1,18 @@
+Clínica A=7 (médico 6, consulta 4, paciente 25); clínica B=8
+OK     controle: recepção A vê a própria agenda  (GET /api/clinicas/7/agenda?de=2026-11-24&ate=2026-11-24 -> 200, esperado 200)
+OK     recepção B lê a agenda de A  (GET /api/clinicas/7/agenda?de=2026-11-24&ate=2026-11-24 -> 403, esperado 403)
+OK     recepção B lê os dados da clínica A  (GET /api/clinicas/7 -> 403, esperado 403)
+OK     recepção B lista os pacientes de A  (GET /api/clinicas/7/pacientes -> 403, esperado 403)
+OK     recepção B lista os médicos de A  (GET /api/clinicas/7/medicos -> 403, esperado 403)
+OK     recepção B lê a lista de espera de A  (GET /api/clinicas/7/lista-espera -> 403, esperado 403)
+OK     recepção B lê uma consulta de A  (GET /api/consultas/4 -> 403, esperado 403)
+OK     recepção B registra chegada numa consulta de A  (PUT /api/consultas/4/status -> 403, esperado 403)
+OK     recepção B cancela uma consulta de A  (DELETE /api/consultas/4 -> 403, esperado 403)
+OK     dono B altera o médico de A  (PUT /api/medicos/6 -> 403, esperado 403)
+OK     dono B cria recepcionista em A  (POST /api/clinicas/7/equipe -> 403, esperado 403)
+OK     dono B altera os dados da clínica A  (PUT /api/clinicas/7 -> 403, esperado 403)
+OK     médico B lê a agenda do médico de A  (GET /api/medicos/6/agenda?data=2026-11-24 -> 403, esperado 403)
+OK     médico B finaliza uma consulta de A  (PUT /api/consultas/4/status -> 403, esperado 403)
+OK     paciente B lê as consultas do paciente de A  (GET /api/pacientes/25/consultas -> 403, esperado 403)
+OK     paciente B cancela uma consulta de A  (DELETE /api/consultas/4 -> 403, esperado 403)
+RESULTADO: 16 de 16
