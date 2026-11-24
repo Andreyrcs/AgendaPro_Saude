@@ -11,8 +11,8 @@
                     ) || {};
                 document.documentElement.dataset.lateral =
                     p.menu === 'recolhido' ? 'recolhida' : 'aberta';
-                if (p.texto === 'grande')
-                    document.documentElement.style.fontSize = '112.5%';
+                document.documentElement.style.fontSize =
+                    { grande: '118.75%', 'muito-grande': '137.5%' }[p.texto] || '';
             } catch (e) {}
         </script>
         <title>Agenda da Clínica</title>
@@ -54,6 +54,7 @@
         />
     </head>
     <body>
+        <a class="pular" href="#conteudo">Pular para o conteúdo</a>
         <div class="casca">
             <aside class="lateral" aria-label="Navegação da clínica">
                 <a class="lateral__marca" href="index.html">

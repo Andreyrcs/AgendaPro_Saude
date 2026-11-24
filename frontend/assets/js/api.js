@@ -358,6 +358,11 @@
     return { usuario: Object.assign({ id: r.usuario.idUsuario }, r.usuario), senhaProvisoria: r.senhaProvisoria };
   }
 
+  /* POST /api/clinicas/{id}/equipe/{usuarioId}/senha-provisoria  (só o dono) → { senhaProvisoria } */
+  async function gerarSenhaProvisoria(usuarioId) {
+    return chamar("POST", "/api/clinicas/" + clinicaAtual().id + "/equipe/" + usuarioId + "/senha-provisoria");
+  }
+
   /* DELETE /api/clinicas/{id}/equipe/{usuarioId}  (só o dono; a API não deixa remover a si mesmo) */
   async function removerDaEquipe(usuarioId) {
     const c = clinicaAtual();
@@ -384,7 +389,7 @@
     sessao, usuarioAtual, clinicaAtual, destinoDe,
     entrar, sair, trocarSenha,
     cadastrarClinica, atualizarClinica, recarregarClinica,
-    listarEquipe, cadastrarRecepcionista, removerDaEquipe,
+    listarEquipe, cadastrarRecepcionista, gerarSenhaProvisoria, removerDaEquipe,
     cadastrarPaciente, buscarClinicas, clinicaPorCodigo, vincularClinica, clinicasDoPaciente, usarClinica, normalizarCodigo,
     validarCNPJ, formatarCNPJ, formatarTelefone,
     validarCPF, formatarCPF, ERRO_CPF,

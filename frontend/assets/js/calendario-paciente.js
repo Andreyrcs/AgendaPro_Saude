@@ -82,15 +82,17 @@
                 });
             });
             D.acompanhamento.retornos.forEach((r) => {
+                /* sem data, não há dia no calendário; com a consulta marcada, ela já aparece */
+                if (!r.prazo || D.consultas.some((c) => A.mesmoId(c.pessoa, r.pessoa) && c.data === r.prazo)) return;
                 lista.push({
                     tipo: 'retorno',
                     id: r.id,
                     data: r.prazo,
                     hora: null,
                     pessoa: r.pessoa,
-                    titulo: 'Último dia para marcar o retorno',
+                    titulo: 'Retorno',
                     sub: r.titulo + ' · ' + medico(r.medico).nome,
-                    href: '#agendar/' + r.esp + '/' + r.pessoa,
+                    href: '#acompanhamento',
                 });
             });
             const e = D.espera;

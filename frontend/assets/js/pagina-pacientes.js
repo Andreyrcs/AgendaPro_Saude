@@ -204,7 +204,7 @@
       retornos.map((r) =>
         '<li><span class="historico__quando">Retorno' + (r.data ? " · " + K.curtoData(r.data) : "") + '</span><span class="historico__quem">' +
         A.esc(r.medico.nome) + " · " + A.esc(SITUACAO_RETORNO[r.status] || r.status) + (r.nota ? "<br>" + A.esc(r.nota) : "") + "</span>" +
-        (r.status === "encaminhado" ? '<a class="link-acao" href="nova-consulta.html?paciente=' + encodeURIComponent(p.id) + '" style="grid-row:1/span 2;grid-column:2;align-self:center">Marcar</a>' : "") + "</li>"
+        (r.status === "encaminhado" ? '<a class="link-acao" href="nova-consulta.html?paciente=' + encodeURIComponent(p.id) + "&amp;medico=" + encodeURIComponent(r.medico.id) + "&amp;retorno=" + encodeURIComponent(r.id) + '" style="grid-row:1/span 2;grid-column:2;align-self:center">Marcar</a>' : "") + "</li>"
       ).join("") +
       exames.map((e) =>
         '<li><span class="historico__quando">Exame · ' + A.esc(e.nome) + '</span><span class="historico__quem">' + (e.medico ? A.esc(e.medico.nome) + " · " : "") +

@@ -4,7 +4,7 @@
    GET  /api/feriados?de=&ate=          dias fechados nas vistas
    PUT  /api/consultas/{id}/status      iniciar (de na_recepcao) e finalizar (atendida)
    POST /api/consultas/{id}/falta       registrar falta
-   POST /api/retornos                   marcar retorno, com data ou encaminhado à recepção
+   POST /api/retornos                   marcar retorno, com data e hora ou encaminhado à recepção
    POST /api/exames                     pedir exame
    O {id} do médico vem da sessão (claim medico, Apêndice F). Ids comparados como texto (A.mesmoId). */
 (function () {
@@ -855,12 +855,13 @@
                   '<button type="submit" class="botao botao--secundario botao--pequeno">Pedir</button></div></form>'
                 : '') +
             (retornos.length
-                ? '<div class="med-dlg__notas"><h3>Retornos marcados</h3>' +
+                ? '<div class="med-dlg__notas"><h3>Retornos</h3>' +
                   retornos
                       .map(
                           (r) =>
                               '<div class="med-nota"><span class="med-nota__data">' +
-                              (r.data ? A.extenso(r.data) : 'Encaminhado à recepção') +
+                              (r.status === 'agendado' ? 'Marcado' : r.status === 'realizado' ? 'Realizado' : 'Encaminhado à recepção') +
+                              (r.data ? ' · ' + A.extenso(r.data) : '') +
                               '</span>' +
                               (r.nota ? '<p class="med-nota__texto">' + A.esc(r.nota) + '</p>' : '') +
                               '</div>',
@@ -904,7 +905,8 @@
         };
         if (k.status === 'na_recepcao')
             botao('botao--principal', I('stethoscope', 'ic-sm') + 'Iniciar atendimento', (b) => iniciarConsulta(k, b));
-        if (k.status === 'em_atendimento' || k.status === 'na_recepcao' || k.status === 'confirmada')
+        /* só a partir do dia da consulta (a API confere também) */
+        if (k.data <= HOJE && (k.status === 'em_atendimento' || k.status === 'na_recepcao' || k.status === 'confirmada'))
             botao('botao--menta', I('check', 'ic-sm') + 'Finalizar atendimento', (b) => finalizarConsulta(k, b));
         if (k.status === 'atendida' || k.status === 'em_atendimento')
             botao('botao--secundario', '<i class="fa-regular fa-calendar-days"></i> Marcar retorno', () => {
@@ -945,32 +947,54 @@
     function abrirRetorno(k) {
         retornoDe = k;
         document.getElementById('ret-paciente').value = k.paciente;
-        // pré-preencher com 30 dias à frente (data montada no fuso local)
-        document.getElementById('ret-data').value = C.somaDias(k.data > HOJE ? k.data : HOJE, 30);
         document.getElementById('ret-nota').value = '';
-        const radioData = document.querySelector(
-            'input[name="ret-tipo"][value="data"]',
-        );
-        if (radioData) radioData.checked = true;
+        document.querySelector('input[name="ret-tipo"][value="data"]').checked = true;
         atualizarRetornoTipo();
+        carregarLivres();
         abrirDlg(document.getElementById('dlg-retorno'));
     }
 
     function atualizarRetornoTipo() {
         const tipo = document.querySelector('input[name="ret-tipo"]:checked');
-        const campoData = document.getElementById('ret-campo-data');
         const btnSubmit = document.getElementById('ret-btn-submit');
-        const inputData = document.getElementById('ret-data');
-        if (!tipo || !campoData) return;
+        if (!tipo || !btnSubmit) return;
         const isRecepcao = tipo.value === 'recepcao';
-        campoData.hidden = isRecepcao;
-        if (inputData) inputData.required = !isRecepcao;
-        if (btnSubmit) {
-            btnSubmit.innerHTML = isRecepcao
-                ? I('send', 'ic-sm') + 'Encaminhar para recepção'
-                : I('calendar-plus', 'ic-sm') + 'Confirmar retorno';
-        }
+        /* style, e não hidden: .campo-med tem display próprio */
+        document.getElementById('ret-campo-data').style.display = isRecepcao ? 'none' : '';
+        btnSubmit.innerHTML = isRecepcao
+            ? I('send', 'ic-sm') + 'Encaminhar para recepção'
+            : I('calendar-plus', 'ic-sm') + 'Confirmar retorno';
     }
+
+    /* horários livres do próprio médico: GET /api/especialidades/{id}/horarios-livres (até 2 meses) */
+    let livres = [];
+    async function carregarLivres() {
+        const campo = document.getElementById('ret-data');
+        livres = [];
+        try {
+            const r = await API.chamar('GET', '/api/especialidades/' + M.medico.especialidade.id + '/horarios-livres');
+            const meu = r.find((x) => A.mesmoId(x.medico.id, M.medico.id));
+            livres = (meu && meu.dias) || [];
+        } catch (e) { avisarRetorno(e.message); return; }
+        /* sugere o primeiro dia com horário a partir de 30 dias (ou o último aberto) */
+        const alvo = C.somaDias(HOJE, 30);
+        const dia = livres.find((d) => d.data >= alvo) || livres[livres.length - 1];
+        campo.min = HOJE;
+        campo.max = livres.length ? livres[livres.length - 1].data : '';
+        campo.value = dia ? dia.data : '';
+        desenharHoras();
+    }
+    function avisarRetorno(t) {
+        const a = document.getElementById('ret-aviso');
+        a.textContent = t || '';
+        a.hidden = !t;
+    }
+    function desenharHoras() {
+        const dia = livres.find((d) => d.data === document.getElementById('ret-data').value);
+        document.getElementById('ret-hora').innerHTML = ((dia && dia.horas) || []).map((h) => '<option>' + A.esc(h) + '</option>').join('');
+        avisarRetorno(dia ? '' : 'Sem horário livre neste dia.');
+    }
+    document.getElementById('ret-data').addEventListener('change', desenharHoras);
 
     document.querySelectorAll('input[name="ret-tipo"]').forEach((r) => {
         r.addEventListener('change', atualizarRetornoTipo);
@@ -981,22 +1005,68 @@
         const paciente = document.getElementById('ret-paciente').value;
         const tipo = document.querySelector('input[name="ret-tipo"]:checked');
         const isRecepcao = tipo && tipo.value === 'recepcao';
-        const data = isRecepcao
-            ? ''
-            : document.getElementById('ret-data').value;
+        const data = isRecepcao ? '' : document.getElementById('ret-data').value;
+        const hora = isRecepcao ? '' : document.getElementById('ret-hora').value;
         const nota = document.getElementById('ret-nota').value.trim();
 
-        /* POST /api/retornos { consulta, data, nota }: com data, AGENDADO; sem data, ENCAMINHADO à recepção */
+        /* POST /api/retornos { consulta, data, hora, nota }: com data, a consulta fica marcada; sem data, a recepção marca */
         if (!retornoDe) return;
-        if (!isRecepcao && !data) { document.getElementById('ret-data').focus(); return; }
+        if (!isRecepcao && !(data && hora)) { document.getElementById('ret-data').focus(); return; }
         const k = retornoDe;
         agir(
             document.getElementById('ret-btn-submit'),
-            () => API.chamar('POST', '/api/retornos', { consulta: Number(k.id), data: isRecepcao ? null : data, nota: nota || null }),
+            () => API.chamar('POST', '/api/retornos', { consulta: Number(k.id), data: data || null, hora: hora || null, nota: nota || null }),
             isRecepcao ? 'Retorno encaminhado à recepção' : 'Retorno marcado',
-            paciente + (isRecepcao ? '' : ' · ' + A.extenso(data)),
+            paciente + (isRecepcao ? '' : ' · ' + A.extenso(data) + ', às ' + hora),
             isRecepcao ? 'send' : 'calendar-plus',
         ).then(() => { document.getElementById('ret-btn-submit').disabled = false; });
+    });
+
+    /* ─── Tamanho do texto (fica salvo neste navegador) ─── */
+    function desenharTexto() {
+        const t = localStorage.getItem('medico-texto') || 'normal';
+        document.documentElement.style.fontSize = { grande: '118.75%', 'muito-grande': '137.5%' }[t] || '';
+        document.querySelectorAll('#seg-texto [data-texto]').forEach((b) => {
+            b.setAttribute('aria-checked', String(b.dataset.texto === t));
+            b.tabIndex = b.dataset.texto === t ? 0 : -1;
+        });
+    }
+    function mudarTexto(t) {
+        try { localStorage.setItem('medico-texto', t); } catch (e) { /* sem armazenamento */ }
+        desenharTexto();
+    }
+    document.getElementById('seg-texto').addEventListener('click', (ev) => {
+        const b = ev.target.closest('[data-texto]');
+        if (b) mudarTexto(b.dataset.texto);
+    });
+    document.getElementById('seg-texto').addEventListener('keydown', (ev) => {
+        if (ev.key !== 'ArrowRight' && ev.key !== 'ArrowLeft') return;
+        const ordem = ['normal', 'grande', 'muito-grande'];
+        const v = ordem[(ordem.indexOf(localStorage.getItem('medico-texto') || 'normal') + (ev.key === 'ArrowRight' ? 1 : 2)) % 3];
+        mudarTexto(v);
+        document.querySelector('#seg-texto [data-texto="' + v + '"]').focus();
+    });
+    desenharTexto();
+
+    /* ─── Senha: PUT /api/usuarios/{id}/senha ─── */
+    document.getElementById('form-senha').addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const f = ev.currentTarget;
+        const campo = (n) => document.getElementById('s-' + n);
+        const avisar = (t) => { campo('aviso').textContent = t; campo('aviso').hidden = false; };
+        const nova = campo('nova').value;
+        if (!campo('atual').value) return avisar('Digite a senha que você usa hoje.');
+        if (nova.length < 8 || !/[a-zA-Z]/.test(nova) || !/\d/.test(nova)) return avisar('A nova senha precisa de pelo menos 8 caracteres, com letras e números.');
+        if (nova === campo('atual').value) return avisar('A nova senha precisa ser diferente da atual.');
+        if (campo('repete').value !== nova) return avisar('As duas senhas novas não estão iguais.');
+        const b = f.querySelector('button[type="submit"]');
+        b.disabled = true;
+        try {
+            await API.trocarSenha(campo('atual').value, nova);
+            f.reset();
+            avisar('Senha trocada. Use a nova senha no próximo login.');
+        } catch (e) { avisar(e.message); }
+        b.disabled = false;
     });
 
     /* ─── Histórico ─── */

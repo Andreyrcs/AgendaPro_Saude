@@ -79,37 +79,26 @@
 
     feriados: FERIADOS,
 
-    /* Pessoas de exemplo: só a ilustração da página inicial (landing.js) */
-    /* cpf: Pacientes.CPF, 11 dígitos, fictício e válido (dígitos verificadores corretos), sem repetir */
+    /* Desenhos da ilustração da página inicial (landing.js): sem nome nem CPF */
     pessoas: [
       {
-        id: "juliana", nome: "Juliana Santos", curto: "Juliana", tratamento: "você",
-        relacao: "Titular", idade: 36, cpf: "28461593782", cor: "var(--id-juliana)",
-        alergias: "Nenhuma informada",
+        id: "juliana", cor: "var(--id-juliana)",
         avatar: { pele: "#8d5524", cabelo: "crespo", corCabelo: "#1e1410", roupa: "#12263f" },
       },
       {
-        id: "davi", nome: "Davi Santos Tanaka", curto: "Davi", tratamento: "o Davi",
-        relacao: "Filho", idade: 8, cpf: "39152840689", cor: "var(--id-davi)",
-        alergias: "Nenhuma informada",
+        id: "davi", cor: "var(--id-davi)",
         avatar: { pele: "#c68642", cabelo: "cacheado", corCabelo: "#2b1b12", roupa: "#e07b39" },
       },
       {
-        id: "marina", nome: "Marina Santos Tanaka", curto: "Marina", tratamento: "a Marina",
-        relacao: "Filha", idade: 14, cpf: "47590312860", cor: "var(--id-marina)",
-        alergias: "Rinite alérgica",
+        id: "marina", cor: "var(--id-marina)",
         avatar: { pele: "#b5703f", cabelo: "trancas", corCabelo: "#1a120d", roupa: "#2f6f9f" },
       },
       {
-        id: "cida", nome: "Maria Aparecida Santos", curto: "Dona Cida", tratamento: "a Dona Cida",
-        relacao: "Mãe", idade: 71, cpf: "56308174262", cor: "var(--id-cida)",
-        alergias: "Alergia a dipirona",
+        id: "cida", cor: "var(--id-cida)",
         avatar: { pele: "#6b3e26", cabelo: "grisalho", corCabelo: "#d6d3cf", roupa: "#b5543a", oculos: true },
       },
       {
-        id: "kenji", nome: "Kenji Tanaka", curto: "Seu Kenji", tratamento: "o Seu Kenji",
-        relacao: "Sogro", idade: 74, cpf: "61827435909", cor: "var(--id-kenji)",
-        alergias: "Nenhuma informada",
+        id: "kenji", cor: "var(--id-kenji)",
         avatar: { pele: "#e8c39e", cabelo: "calvo", corCabelo: "#bdbab5", roupa: "#2e5e4e", oculos: true },
       },
     ],

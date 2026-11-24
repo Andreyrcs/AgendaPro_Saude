@@ -121,8 +121,9 @@ window.PACIENTE.iniciar(function () {
   }
 
   function seloPrazo(iso) {
+    if (!iso) return "";
     const n = A.diasAte(iso);
-    return '<span class="selo selo--alerta">' + I("clock") + (n <= 0 ? "Prazo hoje" : "Faltam " + n + " dias") + "</span>";
+    return '<span class="selo selo--alerta">' + I("clock") + (n <= 0 ? "Hoje" : n === 1 ? "Falta 1 dia" : "Faltam " + n + " dias") + "</span>";
   }
 
   /* texto puro (sem HTML): quem usa em HTML passa por E() */
@@ -264,8 +265,8 @@ window.PACIENTE.iniciar(function () {
       (r || ex.length
         ? '<div class="cartao lista-cartao">' +
           (r
-            ? '<a class="item" href="#agendar/' + r.esp + "/" + r.pessoa + '">' + A.avatar(pessoa(r.pessoa), 40) +
-              '<span class="item__corpo"><span class="item__titulo">' + E(r.titulo) + '</span><span class="item__sub" style="display:block">' + E(pessoa(r.pessoa).curto) + " · marcar até " + A.extenso(r.prazo, false) + "</span></span>" +
+            ? '<a class="item" href="#acompanhamento">' + A.avatar(pessoa(r.pessoa), 40) +
+              '<span class="item__corpo"><span class="item__titulo">' + E(r.titulo) + '</span><span class="item__sub" style="display:block">' + E(pessoa(r.pessoa).curto) + " · " + (r.prazo ? A.extenso(r.prazo, false) : E(r.origem)) + "</span></span>" +
               I("chevron-right", "item__seta") + "</a>"
             : "") +
           /* F28: o exame pedido pelo médico só é "pendente" ou "realizado" (a API manda só os pendentes) */
@@ -728,7 +729,7 @@ window.PACIENTE.iniciar(function () {
             if (resta <= 0) {
               clearInterval(timer);
               g.querySelector("#vaga-sim").disabled = true;
-              erro("O prazo terminou. A vaga foi para a próxima pessoa da fila, e você continua na fila.");
+              erro("O prazo terminou. Você saiu da lista de espera; se quiser, entre de novo.");
               PACIENTE.carregar().then(() => { if (estado.calAtivo) estado.calAtivo.atualizar(); }).catch(() => {});
             }
           }, 1000);
@@ -750,7 +751,7 @@ window.PACIENTE.iniciar(function () {
             g.querySelector("#vaga-nao").addEventListener("click", () => {
               const r = g.querySelector("#recusa");
               r.innerHTML =
-                "<p><b>Recusar esta vaga?</b> Ela passa para a próxima pessoa e você continua na fila.</p>" +
+                "<p><b>Recusar esta vaga?</b> Ela passa para a próxima pessoa e você sai da lista de espera.</p>" +
                 '<div class="gaveta__acoes"><button type="button" class="botao botao--secundario" id="vaga-voltar">Voltar</button>' +
                 '<button type="button" class="botao botao--texto-perigo" id="vaga-nao-sim">Sim, recusar esta vaga</button></div>';
               g.querySelector("#vaga-voltar").addEventListener("click", () => { r.innerHTML = recusaHTML; ligarRecusa(); g.querySelector("#vaga-nao").focus(); });
@@ -764,7 +765,7 @@ window.PACIENTE.iniciar(function () {
                 clearInterval(timer);
                 if (estado.calAtivo) estado.calAtivo.atualizar();
                 fecharGaveta();
-                aviso({ titulo: "Vaga recusada", texto: "Ela passou para a próxima pessoa da fila. Você continua na fila.", icone: "info" });
+                aviso({ titulo: "Vaga recusada", texto: "Você saiu da lista de espera; se quiser, entre de novo.", icone: "info" });
                 navegar();
               });
               g.querySelector("#vaga-voltar").focus();
@@ -963,9 +964,8 @@ window.PACIENTE.iniciar(function () {
     const espPadrao = espPadraoPara(p);
     const retornos = D.acompanhamento.retornos.filter((r) => A.mesmoId(r.pessoa, p.id));
     const exames = D.acompanhamento.exames.filter((x) => A.mesmoId(x.pessoa, p.id) && x.status === "pendente");
-    const ret = retornos[0];
     const precisa = retornos.length || exames.length
-      ? '<section class="secao">' + cabecaSecao("Precisa marcar") +
+      ? '<section class="secao">' + cabecaSecao("Retornos e exames") +
         '<div class="cartao lista-cartao">' +
         retornos.map((r) =>
           '<div class="prev-item"><div class="item__corpo"><p class="prev-item__titulo">' + E(r.titulo) + '</p><p class="prev-item__nota">Com ' + E(medico(r.medico).nome) + ". " + E(r.origem) + ".</p>" +
@@ -977,9 +977,7 @@ window.PACIENTE.iniciar(function () {
         ).join("") +
         "</div></section>"
       : "";
-    const cta = ret
-      ? ["#agendar/" + ret.esp + "/" + p.id, "Marcar " + ret.titulo.charAt(0).toLowerCase() + ret.titulo.slice(1)]
-      : ["#agendar/" + espPadrao + "/" + p.id, "Marcar consulta para " + (A.mesmoId(p.id, D.titular) ? "mim" : p.curto)];
+    const cta = ["#agendar/" + espPadrao + "/" + p.id, "Marcar consulta para " + (A.mesmoId(p.id, D.titular) ? "mim" : p.curto)];
     const html =
       barra(p.curto, p.relacao) +
       '<div class="pessoa-topo">' + A.avatar(p, 112) +
@@ -1176,8 +1174,8 @@ window.PACIENTE.iniciar(function () {
             const p = pessoa(r.pessoa);
             return (
               '<div class="prev-item">' + A.avatar(p, 40) +
-              '<div class="item__corpo"><p class="prev-item__titulo">' + E(r.titulo) + '</p><p class="prev-item__nota">' + E(p.curto) + " · com " + E(medico(r.medico).nome) + "<br>" + E(r.origem) + ". Marcar até " + A.extenso(r.prazo, false) + ".</p>" +
-              '<div class="prev-item__acao">' + seloPrazo(r.prazo) + (r.esp ? '<a class="botao botao--principal botao--pequeno" href="#agendar/' + r.esp + "/" + r.pessoa + '">Agendar retorno</a>' : "") + "</div></div></div>"
+              '<div class="item__corpo"><p class="prev-item__titulo">' + E(r.titulo) + '</p><p class="prev-item__nota">' + E(p.curto) + " · com " + E(medico(r.medico).nome) + "<br>" + E(r.origem) + (r.prazo ? ". Dia " + A.extenso(r.prazo, false) : "") + ".</p>" +
+              '<div class="prev-item__acao">' + seloPrazo(r.prazo) + ligarClinica("Ligar para a clínica") + "</div></div></div>"
             );
           }).join("") +
           "</div>"
@@ -1299,7 +1297,7 @@ window.PACIENTE.iniciar(function () {
 
   /* Notificações (F27): GET /api/pacientes/{id}/notificacoes; "lidas" por PUT .../notificacoes/lidas */
   function telaNotificacoes() {
-    const destinos = { VAGA_OFERECIDA: "#espera", CONSULTA_CONFIRMADA: "#agenda", RESTRICAO: "#agendar" };
+    const destinos = { VAGA_OFERECIDA: "#espera", CONSULTA_CONFIRMADA: "#agenda", RESTRICAO: "#agendar", LEMBRETE: "#inicio" };
     const novos = PACIENTE.avisosNovos();
     const html =
       barra("Notificações") +

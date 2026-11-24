@@ -146,11 +146,12 @@ window.PACIENTE.iniciar(function () {
     }
 
     function seloPrazo(iso) {
+        if (!iso) return '';
         const n = A.diasAte(iso);
         return (
             '<span class="selo selo--alerta">' +
             I('clock') +
-            (n <= 0 ? 'Prazo hoje' : 'Faltam ' + n + ' dias') +
+            (n <= 0 ? 'Hoje' : n === 1 ? 'Falta 1 dia' : 'Faltam ' + n + ' dias') +
             '</span>'
         );
     }
@@ -855,7 +856,7 @@ window.PACIENTE.iniciar(function () {
             '<div>' +
             (retornos.length || exames.length
                 ? '<div class="grupo">' +
-                  cabecaSecao('Precisa marcar') +
+                  cabecaSecao('Retornos e exames') +
                   '<div class="cartao lista-cartao">' +
                   retornos
                       .map(
@@ -935,12 +936,11 @@ window.PACIENTE.iniciar(function () {
                               A.esc(medico(r.medico).nome) +
                               '<br>' +
                               A.esc(r.origem) +
-                              '. Marcar até ' +
-                              A.extenso(r.prazo, false) +
+                              (r.prazo ? '. Dia ' + A.extenso(r.prazo, false) : '') +
                               '.</p>' +
                               '<div class="prev-item__acao">' +
                               seloPrazo(r.prazo) +
-                              (r.esp ? '<a class="botao botao--principal botao--pequeno" href="#agendar/' + r.esp + '/' + r.pessoa + '">Agendar retorno</a>' : '') +
+                              ligarClinica('Ligar para a clínica') +
                               '</div></div></div>'
                           );
                       })
@@ -1377,7 +1377,7 @@ window.PACIENTE.iniciar(function () {
                 '</b></span></p>' +
                 '<p class="campo__erro" id="erro-vaga" role="alert" hidden></p>' +
                 '<div class="gaveta__acoes"><button type="button" class="botao botao--principal botao--largo" id="vaga-sim">Confirmar vaga</button></div>' +
-                '<div class="gaveta__recusa" id="recusa"><button type="button" class="botao botao--texto-perigo" id="vaga-nao">Não quero esta vaga</button><p>A vaga vai para a próxima pessoa da fila, e você continua na fila.</p></div>',
+                '<div class="gaveta__recusa" id="recusa"><button type="button" class="botao botao--texto-perigo" id="vaga-nao">Não quero esta vaga</button><p>A vaga vai para a próxima pessoa da fila, e você sai da lista de espera.</p></div>',
             {
                 montar: (g) => {
                     const saida = g.querySelector('#contagem');
@@ -1397,7 +1397,7 @@ window.PACIENTE.iniciar(function () {
                         if (resta <= 0) {
                             clearInterval(timer);
                             g.querySelector('#vaga-sim').disabled = true;
-                            erro('O prazo terminou. A vaga foi para a próxima pessoa da fila, e você continua na fila.');
+                            erro('O prazo terminou. Você saiu da lista de espera; se quiser, entre de novo.');
                             PACIENTE.carregar().then(() => { if (estado.calAtivo) estado.calAtivo.atualizar(); }).catch(() => {});
                         }
                     }, 1000);
@@ -1425,7 +1425,7 @@ window.PACIENTE.iniciar(function () {
                         clearInterval(timer);
                         fecharGaveta();
                         if (estado.calAtivo) estado.calAtivo.atualizar();
-                        aviso({ titulo: 'Vaga recusada', texto: 'Ela passou para a próxima pessoa da fila. Você continua na fila.', icone: 'info' });
+                        aviso({ titulo: 'Vaga recusada', texto: 'Você saiu da lista de espera; se quiser, entre de novo.', icone: 'info' });
                         navegar();
                     });
                 },

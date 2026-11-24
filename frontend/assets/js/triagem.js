@@ -31,7 +31,7 @@
      São nomes, e não ids: o id de cada especialidade muda de clínica para clínica (F2). */
   function analisar(texto) {
     const t = semAcento(texto);
-    if (/(suicid|me matar|tirar (a )?minha vida|nao quero mais viver|acabar com tudo)/.test(t)) return { tipo: "cvv" };
+    if (/(suicid|me matar|me enforcar|automutil|tirar (a )?(minha |propria )+vida|acabar com (a )?minha vida|acabar com tudo|desistir d[ae] (vida|viver)|(quero|queria|prefiro|preferia|vontade de|melhor) (morrer|sumir)|nao (quero|aguento) mais (viver|existir)|nao quero viver|sem vontade de viver)/.test(t)) return { tipo: "cvv" };
     if (/(dor no peito|aperto no peito|peito doendo|dor forte no peito|falta de ar|nao consigo respirar|dificuldade para respirar|desmai|convuls|boca torta|fraqueza de um lado|nao consegue falar|sangramento forte|sangrando muito|infarto|\bavc\b|inconsciente|engasg)/.test(t)) return { tipo: "emergencia" };
     const D = window.DADOS;
     const quem = descobrirQuem(t, D.pessoas, D.titular);

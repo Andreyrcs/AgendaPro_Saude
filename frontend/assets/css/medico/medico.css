@@ -410,6 +410,7 @@
     font-size: 0.9375rem;
 }
 .campo-med input,
+.campo-med select,
 .campo-med textarea {
     min-height: 44px;
     padding: 10px 14px;
@@ -427,6 +428,7 @@
     cursor: default;
 }
 .campo-med input:focus,
+.campo-med select:focus,
 .campo-med textarea:focus {
     outline: 3px solid var(--noite);
     outline-offset: 1px;

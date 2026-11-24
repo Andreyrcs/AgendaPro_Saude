@@ -94,7 +94,7 @@
     };
   }
 
-  const ICONE_AVISO = { VAGA_OFERECIDA: "bell-ring", CONSULTA_CONFIRMADA: "calendar-days", RESTRICAO: "info" };
+  const ICONE_AVISO = { VAGA_OFERECIDA: "bell-ring", CONSULTA_CONFIRMADA: "calendar-days", RESTRICAO: "info", LEMBRETE: "calendar-days" };
   function quando(dataIso) {
     const n = A.diasAte(dataIso);
     if (n === 0) return "Hoje";

@@ -387,7 +387,8 @@
     marcar.disabled = true;
     marcar.setAttribute("aria-busy", "true");
     try {
-      const r = await API.chamar("POST", "/api/consultas", { pessoa: Number(est.pessoa.id), medico: Number(est.medico), data: est.dia, hora: est.hora, motivo: motivo || null });
+      const r = await API.chamar("POST", "/api/consultas", { pessoa: Number(est.pessoa.id), medico: Number(est.medico), data: est.dia, hora: est.hora, motivo: motivo || null, retorno: retornoDoPaciente() });
+      if (retornoDoPaciente()) retorno = null; /* já marcado: a próxima consulta é comum */
       delete livresApi[est.esp];
       CL.recarregar(["agenda"]).catch(() => {});
       mostrarFeito(
@@ -435,6 +436,11 @@
       seletor.focar();
     });
   }
+
+  /* ─── Retorno que esta consulta atende (veio de "Marcar" na ficha): vale só para aquele paciente ─── */
+  const daUrl = new URLSearchParams(location.search);
+  let retorno = daUrl.get("retorno");
+  const retornoDoPaciente = () => (retorno && A.mesmoId(est.pessoa.id, daUrl.get("paciente")) ? Number(retorno) : null);
 
   /* ─── Primeira pintura, com o que veio na URL ─── */
   (async function () {

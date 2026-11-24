@@ -257,7 +257,7 @@
       cred.hidden = false;
       cred.innerHTML = "<p><b>" + A.esc(r.medico.nome) + " já pode entrar.</b> Passe estes dados ao médico:</p>" +
         "<dl><div><dt>E-mail</dt><dd>" + A.esc(r.usuario.email) + '</dd></div><div><dt>Senha provisória</dt><dd class="num">' + A.esc(r.senhaProvisoria) + "</dd></div></dl>" +
-        '<p class="campo__dica">A senha provisória aparece só desta vez. O médico troca a senha depois de entrar. Agora defina o expediente em <a href="horarios.html#' +
+        '<p class="campo__dica">A senha provisória aparece só desta vez; se perder, o dono gera outra em Clínica e equipe. O médico troca a senha em Meu perfil. Agora defina o expediente em <a href="horarios.html#' +
         encodeURIComponent(String(r.medico.id)) + '">Horários</a>.</p>';
       cred.scrollIntoView({ block: "nearest", behavior: M.reduzido() ? "auto" : "smooth" });
       K.toast({ titulo: r.medico.nome + " cadastrado", texto: "Os dados de acesso estão no alto da página.", icone: "stethoscope" });

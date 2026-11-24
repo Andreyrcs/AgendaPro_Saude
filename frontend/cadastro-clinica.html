@@ -12,6 +12,7 @@
         <link rel="stylesheet" href="assets/css/acesso.css" />
     </head>
     <body>
+        <a class="pular" href="#conteudo">Pular para o conteúdo</a>
         <div class="acesso">
             <header class="acesso__topo">
                 <a href="index.html" class="acesso__marca" aria-label="AgendaPro Saúde - página inicial">
@@ -20,7 +21,7 @@
                 </a>
             </header>
 
-            <main class="acesso__corpo">
+            <main class="acesso__corpo" id="conteudo" tabindex="-1">
                 <div class="cartao-acesso cartao-acesso--largo" id="cartao">
                     <h1 class="cartao-acesso__titulo cartao-acesso__titulo--esq">Cadastrar sua clínica</h1>
                     <p class="cartao-acesso__sub cartao-acesso__sub--esq">
@@ -51,7 +52,7 @@
                                 </div>
                                 <div class="campo">
                                     <label class="campo__rotulo" for="telefone">Telefone da recepção</label>
-                                    <input class="campo__entrada" id="telefone" name="telefone" type="tel" inputmode="tel" placeholder="(11) 2345-0000" autocomplete="tel" />
+                                    <input class="campo__entrada" id="telefone" name="telefone" type="tel" inputmode="tel" placeholder="(00) 0000-0000" autocomplete="tel" />
                                     <span class="campo__erro" id="erro-telefone" aria-live="polite"></span>
                                 </div>
                             </div>

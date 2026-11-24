@@ -125,10 +125,42 @@
         '<span class="avatar-iniciais" style="--tam: 40px; background: ' + (COR[u.papel] || COR.recepcao) + '" aria-hidden="true">' + (nome ? A.esc(A.iniciais(nome)) : "") + "</span>" +
         '<span class="pessoa-equipe__texto"><b>' + A.esc(nome) + (voce ? ' <span class="pessoa-equipe__voce">você</span>' : "") + "</b><span>" + A.esc(u.email) + "</span></span>" +
         '<span class="selo">' + A.esc(API.PAPEIS[u.papel] || u.papel) + "</span>" +
+        (dono && !voce && (u.papel === "recepcao" || u.papel === "medico") ? '<button type="button" class="botao botao--secundario botao--pequeno" data-nova-senha="' + A.esc(u.id) + '">Gerar nova senha provisória</button>' : "") +
         (podeRemover ? '<button type="button" class="botao botao--texto-perigo botao--pequeno" data-remover="' + A.esc(u.id) + '">Remover</button>' : "") +
         "</li>";
     }).join("");
   }
+  /* Só o dono: a senha anterior da pessoa deixa de valer */
+  function mostrarCredencial(titulo, email, senha) {
+    const cred = $("#credencial");
+    cred.hidden = false;
+    cred.innerHTML = "<p>" + titulo + "</p>" +
+      '<dl><div><dt>E-mail</dt><dd>' + A.esc(email) + '</dd></div><div><dt>Senha provisória</dt><dd class="num">' + A.esc(senha) + "</dd></div></dl>" +
+      '<p class="campo__dica">A senha provisória aparece só desta vez. Se perder, gere outra na lista da equipe.</p>';
+    cred.scrollIntoView({ block: "nearest" });
+  }
+  $("#equipe").addEventListener("click", async (ev) => {
+    const b = ev.target.closest("[data-nova-senha]");
+    if (!b || b.disabled) return;
+    const li = b.closest("li");
+    /* o primeiro clique avisa, o segundo confirma: a pessoa perde a senha que usa hoje */
+    if (!b.dataset.confirma) {
+      b.dataset.confirma = "1";
+      b.textContent = "Sim, trocar a senha atual";
+      b.addEventListener("blur", () => { delete b.dataset.confirma; b.textContent = "Gerar nova senha provisória"; }, { once: true });
+      return;
+    }
+    b.disabled = true;
+    try {
+      const r = await API.gerarSenhaProvisoria(b.dataset.novaSenha);
+      mostrarCredencial("Nova senha de <b>" + A.esc(li.querySelector("b").firstChild.textContent) + "</b>. A anterior não vale mais:", li.querySelector(".pessoa-equipe__texto > span").textContent, r.senhaProvisoria);
+    } catch (e) {
+      K.toast({ titulo: "Não deu para gerar a senha", texto: e.message, icone: "info" });
+      desenharEquipe();
+    }
+    b.disabled = false;
+  });
+
   $("#equipe").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-remover]");
     if (!b) return;
@@ -171,11 +203,7 @@
     try {
       const r = await API.cadastrarRecepcionista({ nome, email });
       fn.reset();
-      const cred = $("#credencial");
-      cred.hidden = false;
-      cred.innerHTML = "<p><b>" + A.esc(r.usuario.nome) + " já pode entrar.</b> Passe estes dados à pessoa:</p>" +
-        '<dl><div><dt>E-mail</dt><dd>' + A.esc(r.usuario.email) + '</dd></div><div><dt>Senha provisória</dt><dd class="num">' + A.esc(r.senhaProvisoria) + "</dd></div></dl>" +
-        '<p class="campo__dica">A senha provisória aparece só desta vez. A pessoa troca a senha em Minha conta.</p>';
+      mostrarCredencial("<b>" + A.esc(r.usuario.nome) + " já pode entrar.</b> Passe estes dados à pessoa:", r.usuario.email, r.senhaProvisoria);
       await desenharEquipe();
       K.toast({ titulo: r.usuario.nome + " entrou na equipe", texto: "Função: Recepção", icone: "user-check" });
     } catch (e) {

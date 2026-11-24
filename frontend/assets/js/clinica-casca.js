@@ -40,7 +40,7 @@
   try { Object.assign(pref, JSON.parse(localStorage.getItem(CHAVE_PREF)) || {}); } catch (e) { /* sem armazenamento */ }
   function aplicarPref() {
     const raiz = document.documentElement;
-    raiz.style.fontSize = pref.texto === "grande" ? "112.5%" : "";
+    raiz.style.fontSize = { grande: "118.75%", "muito-grande": "137.5%" }[pref.texto] || "";
     if (pref.movimento === "reduzido") raiz.dataset.movimento = "reduzido"; else delete raiz.dataset.movimento;
     raiz.dataset.lateral = pref.menu === "recolhido" ? "recolhida" : "aberta";
   }

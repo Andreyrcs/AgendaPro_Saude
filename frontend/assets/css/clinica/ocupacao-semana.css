@@ -20,7 +20,7 @@
 }
 .calor__grade {
   display: grid;
-  grid-template-columns: 74px repeat(11, minmax(0, 1fr));
+  grid-template-columns: 4.625rem repeat(11, minmax(0, 1fr));
   gap: 2px;
   margin-top: 10px;
 }

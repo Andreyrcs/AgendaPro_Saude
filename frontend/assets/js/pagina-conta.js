@@ -93,7 +93,8 @@
   });
   $("#seg-texto").addEventListener("keydown", (ev) => {
     if (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft") return;
-    const v = K.pref.texto === "normal" ? "grande" : "normal";
+    const ordem = ["normal", "grande", "muito-grande"];
+    const v = ordem[(ordem.indexOf(K.pref.texto) + (ev.key === "ArrowRight" ? 1 : 2)) % 3];
     K.mudarPref("texto", v);
     desenharPref();
     $('#seg-texto [data-texto="' + v + '"]').focus();

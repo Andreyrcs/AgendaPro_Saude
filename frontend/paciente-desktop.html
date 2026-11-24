@@ -32,6 +32,7 @@
         <link rel="stylesheet" href="assets/css/paciente-desktop.css" />
     </head>
     <body class="corpo">
+        <a class="pular" href="#conteudo" onclick="event.preventDefault();document.getElementById('conteudo').focus()">Pular para o conteúdo</a>
         <div class="casca">
             <aside class="lateral" aria-label="Navegação do paciente">
                 <div>
@@ -136,7 +137,7 @@
                 </a>
             </aside>
 
-            <main class="conteudo" id="conteudo">
+            <main class="conteudo" id="conteudo" tabindex="-1">
                 <div id="pagina"></div>
             </main>
         </div>
