@@ -183,15 +183,7 @@ export default function EsperaTela({ navigation }) {
         ))}
       </Cartao>
 
-      <Botao
-        titulo="Atualizar a fila"
-        variante="secundario"
-        icone="refresh-cw"
-        onPress={atualizar}
-        carregando={atualizando}
-        desativado={!!vaga}
-        style={estilos.espacoTopo}
-      />
+    
 
       <Botao titulo="Sair da fila" variante="textoPerigo" onPress={() => setPerguntandoSaida(true)} style={estilos.espacoTopo} />
       <Texto variante="meta" style={estilos.centro}>
@@ -272,7 +264,8 @@ const estilos = StyleSheet.create({
     backgroundColor: cores.menta2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
+  },
+
   vaga: { flexDirection: 'row', alignItems: 'center', gap: espaco.g },
   contagem: { flexDirection: 'row', alignItems: 'center', gap: espaco.p, backgroundColor: cores.menta2, borderRadius: raios.folha, padding: espaco.m },
   relogio: { fontFamily: fontes.numeroForte },
