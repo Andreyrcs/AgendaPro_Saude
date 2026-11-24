@@ -87,10 +87,10 @@ export default function InicioTela({ navigation }) {
   const proxima = dados.consultas.proximas[0];
   const { fila, familia, acompanhamento } = dados;
   const pendencias = [
-    ...acompanhamento.retornos.map((r) => ({ id: r.id, pessoa: r.pessoa, titulo: r.titulo, sub: `Marque até ${diaEMes(r.prazo)}` })),
+    ...acompanhamento.retornos.map((r) => ({ id: `retorno-${r.id}`, pessoa: r.pessoa, titulo: r.titulo, sub: r.prazo ? `Marcado para ${diaEMes(r.prazo)}` : r.origem })),
     ...acompanhamento.exames
       .filter((e) => e.status === 'pendente')
-      .map((e) => ({ id: e.id, pessoa: e.pessoa, titulo: e.titulo, sub: e.obs })),
+      .map((e) => ({ id: `exame-${e.id}`, pessoa: e.pessoa, titulo: e.titulo, sub: e.obs || e.origem || 'Exame pedido' })),
   ].slice(0, 2);
 
   return (

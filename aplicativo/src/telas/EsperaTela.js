@@ -55,7 +55,7 @@ export default function EsperaTela({ navigation }) {
   // Acabou o tempo: a vaga passa para a próxima pessoa (mesmo efeito de recusar)
   useEffect(() => {
     if (vaga && restante <= 0 && !respondendo) {
-      responder(false, 'O tempo acabou e a vaga passou para a próxima pessoa. Você continua em 1º.');
+      responder(false, 'O prazo terminou. Você saiu da lista de espera; se quiser, entre de novo.');
     }
   });
 
@@ -104,7 +104,7 @@ export default function EsperaTela({ navigation }) {
       if (consulta) {
         setAceita(consulta);
       } else {
-        setAviso(mensagem || 'Vaga recusada. Ela passou para a próxima pessoa. Você continua em 1º.');
+        setAviso(mensagem || 'Vaga recusada. Você saiu da lista de espera; se quiser, entre de novo.');
         await recarregar();
       }
     } catch (e) {
@@ -238,7 +238,7 @@ export default function EsperaTela({ navigation }) {
               Confirme em até <Texto style={estilos.relogio}>{relogio(restante)}</Texto>
             </Texto>
           </View>
-          <Texto variante="meta">Se você não quiser, a vaga vai para a próxima pessoa e você continua em 1º.</Texto>
+          <Texto variante="meta">Se você não quiser, a vaga vai para a próxima pessoa e você sai da lista de espera.</Texto>
         </Confirmacao>
       )}
     </Tela>

@@ -45,8 +45,11 @@ export default function PosConsultaTela({ navigation }) {
       {retornos.length === 0 && <EstadoVazio icone="repeat" titulo="Nenhum retorno pendente" />}
       <View style={estilos.lista}>
         {retornos.map((r) => {
-          const faltam = diasAte(r.prazo);
-          const urgente = faltam <= 30;
+          const faltam = r.prazo ? diasAte(r.prazo) : null;
+          const urgente = faltam !== null && faltam <= 30;
+          const prazo = faltam === null ? 'A recepção vai marcar'
+            : faltam <= 0 ? 'Marcado para hoje'
+            : `Marcado para ${diaEMes(r.prazo)} (${faltam === 1 ? 'falta 1 dia' : `faltam ${faltam} dias`})`;
           return (
             <Cartao key={r.id} style={estilos.item}>
               <View style={estilos.linha}>
@@ -58,14 +61,8 @@ export default function PosConsultaTela({ navigation }) {
                   </Texto>
                 </View>
               </View>
-              <Selo texto={`Marque até ${diaEMes(r.prazo)} (faltam ${faltam} dias)`} tom={urgente ? 'alerta' : 'neutro'} />
+              <Selo texto={prazo} tom={urgente ? 'alerta' : 'neutro'} />
               <Texto variante="meta">{r.origem}</Texto>
-              <Botao
-                titulo="Marcar o retorno"
-                icone="calendar"
-                pequeno
-                onPress={() => navigation.navigate('Agendar', { especialidade: r.especialidade.id, pessoa: r.pessoa.id })}
-              />
               {!!clinica.telefoneLink && <Botao
                 titulo="Ligar para a clínica"
                 variante="secundario"
