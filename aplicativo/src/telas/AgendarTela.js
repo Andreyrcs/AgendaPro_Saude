@@ -48,7 +48,7 @@ function EscolherEspecialidade({ navigation, params }) {
       {dados && (
         <>
           <Cartao
-            onPress={() => navigation.navigate('Assistente')}
+            onPress={() => navigation.navigate('InicioAba', { screen: 'Assistente', initial: false })}
             style={estilos.dicaAssistente}
             accessibilityLabel="Não sabe qual escolher? Conte o que sente ao assistente."
           >
@@ -245,6 +245,12 @@ function EscolherHorario({ navigation, params }) {
         </Cartao>
       )}
 
+      {dados.horarios.length === 0 && (
+        <Texto style={estilos.nota}>
+          Sem horário disponível no momento: ainda não há médico nesta especialidade. Ligue para a clínica
+          {clinicaDaSessao(usuario).telefone ? `: ${clinicaDaSessao(usuario).telefone}` : ''}.
+        </Texto>
+      )}
       <View style={estilos.lista}>
         {horarios.map(({ medico, dias }) => (
           <Cartao key={medico.id} style={estilos.medico}>

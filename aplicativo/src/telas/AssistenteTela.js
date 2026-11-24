@@ -3,7 +3,7 @@
 // NÃO faz diagnóstico, e em emergência NÃO agenda: manda ligar 192 (SAMU).
 
 import { useRef, useState } from 'react';
-import { FlatList, Linking, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, FlatList, Linking, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Tela from '../componentes/Tela';
 import Texto from '../componentes/Texto';
@@ -17,7 +17,7 @@ import { cores } from '../estilos/cores';
 import { fontes, tamanhos } from '../estilos/tipografia';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 import { relativo } from '../utilitarios/datas';
-import { primeiroNome } from '../utilitarios/texto';
+import { clinicaDaSessao, primeiroNome } from '../utilitarios/texto';
 
 const RESPOSTAS_RAPIDAS = [
   { texto: 'Meu filho está com dor de ouvido' },
@@ -28,6 +28,12 @@ const RESPOSTAS_RAPIDAS = [
 
 let proximoId = 1;
 const novaMensagem = (autor, conteudo) => ({ id: String(proximoId++), autor, ...conteudo });
+
+// Abre a discagem (ou o mapa). Se o aparelho não conseguir, mostra o número em vez de não fazer nada.
+function abrir(link, aviso) {
+  Linking.openURL(link).catch(() => Alert.alert('Não foi possível abrir', aviso));
+}
+const ligar = (numero) => abrir(`tel:${numero}`, `Ligue para ${numero} de qualquer telefone.`);
 
 export default function AssistenteTela({ navigation }) {
   const { usuario } = useSessao();
@@ -45,15 +51,25 @@ export default function AssistenteTela({ navigation }) {
 
   function enviar(conteudo) {
     const limpo = conteudo.trim();
-    if (!limpo || digitando || !familia) return;
+    if (!limpo || digitando) return;
     setTexto('');
     setMensagens((atuais) => [...atuais, novaMensagem('eu', { texto: limpo })]);
+    responder(limpo);
+  }
+
+  // Também é o "Tentar de novo" (sem repetir a mensagem da pessoa). Sem a lista da família (API fora do ar),
+  // a emergência e o CVV respondem do mesmo jeito.
+  function responder(conteudo) {
+    if (digitando) return;
     setDigitando(true);
     // Pequena pausa de "digitando", mais curta para quem pediu menos movimento
     setTimeout(async () => {
-      const resposta = await analisarSintomas(usuario, limpo, familia);
-      setMensagens((atuais) => [...atuais, novaMensagem('assistente', { resposta })]);
-      setDigitando(false);
+      try {
+        const resposta = await analisarSintomas(usuario, conteudo, familia);
+        setMensagens((atuais) => [...atuais, novaMensagem('assistente', { resposta, pergunta: conteudo })]);
+      } finally {
+        setDigitando(false);
+      }
     }, reduzirMovimento ? 350 : 800);
   }
 
@@ -88,6 +104,7 @@ export default function AssistenteTela({ navigation }) {
             onPress={() => enviar(texto)}
             accessibilityRole="button"
             accessibilityLabel="Enviar"
+            disabled={!texto.trim() || digitando}
             accessibilityState={{ disabled: !texto.trim() || digitando }}
             style={[estilos.enviar, (!texto.trim() || digitando) && { opacity: 0.5 }]}
           >
@@ -115,7 +132,15 @@ export default function AssistenteTela({ navigation }) {
         contentContainerStyle={estilos.conversa}
         onContentSizeChange={() => lista.current?.scrollToEnd({ animated: !reduzirMovimento })}
         keyboardShouldPersistTaps="handled"
-        renderItem={({ item }) => <Mensagem mensagem={item} aoEscolher={irParaAgendar} />}
+        renderItem={({ item }) => (
+          <Mensagem
+            mensagem={item}
+            clinica={clinicaDaSessao(usuario)}
+            aoEscolher={irParaAgendar}
+            aoTentarDeNovo={() => responder(item.pergunta)}
+            aoAdicionarFamiliar={() => navigation.navigate('FamiliaAba', { screen: 'AdicionarFamiliar', initial: false })}
+          />
+        )}
         ListFooterComponent={
           <>
             {soBoasVindas && (
@@ -125,6 +150,9 @@ export default function AssistenteTela({ navigation }) {
                     key={r.texto}
                     onPress={() => enviar(r.texto)}
                     accessibilityRole="button"
+                    accessibilityLabel={r.texto}
+                    accessibilityHint="Envia esta frase ao assistente"
+                    disabled={digitando}
                     style={[estilos.rapida, r.alerta && estilos.rapidaAlerta]}
                   >
                     <Texto variante="rotulo" cor={r.alerta ? cores.domingo : cores.noite}>
@@ -147,7 +175,7 @@ export default function AssistenteTela({ navigation }) {
 }
 
 // Um balão da conversa
-function Mensagem({ mensagem, aoEscolher }) {
+function Mensagem({ mensagem, clinica, aoEscolher, aoTentarDeNovo, aoAdicionarFamiliar }) {
   if (mensagem.autor === 'eu') {
     return (
       <View style={[estilos.balao, estilos.balaoEu]}>
@@ -179,12 +207,12 @@ function Mensagem({ mensagem, aoEscolher }) {
           Dor no peito, falta de ar, desmaio ou fraqueza de um lado do corpo precisam de atendimento{' '}
           <Texto variante="negrito">agora</Texto>. Não espere por uma consulta.
         </Texto>
-        <Botao titulo="Ligar 192 (SAMU)" variante="perigo" icone="phone" onPress={() => Linking.openURL('tel:192')} />
+        <Botao titulo="Ligar 192 (SAMU)" variante="perigo" icone="phone" onPress={() => ligar('192')} />
         <Botao
           titulo="Pronto-socorro mais perto"
           variante="secundario"
           icone="map-pin"
-          onPress={() => Linking.openURL('https://www.google.com/maps/search/pronto-socorro')}
+          onPress={() => abrir('https://www.google.com/maps/search/pronto-socorro', 'Ligue 192 (SAMU).')}
         />
       </View>
     );
@@ -202,28 +230,73 @@ function Mensagem({ mensagem, aoEscolher }) {
         <Texto>
           Converse agora com alguém do CVV, de graça, 24 horas por dia. Se houver risco imediato, ligue para o SAMU.
         </Texto>
-        <Botao titulo="Ligar 188 (CVV)" variante="perigo" icone="phone" onPress={() => Linking.openURL('tel:188')} />
-        <Botao titulo="Ligar 192 (SAMU)" variante="secundario" icone="phone" onPress={() => Linking.openURL('tel:192')} />
+        <Botao titulo="Ligar 188 (CVV)" variante="perigo" icone="phone" onPress={() => ligar('188')} />
+        <Botao titulo="Ligar 192 (SAMU)" variante="secundario" icone="phone" onPress={() => ligar('192')} />
+      </View>
+    );
+  }
+
+  if (r.tipo === 'naoEntendi') {
+    return (
+      <View style={[estilos.balao, estilos.balaoAssistente]}>
+        <Texto>Não entendi. Escreva com palavras o que está sentindo, por exemplo: “dor de garganta e febre”.</Texto>
+      </View>
+    );
+  }
+
+  const ligarClinica = !!clinica.telefoneLink && (
+    <Botao
+      titulo="Ligar para a clínica"
+      variante="secundario"
+      icone="phone"
+      pequeno
+      accessibilityHint={`Liga para ${clinica.nome}, ${clinica.telefone}`}
+      onPress={() => abrir(clinica.telefoneLink, `Ligue para ${clinica.telefone}.`)}
+    />
+  );
+
+  // A API não respondeu: diz o que houve e deixa tentar de novo
+  if (r.erro) {
+    return (
+      <View style={estilos.sugestoes} accessibilityRole="alert" accessibilityLiveRegion="polite">
+        <View style={[estilos.balao, estilos.balaoAssistente]}>
+          <Texto>{r.erro.replace(/\.$/, '')}. Não consegui ver as especialidades da clínica agora. Se for grave, ligue 192 (SAMU).</Texto>
+        </View>
+        <Botao titulo="Tentar de novo" variante="secundario" icone="refresh-cw" pequeno onPress={aoTentarDeNovo} />
+        {ligarClinica}
       </View>
     );
   }
 
   // Sugestão de especialidades
-  const intro = r.quem.titular
-    ? 'Entendi. Pelo que você contou, estas especialidades podem ajudar:'
-    : `Entendi. Para ${r.quem.curto}, estas especialidades podem ajudar:`;
+  const temCartao = r.especialidades.length > 0;
+  const paraQuem = r.quem.titular ? '' : `Para ${r.quem.curto}, `;
+  let intro = paraQuem ? `Entendi. ${paraQuem}estas especialidades podem ajudar:` : 'Entendi. Pelo que você contou, estas especialidades podem ajudar:';
+  if (!r.reconhecido) intro = 'Não reconheci um sintoma no que você escreveu. Pode contar de outro jeito, ou começar por aqui:';
+  if (!temCartao) intro = 'Entendi.';
 
   return (
     <View style={estilos.sugestoes}>
       <View style={[estilos.balao, estilos.balaoAssistente]}>
         <Texto>{intro}</Texto>
       </View>
+      {r.naoCadastrado && (
+        <>
+          <View style={[estilos.balao, estilos.balaoAssistente]}>
+            <Texto>Essa pessoa ainda não está na sua família. Para marcar para ela, adicione primeiro.</Texto>
+          </View>
+          <Botao titulo="Adicionar familiar" variante="secundario" icone="user-plus" pequeno onPress={aoAdicionarFamiliar} />
+        </>
+      )}
       {r.especialidades.map((e) => {
         const h = e.primeiroHorario;
-        const sub = h
-          ? `Próximo horário: ${relativo(h.data)}, ${h.hora} com ${h.medico.nome}`
-          : 'Sem horário livre agora. Você pode entrar na lista de espera.';
-        return (
+        const sub = {
+          livre: h && `Próximo horário: ${relativo(h.data)}, ${h.hora} com ${h.medico.nome}`,
+          semHorario: 'Sem horário disponível no momento',
+          semMedico: 'Sem horário disponível no momento: ainda não há médico nesta especialidade',
+          desconhecida: 'Toque para ver os horários',
+        }[e.situacao];
+        const cartao = (
           <Pressable
             key={e.id}
             onPress={() => aoEscolher(e.id, r.quem.id)}
@@ -242,7 +315,35 @@ function Mensagem({ mensagem, aoEscolher }) {
             <Feather name="chevron-right" size={22} color={cores.tinta3} />
           </Pressable>
         );
+        if (e.situacao === 'semHorario') {
+          // a fila é por médico: a próxima tela mostra cada um com "Entrar na lista de espera"
+          return (
+            <View key={e.id} style={estilos.sugestoes}>
+              {cartao}
+              <Botao
+                titulo="Entrar na lista de espera"
+                variante="menta"
+                icone="list"
+                pequeno
+                accessibilityLabel={`Entrar na lista de espera de ${e.nome}`}
+                onPress={() => aoEscolher(e.id, r.quem.id)}
+              />
+            </View>
+          );
+        }
+        if (e.situacao === 'semMedico') return <View key={e.id} style={estilos.sugestoes}>{cartao}{ligarClinica}</View>;
+        return cartao;
       })}
+      {r.naoAtendidas.length > 0 && (
+        <View style={estilos.sugestoes}>
+          <View style={[estilos.balao, estilos.balaoAssistente]}>
+            <Texto>
+              {clinica.nome} não atende {r.naoAtendidas.join(' nem ')}.{temCartao ? '' : ' Ligue para a clínica para saber quem pode atender.'}
+            </Texto>
+          </View>
+          {!temCartao && ligarClinica}
+        </View>
+      )}
       <View style={[estilos.balao, estilos.balaoAssistente]}>
         <Texto>
           Isto é uma orientação, não um diagnóstico. Se piorar, ou se aparecer febre alta, falta de ar ou dor forte,

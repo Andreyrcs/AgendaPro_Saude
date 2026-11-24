@@ -3,6 +3,7 @@
 // GET /api/especialidades/{id}/horarios-livres. A clínica é a da sessão (GET /api/pacientes/{id}/clinicas no login).
 
 import { chamarApi } from './api';
+import { mesmaEspecialidade } from '../utilitarios/texto';
 
 // Especialidade da API: { id, nome, duracao }. "desc" é o texto curto que as telas mostram embaixo do nome.
 const comDescricao = (e) => ({ ...e, desc: `Consulta de ${e.duracao} minutos` });
@@ -19,10 +20,9 @@ export async function buscarEspecialidade(idEspecialidade) {
 
 // Procura a especialidade pelo NOME na clínica do paciente (os ids mudam de clínica para clínica).
 // Devolve a especialidade ou null.
-const semAcento = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
 export async function especialidadePeloNome(usuario, nome) {
   const lista = await listarEspecialidades(usuario);
-  return lista.find((e) => semAcento(e.nome) === semAcento(nome)) || null;
+  return lista.find((e) => mesmaEspecialidade(e.nome, nome)) || null;
 }
 
 // "Marcar" da prevenção: devolve o id da especialidade ou lança "Esta clínica não atende essa especialidade."
