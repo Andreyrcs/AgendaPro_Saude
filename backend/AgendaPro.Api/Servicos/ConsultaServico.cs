@@ -82,13 +82,38 @@ public class ConsultaServico : IConsultaServico
         }
 
         await ConferirPediatriaAsync(medico, paciente);
+        await ConferirRetornoAsync(dados.Retorno, paciente.Id, medico.Id, logado);
 
         var motivo = string.IsNullOrWhiteSpace(dados.Motivo) ? null : dados.Motivo.Trim();
+        if (dados.Retorno is not null)
+            motivo = AcompanhamentoServico.MotivoRetorno(motivo);
+
         var idConsulta = await _consultas.AgendarAsync(paciente.Id, medico.Id,
             dados.Data!.Value.ToDateTime(TimeOnly.MinValue), FormatadorTexto.Hora(dados.Hora), motivo,
-            pelaRecepcao: logado.EhRecepcaoOuDono);
+            pelaRecepcao: logado.EhRecepcaoOuDono, dados.Retorno)
+            ?? throw new ErroApi(StatusCodes.Status400BadRequest, RetornoJaMarcado);
 
         return await ObterAsync(idConsulta, logado);
+    }
+
+    private const string RetornoJaMarcado = "Este retorno já foi marcado.";
+
+    // O retorno encaminhado é do mesmo paciente e do mesmo médico, e quem marca é a recepção
+    private async Task ConferirRetornoAsync(int? idRetorno, int idPaciente, int idMedico, UsuarioLogado logado)
+    {
+        if (idRetorno is null)
+            return;
+
+        if (logado.EhPaciente)
+            throw new ErroApi(StatusCodes.Status403Forbidden, "O retorno é marcado pela recepção da clínica.");
+
+        var retorno = await _acompanhamento.BuscarRetornoAsync(idRetorno.Value);
+        if (retorno is null || retorno.Paciente.Id != idPaciente)
+            throw new ErroApi(StatusCodes.Status404NotFound, "Retorno não encontrado.");
+        if (retorno.Medico.Id != idMedico)
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Este retorno é com " + retorno.Medico.Nome + ".");
+        if (retorno.Retorno.Status != "ENCAMINHADO")
+            throw new ErroApi(StatusCodes.Status400BadRequest, RetornoJaMarcado);
     }
 
     // Recepção e dono: cancela e agenda o novo horário para o mesmo paciente, com o mesmo motivo
@@ -218,6 +243,10 @@ public class ConsultaServico : IConsultaServico
         // Perfil que não faz essa ação (ex.: recepção finalizando o atendimento)
         if (logado.EhMedico ? !regra.Medico : !regra.Recepcao)
             return null;
+
+        // Por data, e não por hora: dá para adiantar quem chegou antes, mas não a consulta de outro dia
+        if (regra.Novo is "EM_ATENDIMENTO" or "ATENDIDA" && consulta.Consulta.DataConsulta.Date > DateTime.Today)
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Só dá para atender a consulta a partir do dia dela.");
 
         if (!await _consultas.MudarStatusAsync(id, regra.Atuais, regra.Novo))
             throw new ErroApi(StatusCodes.Status400BadRequest, regra.Erro);

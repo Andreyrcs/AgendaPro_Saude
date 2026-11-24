@@ -20,7 +20,14 @@ public class AcompanhamentoServico : IAcompanhamentoServico
         _consultas = consultas;
     }
 
-    // Com data: AGENDADO; sem data: ENCAMINHADO à recepção (Apêndice C; medico.js:944)
+    // Motivo da consulta de retorno (até 500: coluna Consultas.Motivo)
+    internal static string MotivoRetorno(string? motivo)
+    {
+        var texto = motivo is null || motivo.StartsWith("Retorno") ? motivo ?? "Retorno" : "Retorno · " + motivo;
+        return texto.Length > 500 ? texto[..500] : texto;
+    }
+
+    // Com data definida: a consulta de retorno fica marcada (AGENDADO); sem data: ENCAMINHADO à recepção (Apêndice C)
     public async Task<RetornoResposta?> MarcarRetornoAsync(RetornoRequisicao dados, UsuarioLogado logado)
     {
         var consulta = await ConsultaDoMedicoAsync(dados.Consulta!.Value, logado);
@@ -40,7 +47,12 @@ public class AcompanhamentoServico : IAcompanhamentoServico
             Status = dados.Data is null ? "ENCAMINHADO" : "AGENDADO"
         };
 
-        var id = await _acompanhamento.CriarRetornoAsync(retorno);
+        if (dados.Data is not null && dados.Hora is null)
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Escolha o horário do retorno.");
+
+        var id = dados.Data is null
+            ? await _acompanhamento.CriarRetornoAsync(retorno)
+            : await _acompanhamento.CriarRetornoComConsultaAsync(retorno, FormatadorTexto.Hora(dados.Hora!), MotivoRetorno(null));
         return RespostaRetorno((await _acompanhamento.BuscarRetornoAsync(id))!);
     }
 
@@ -92,20 +104,18 @@ public class AcompanhamentoServico : IAcompanhamentoServico
     // Formato de aplicativo-integracao-api.md:200-204, com os textos de paciente-servicos.js:294-303
     public async Task<AcompanhamentoResposta> ListarDaContaAsync(int idConta)
     {
-        var hoje = DateOnly.FromDateTime(DateTime.Today);
-
         var retornos = (await _acompanhamento.ListarRetornosPendentesDaContaAsync(idConta))
             .Select(r => new RetornoPendenteResposta(
                 r.Retorno.Id,
                 "Retorno com " + r.Medico.Nome,
-                // Encaminhado não tem data: a web usa a de hoje (paciente-servicos.js:298)
-                r.Retorno.DataRetorno is null ? hoje : DateOnly.FromDateTime(r.Retorno.DataRetorno.Value),
-                (r.Retorno.Status == "ENCAMINHADO" ? "A recepção vai combinar a data com você" : "Data indicada pelo médico")
+                // Encaminhado ainda não tem data
+                r.Retorno.DataRetorno is null ? (DateOnly?)null : DateOnly.FromDateTime(r.Retorno.DataRetorno.Value),
+                (r.Retorno.Status == "ENCAMINHADO" ? "A recepção vai combinar a data com você" : "Retorno marcado")
                     + (r.Retorno.Nota is null ? "" : " · " + r.Retorno.Nota),
                 PacienteServico.Familiar(r.Paciente),
                 new MedicoResumoResposta(r.Medico.Id, r.Medico.Nome),
                 new EspecialidadeResumoResposta(r.Especialidade.Id, r.Especialidade.Nome)))
-            .OrderBy(r => r.Prazo) // aplicativo/src/servicos/acompanhamento.js:20
+            .OrderBy(r => r.Prazo ?? DateOnly.MaxValue) // sem data, por último
             .ToList();
 
         var exames = (await _acompanhamento.ListarExamesPendentesDaContaAsync(idConta))

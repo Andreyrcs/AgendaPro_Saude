@@ -82,6 +82,16 @@ public class ClinicasController : ApiControllerBase
     }
 
     [Authorize(Roles = "dono")]
+    [HttpPost("api/clinicas/{idClinica:int}/equipe/{usuarioId:int}/senha-provisoria")]
+    public async Task<ActionResult<SenhaProvisoriaResposta>> GerarSenhaProvisoria(int idClinica, int usuarioId)
+    {
+        var resposta = await _servico.GerarSenhaProvisoriaAsync(idClinica, usuarioId, Logado);
+        if (resposta is null)
+            return Forbid();
+        return Ok(resposta);
+    }
+
+    [Authorize(Roles = "dono")]
     [HttpDelete("api/clinicas/{idClinica:int}/equipe/{usuarioId:int}")]
     public async Task<IActionResult> RemoverDaEquipe(int idClinica, int usuarioId)
     {

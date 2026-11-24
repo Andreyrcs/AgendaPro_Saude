@@ -117,7 +117,7 @@ Quadro C.1 – Rotas da API
 | GET /api/pacientes/{id}/clinicas | Paciente | Lista as clínicas às quais a conta está vinculada |
 | POST /api/pacientes/{id}/clinicas | Paciente | Vincula a conta a uma clínica |
 | GET /api/pacientes/{id}/situacao | Paciente, recepção e dono | Faltas registradas e restrição em vigor (visão vw_SituacaoConta) |
-| GET /api/pacientes/{id}/notificacoes | Paciente | Lista os avisos da conta, como vaga oferecida e consulta confirmada |
+| GET /api/pacientes/{id}/notificacoes | Paciente | Lista os avisos da conta, como vaga oferecida, consulta confirmada, restrição e lembrete da véspera (LEMBRETE) |
 | PUT /api/pacientes/{id}/notificacoes/lidas | Paciente | Marca todos os avisos como lidos |
 | POST /api/clinicas | Público | Cria a clínica, gera o código AAA-0000 e cria a conta do dono na mesma transação |
 | GET /api/clinicas?busca= | Paciente | Busca clínicas públicas pelo nome ou pela cidade |
@@ -125,6 +125,7 @@ Quadro C.1 – Rotas da API
 | PUT /api/clinicas/{id} | Dono | Altera os dados da clínica, exceto o CNPJ |
 | GET /api/clinicas/{id}/equipe | Dono e recepção | Lista o dono, as recepcionistas e os médicos da clínica |
 | POST /api/clinicas/{id}/equipe | Dono | Cria a conta de uma recepcionista com senha provisória |
+| POST /api/clinicas/{id}/equipe/{usuarioId}/senha-provisoria | Dono | Gera outra senha provisória para médico ou recepcionista (a anterior deixa de valer) |
 | DELETE /api/clinicas/{id}/equipe/{usuarioId} | Dono | Desativa a conta de uma recepcionista; o dono não pode remover a própria conta |
 | GET /api/clinicas/{id}/pacientes | Recepção e dono | Busca e filtra os pacientes vinculados à clínica |
 | GET /api/clinicas/{id}/faltas?paciente= | Recepção e dono | Lista as faltas de um paciente para a ficha |
@@ -145,7 +146,7 @@ Quadro C.1 – Rotas da API
 | DELETE /api/consultas/{id} | Paciente e recepção | Cancela a consulta; a vaga vai para a lista de espera (sp_CancelarConsulta) |
 | POST /api/consultas/{id}/oferecer | Recepção e dono | Oferece ao primeiro da lista de espera uma vaga que ficou parada (sp_OferecerVaga) |
 | PUT /api/consultas/{id}/presenca | Paciente | Responde "Vou" ou "Não vou" na véspera (sp_ConfirmarPresenca) |
-| PUT /api/consultas/{id}/status | Recepção e médico | Registra chegada, início ou fim do atendimento, conforme o Apêndice I |
+| PUT /api/consultas/{id}/status | Recepção e médico | Registra chegada, início ou fim do atendimento, conforme o Apêndice I; início e fim só a partir do dia da consulta |
 | POST /api/consultas/{id}/falta | Recepção e médico | Registra a falta do paciente (sp_RegistrarFalta) |
 | PUT /api/faltas/{id}/retirar | Recepção | Retira uma falta justificada (sp_RetirarFalta) |
 | GET /api/pacientes/{id}/lista-espera | Paciente | Posição na fila e vaga oferecida, com o prazo de resposta |
@@ -153,7 +154,7 @@ Quadro C.1 – Rotas da API
 | POST /api/lista-espera | Paciente e recepção | Coloca o paciente no fim da fila do médico (sp_EntrarListaEspera) |
 | DELETE /api/lista-espera/{id} | Paciente e recepção | Tira o paciente da fila (sp_SairListaEspera) |
 | PUT /api/lista-espera/{id}/vaga | Paciente | Aceita ou recusa a vaga oferecida (sp_AceitarOferta ou sp_RecusarOferta) |
-| POST /api/retornos | Médico | Marca o retorno, com data definida ou encaminhado à recepção |
+| POST /api/retornos | Médico | Marca o retorno `{ consulta, data, hora, nota }`, com data definida (a consulta fica marcada) ou encaminhado à recepção (data null) |
 | POST /api/exames | Médico | Registra um exame pedido na consulta |
 | PUT /api/exames/{id} | Médico e recepção | Altera a situação do exame |
 | GET /api/pacientes/{id}/acompanhamento | Paciente | Retornos e exames pendentes da família |

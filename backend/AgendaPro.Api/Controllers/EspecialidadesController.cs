@@ -58,7 +58,8 @@ public class EspecialidadesController : ApiControllerBase
         return Ok(resposta);
     }
 
-    [Authorize(Roles = "paciente,recepcao,dono")]
+    // O médico também lê: escolhe o horário do retorno com data definida
+    [Authorize(Roles = "paciente,recepcao,dono,medico")]
     [HttpGet("api/especialidades/{id:int}/horarios-livres")]
     public async Task<ActionResult<IEnumerable<HorariosLivresResposta>>> HorariosLivres(int id)
     {

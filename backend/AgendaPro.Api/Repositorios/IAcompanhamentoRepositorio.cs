@@ -6,6 +6,9 @@ namespace AgendaPro.Api.Repositorios;
 public interface IAcompanhamentoRepositorio
 {
     Task<int> CriarRetornoAsync(Retorno retorno);
+
+    // O médico marca com data definida: a consulta e o retorno entram na mesma transação
+    Task<int> CriarRetornoComConsultaAsync(Retorno retorno, TimeSpan hora, string motivo);
     Task<RetornoCompleto?> BuscarRetornoAsync(int idRetorno);
 
     Task<int> CriarExameAsync(Exame exame);

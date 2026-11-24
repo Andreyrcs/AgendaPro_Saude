@@ -20,4 +20,7 @@ public class AgendamentoRequisicao
 
     [StringLength(500, ErrorMessage = "O motivo pode ter até 500 caracteres.")]
     public string? Motivo { get; set; }
+
+    // O retorno encaminhado que a recepção está marcando (opcional): passa a AGENDADO, na data da consulta
+    public int? Retorno { get; set; }
 }

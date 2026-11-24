@@ -9,8 +9,9 @@ public record ExameResposta(int Id, int? Consulta, string Nome, string Status, P
 public record RetornoResposta(int Id, int? Consulta, DateOnly? Data, string? Nota, string Status,
     PessoaResumoResposta Pessoa, MedicoResumoResposta Medico);
 
+// Prazo: o dia marcado; null enquanto a recepção não marca.
 // GET /api/pacientes/{id}/acompanhamento (aplicativo-integracao-api.md:200-204; paciente-servicos.js:294-303)
-public record RetornoPendenteResposta(int Id, string Titulo, DateOnly Prazo, string Origem, FamiliarResposta Pessoa,
+public record RetornoPendenteResposta(int Id, string Titulo, DateOnly? Prazo, string Origem, FamiliarResposta Pessoa,
     MedicoResumoResposta Medico, EspecialidadeResumoResposta Especialidade);
 
 public record ExamePendenteResposta(int Id, string Titulo, string Status, string Obs, string Origem,

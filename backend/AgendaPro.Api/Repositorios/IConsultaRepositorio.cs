@@ -26,7 +26,9 @@ public interface IConsultaRepositorio
     // Horários VAGA que ainda não passaram, nos médicos da clínica
     Task<IEnumerable<Consulta>> ListarVagasFuturasDaClinicaAsync(int idClinica);
 
-    Task<int> AgendarAsync(int idPaciente, int idMedico, DateTime data, TimeSpan hora, string? motivo, bool pelaRecepcao);
+    // null = o retorno já foi marcado por outra consulta (nada é gravado)
+    Task<int?> AgendarAsync(int idPaciente, int idMedico, DateTime data, TimeSpan hora, string? motivo, bool pelaRecepcao,
+        int? idRetorno);
     Task<int> ReagendarAsync(int idConsulta, int idUsuario, int idPaciente, int idMedico, DateTime data, TimeSpan hora, string? motivo);
     Task CancelarAsync(int idConsulta, bool peloPaciente, int idUsuario);
     Task ConfirmarPresencaAsync(int idConsulta, bool vou, int idUsuario);

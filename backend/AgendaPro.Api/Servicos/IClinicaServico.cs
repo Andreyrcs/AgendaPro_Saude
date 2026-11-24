@@ -15,6 +15,7 @@ public interface IClinicaServico
     Task<ClinicaResposta?> AtualizarAsync(int idClinica, AtualizacaoClinicaRequisicao dados, UsuarioLogado logado);
     Task<IEnumerable<MembroEquipeResposta>?> ListarEquipeAsync(int idClinica, UsuarioLogado logado);
     Task<RecepcionistaCadastradaResposta?> CadastrarRecepcionistaAsync(int idClinica, CadastroRecepcionistaRequisicao dados, UsuarioLogado logado);
+    Task<SenhaProvisoriaResposta?> GerarSenhaProvisoriaAsync(int idClinica, int idUsuario, UsuarioLogado logado);
     Task<bool> RemoverDaEquipeAsync(int idClinica, int idUsuario, UsuarioLogado logado);
 
     // Clínicas da conta do paciente. Vincular devolve a clínica e se o vínculo é novo (201) ou já existia (200)

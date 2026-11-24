@@ -90,6 +90,7 @@ builder.Services.AddScoped<IPrevencaoServico, PrevencaoServico>();
 builder.Services.AddScoped<INotificacaoRepositorio, NotificacaoRepositorio>();
 builder.Services.AddScoped<INotificacaoServico, NotificacaoServico>();
 builder.Services.AddHostedService<ExpiracaoOfertasServico>();
+builder.Services.AddHostedService<LembretesServico>();
 
 // Limite de tentativas de login (Apêndice H e seção 5.4): 5 por minuto para cada IP.
 // Conta todo pedido de login, certo ou errado. O 6º no mesmo minuto recebe 429 (Quadro 5.1).

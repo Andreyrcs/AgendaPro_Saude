@@ -41,13 +41,17 @@ public class MedicoServico : IMedicoServico
 
         await ConferirEspecialidadeAsync(dados.Especialidade!.Value, idClinica);
 
-        var email = dados.Email.Trim().ToLowerInvariant();
-        if (await _usuarios.EmailExisteAsync(email))
-            throw new ErroApi(StatusCodes.Status400BadRequest, "Este e-mail já tem uma conta.");
-
         // pagina-medicos.js:155: a tela põe o CRM em maiúsculas
         var crm = dados.Crm.Trim().ToUpperInvariant();
-        if (await _medicos.CrmExisteAsync(crm, null))
+        var desativado = await _medicos.BuscarDesativadoPorCrmAsync(crm, idClinica);
+
+        // Médico removido que volta: pode usar o e-mail que já era dele
+        var email = dados.Email.Trim().ToLowerInvariant();
+        var emailAntigo = desativado is null ? null : (await _medicos.BuscarCompletoAsync(desativado.Id))!.Value.Conta.Email;
+        if (email != emailAntigo && await _usuarios.EmailExisteAsync(email))
+            throw new ErroApi(StatusCodes.Status400BadRequest, "Este e-mail já tem uma conta.");
+
+        if (await _medicos.CrmExisteAsync(crm, desativado?.Id))
             throw new ErroApi(StatusCodes.Status400BadRequest, "Já existe um médico com este CRM.");
 
         var telefone = TelefoneFormatado(dados.Telefone);
@@ -74,11 +78,22 @@ public class MedicoServico : IMedicoServico
             Sala = Opcional(dados.Sala)
         };
 
-        var idMedico = await _medicos.CriarComContaAsync(conta, medico);
+        int idMedico;
+        if (desativado is null)
+            idMedico = await _medicos.CriarComContaAsync(conta, medico);
+        else
+        {
+            conta.Id = desativado.IdUsuario;
+            medico.Id = idMedico = desativado.Id;
+            medico.IdUsuario = desativado.IdUsuario;
+            await _medicos.ReativarComContaAsync(conta, medico);
+        }
+
+        var expediente = await _horarios.ListarPorMedicosAsync([idMedico]);
         var completo = (await _medicos.BuscarCompletoAsync(idMedico))!.Value;
 
         return new MedicoCadastradoResposta(
-            Resposta(completo, []),
+            Resposta(completo, expediente),
             new ContaCriadaResposta(medico.IdUsuario, nome, email, "medico"),
             senhaProvisoria);
     }

@@ -211,6 +211,21 @@ public class ClinicaServico : IClinicaServico
             new ContaCriadaResposta(idUsuario, nome, email, "recepcao"), senhaProvisoria);
     }
 
+    // O dono gera outra senha provisória para alguém da equipe (a anterior deixa de valer)
+    public async Task<SenhaProvisoriaResposta?> GerarSenhaProvisoriaAsync(int idClinica, int idUsuario, UsuarioLogado logado)
+    {
+        if (logado.IdClinica != idClinica)
+            return null;
+
+        var conta = await _usuarios.BuscarAtivoPorIdAsync(idUsuario);
+        if (conta is null || conta.Papel is not ("RECEPCAO" or "MEDICO") || conta.IdClinica != idClinica)
+            throw new ErroApi(StatusCodes.Status404NotFound, "Pessoa não encontrada na equipe.");
+
+        var senha = GeradorSenhaProvisoria.Gerar();
+        await _usuarios.AtualizarSenhaAsync(idUsuario, BCrypt.Net.BCrypt.HashPassword(senha, workFactor: 12));
+        return new SenhaProvisoriaResposta(senha);
+    }
+
     // Só recepcionistas ativas da própria clínica; o dono não remove a si mesmo (api.js: removerDaEquipe)
     public async Task<bool> RemoverDaEquipeAsync(int idClinica, int idUsuario, UsuarioLogado logado)
     {

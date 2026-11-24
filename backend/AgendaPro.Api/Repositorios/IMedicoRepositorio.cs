@@ -15,5 +15,9 @@ public interface IMedicoRepositorio
     Task<bool> CrmExisteAsync(string crm, int? ignorarIdMedico);
     Task<(int Consultas, int Fila)> ContarCompromissosAsync(int idMedico);
     Task<int> CriarComContaAsync(Usuario conta, Medico medico);
+
+    // Médico desativado desta clínica com este CRM (null = não há)
+    Task<Medico?> BuscarDesativadoPorCrmAsync(string crm, int idClinica);
+    Task ReativarComContaAsync(Usuario conta, Medico medico);
     Task AtualizarAsync(Medico medico, string? telefone);
 }

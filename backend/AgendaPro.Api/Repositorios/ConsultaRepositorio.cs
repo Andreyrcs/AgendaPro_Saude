@@ -91,10 +91,28 @@ public class ConsultaRepositorio : IConsultaRepositorio
         return await conexao.QueryAsync<Consulta>(sql, new { IdClinica = idClinica });
     }
 
-    public async Task<int> AgendarAsync(int idPaciente, int idMedico, DateTime data, TimeSpan hora, string? motivo, bool pelaRecepcao)
+    // Com retorno: a consulta e a ligação com ele entram na mesma transação, para não marcar duas vezes
+    public async Task<int?> AgendarAsync(int idPaciente, int idMedico, DateTime data, TimeSpan hora, string? motivo,
+        bool pelaRecepcao, int? idRetorno)
     {
+        // UPDLOCK: o segundo a tentar espera e encontra o retorno já marcado
+        const string sqlPendente = @"
+            SELECT COUNT(1)
+            FROM Retornos R WITH (UPDLOCK, HOLDLOCK)" + AcompanhamentoRepositorio.ConsultaDoRetorno + @"
+            WHERE R.Id_Retorno = @IdRetorno AND " + AcompanhamentoRepositorio.StatusRetorno + @" = 'ENCAMINHADO';";
+
+        const string sqlMarcarRetorno =
+            "UPDATE Retornos SET Status = 'AGENDADO', DataRetorno = @Data WHERE Id_Retorno = @IdRetorno;";
+
         using var conexao = _fabrica.CriarConexao();
-        return await conexao.QuerySingleAsync<int>("sp_AgendarConsulta",
+        conexao.Open();
+        using var transacao = conexao.BeginTransaction();
+
+        if (idRetorno is not null
+            && await conexao.ExecuteScalarAsync<int>(sqlPendente, new { IdRetorno = idRetorno }, transacao) == 0)
+            return null;
+
+        var idConsulta = await conexao.QuerySingleAsync<int>("sp_AgendarConsulta",
             new
             {
                 IdPaciente = idPaciente,
@@ -104,7 +122,13 @@ public class ConsultaRepositorio : IConsultaRepositorio
                 Motivo = motivo,
                 PelaRecepcao = pelaRecepcao
             },
-            commandType: CommandType.StoredProcedure);
+            transacao, commandType: CommandType.StoredProcedure);
+
+        if (idRetorno is not null)
+            await conexao.ExecuteAsync(sqlMarcarRetorno, new { Data = data, IdRetorno = idRetorno }, transacao);
+
+        transacao.Commit();
+        return idConsulta;
     }
 
     // Apêndice C: cancela e agenda o novo horário numa única transação. As procedures aninham na
@@ -115,6 +139,15 @@ public class ConsultaRepositorio : IConsultaRepositorio
         using var conexao = _fabrica.CriarConexao();
         conexao.Open();
         using var transacao = conexao.BeginTransaction();
+
+        // Se a consulta é a de um retorno marcado, ele acompanha o novo dia e o novo médico
+        await conexao.ExecuteAsync(@"
+            UPDATE R SET DataRetorno = @Data, IdMedico = @IdMedico
+            FROM Retornos R
+            INNER JOIN Consultas C ON C.IdPaciente = R.IdPaciente AND C.IdMedico = R.IdMedico AND C.DataConsulta = R.DataRetorno
+            WHERE C.Id_Consulta = @IdConsulta AND R.Status = 'AGENDADO' AND C.Motivo LIKE N'Retorno%'
+              AND (R.IdConsultaOrigem IS NULL OR R.IdConsultaOrigem <> C.Id_Consulta);",
+            new { Data = data, IdMedico = idMedico, IdConsulta = idConsulta }, transacao);
 
         await conexao.ExecuteAsync("sp_CancelarConsulta",
             new { IdConsulta = idConsulta, PeloPaciente = false, IdUsuario = idUsuario },

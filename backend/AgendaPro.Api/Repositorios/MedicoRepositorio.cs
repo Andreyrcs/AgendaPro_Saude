@@ -127,6 +127,40 @@ public class MedicoRepositorio : IMedicoRepositorio
         return idMedico;
     }
 
+    public async Task<Medico?> BuscarDesativadoPorCrmAsync(string crm, int idClinica)
+    {
+        const string sql = @"
+            SELECT M.Id_Medico AS Id, M.IdUsuario, M.IdEspecialidade, M.IdClinica, M.Nome, M.CRM AS Crm, M.Sala
+            FROM Medicos M
+            INNER JOIN Usuarios U ON U.Id_Usuario = M.IdUsuario AND U.Ativo = 0
+            WHERE M.CRM = @Crm AND M.IdClinica = @IdClinica;";
+
+        using var conexao = _fabrica.CriarConexao();
+        return await conexao.QuerySingleOrDefaultAsync<Medico>(sql, new { Crm = crm, IdClinica = idClinica });
+    }
+
+    // O mesmo cadastro volta, com os dados novos: as consultas antigas continuam no histórico dele
+    public async Task ReativarComContaAsync(Usuario conta, Medico medico)
+    {
+        const string sqlConta = @"
+            UPDATE Usuarios
+            SET Email = @Email, SenhaHash = @SenhaHash, Nome = @Nome, Telefone = @Telefone, Ativo = 1
+            WHERE Id_Usuario = @Id;";
+
+        const string sqlMedico = @"
+            UPDATE Medicos SET Nome = @Nome, IdEspecialidade = @IdEspecialidade, Sala = @Sala
+            WHERE Id_Medico = @Id;";
+
+        using var conexao = _fabrica.CriarConexao();
+        conexao.Open();
+        using var transacao = conexao.BeginTransaction();
+
+        await conexao.ExecuteAsync(sqlConta, conta, transacao);
+        await conexao.ExecuteAsync(sqlMedico, medico, transacao);
+
+        transacao.Commit();
+    }
+
     // O nome fica igual nas duas tabelas; o telefone do médico é o da conta (api.js:348-349)
     public async Task AtualizarAsync(Medico medico, string? telefone)
     {
