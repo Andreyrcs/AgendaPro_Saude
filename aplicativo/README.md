@@ -78,11 +78,8 @@ Para que login e cadastro usem a API de verdade:
    ```
    A API fica em `http://0.0.0.0:5080` (porta **5080**; veja `backend/README.md`).
 2. Descubra o IP do computador: no Windows, `ipconfig` (procure "Endereço IPv4"); no Linux/Mac, `ip addr` ou `ifconfig`.
-3. Edite [`src/servicos/config.js`](src/servicos/config.js):
-   ```js
-   USAR_API_REAL: true,
-   ENDERECO_API: 'http://192.168.0.10:5080', // o IP do passo 2
-   ```
+3. Informe o IP do passo 2 em [`src/servicos/config.js`](src/servicos/config.js), na linha `IP_DA_CONEXAO`.
+   Na apresentação não precisa: o `apresentacao.cmd` informa o IP sozinho ([`docs/apresentacao.md`](../docs/apresentacao.md)).
 4. Crie a conta pelo próprio app (tela Cadastro) ou entre com uma conta de paciente já criada.
 
 Se a API não responder em 8 segundos, o app avisa: *"Não foi possível falar com o servidor"*.

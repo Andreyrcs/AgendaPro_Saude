@@ -48,8 +48,9 @@ O que a web e o app precisam ajustar para usar a API está em [docs/ajustes-fron
 
    No perfil `rede-local`, os outros acessam pelo IP do computador que roda a API (`ipconfig`, linha "IPv4"),
    por exemplo `http://192.168.0.10:5080`. Na primeira vez, o Windows pode pedir para liberar o programa no
-   firewall: aceite para "redes privadas". No app, troque `ENDERECO_API` em `aplicativo/src/servicos/config.js`
-   para esse endereço (porta **5080**).
+   firewall: aceite para "redes privadas". No app, troque `IP_DA_CONEXAO` em `aplicativo/src/servicos/config.js`
+   para esse IP. Na apresentação, o `apresentacao.cmd` (na raiz) liga tudo e já informa o IP e a origem do CORS:
+   veja `docs/apresentacao.md`.
 
 ## CORS (web)
 
