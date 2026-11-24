@@ -1,15 +1,28 @@
-/* AgendaPro Saúde — agenda da recepção (dia, semana e mês), próximos pacientes e lista de espera.
-   "Agora" é o relógio do computador: a linha do agora anda e as faltas são marcadas na hora certa. */
+/* AgendaPro Saúde — agenda da recepção (dia, semana e mês), próximos pacientes e lista de espera, pela API.
+   "Agora" é o relógio do computador: a linha do agora anda e as faltas são marcadas na hora certa.
+   A agenda vem de GET /api/clinicas/{id}/agenda (F18: "livre" e "oferecido" vêm no status) e cada ação é uma chamada:
+   chegada e desfazer   → PUT /api/consultas/{id}/status { na_recepcao | confirmada }
+   iniciar atendimento  → PUT /api/consultas/{id}/status { em_atendimento } (só a partir de na_recepcao, F23)
+   falta                → POST /api/consultas/{id}/falta
+   remarcar (arrastar)  → PUT /api/consultas/{id} { medico, data, hora } → a consulta nova tem outro id (F34)
+   cancelar             → DELETE /api/consultas/{id} → { falta, oferecidoAFila } (o banco já oferece à fila, F19)
+   oferecer horário     → POST /api/consultas/{id}/oferecer (só numa vaga; a API escolhe a pessoa, F20)
+   Depois de cada uma, a agenda é buscada de novo. Entre abas e computadores, a agenda e a fila são consultadas
+   a cada 30 s (CLINICA.vigiar). "Chamar no painel" fica só nesta tela. */
 (function () {
   "use strict";
 
-  const D = window.DADOS;
-  const C = window.CLIDADOS;
+  const D = window.DADOS; /* só os rótulos de status (STATUS_CONSULTA, ESTADO_HORARIO) */
+  const C = window.CLINICA;
   const A = window.AP;
   const M = window.MOV;
   const K = window.CASCA;
+  const API = window.API;
   const I = A.icone;
 
+  C.iniciar(iniciar);
+  function iniciar() {
+  const HOJE = C.hoje;
   const PX = 1.5;
   const INICIO = C.INICIO;
   const agora = () => C.minutoAgora();
@@ -30,20 +43,21 @@
   const chave = (k) => k.horario || k.status;
   const MOVEIS = ["confirmada", "na_recepcao"];
 
-  const medico = (id) => D.medicos.find((m) => m.id === id);
-  const esp = (id) => D.especialidades[id];
+  const medico = (id) => K.medico(id);
+  const esp = (id) => K.esp(id);
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const curtoData = (dia) => { const d = C.data(dia); return A.SEMANA_CURTA[d.getDay()] + ", " + d.getDate() + "/" + String(d.getMonth() + 1).padStart(2, "0"); };
   const segunda = (dia) => { const d = C.data(dia); const dow = d.getDay() || 7; return C.somaDias(dia, 1 - dow); };
-  const relogio = () => new Date().toLocaleTimeString("pt-BR");
 
   const PXH = 2.6; /* px por minuto na disposição em linhas (igual a --pxh no CSS) */
   const LARG = C.FIM - INICIO;
   let layoutSalvo = null;
   try { layoutSalvo = localStorage.getItem("agendapro.layout"); } catch (e) { /* sem armazenamento */ }
 
-  const primeiroComFila = C.MEDICOS.find((m) => (D.filas[m] || []).length) || C.MEDICOS[0] || null;
-  const est = { vista: "dia", layout: layoutSalvo === "linha" ? "linha" : "coluna", dia: D.hoje, semana: segunda(D.hoje), filaMedico: primeiroComFila, sessao: null, filtro: new Set() };
+  /* fila de um médico (GET /api/clinicas/{id}/lista-espera): [{ id, posicao, pessoa: { id, nome }, desde, usaApp, telefone, vagaOferecida }] */
+  const filaDe = (m) => { const f = C.filaDoMedico(m); return f ? f.pessoas || [] : []; };
+  const primeiroComFila = C.MEDICOS.find((m) => filaDe(m).length) || C.MEDICOS[0] || null;
+  const est = { vista: "dia", layout: layoutSalvo === "linha" ? "linha" : "coluna", dia: HOJE, semana: segunda(HOJE), filaMedico: primeiroComFila, sessao: null, filtro: new Set() };
   const emLinha = () => est.layout === "linha" && est.vista !== "mes";
 
   const $ = (s) => document.querySelector(s);
@@ -55,13 +69,48 @@
   const ativas = C.ativa;
   const doDia = (dia) => C.consultas.filter((k) => k.data === dia && ativas(k));
   const ocupa = (k) => C.horarioDe(k) === "ocupado" || C.horarioDe(k) === "oferecido";
-  const filaDe = (m) => D.filas[m] || [];
-  const totalFila = () => C.MEDICOS.reduce((s, m) => s + filaDe(m).length, 0);
+  const totalFila = () => C.totalFila();
+  /* quem aparece no bloco: o paciente; no horário oferecido, quem recebeu a vaga (vem da lista de espera) */
+  const quemDe = (k) => (k.horario === "livre" ? "Horário livre" : k.paciente || (k.horario === "oferecido" ? "Oferecido à fila" : ""));
+
+  /* ─── Chamadas à API: uma por vez; erro mostra a mensagem da API (a do 401 já levou ao login) ─── */
+  let ocupado = false;
+  async function acao(fazer) {
+    if (ocupado) return null;
+    ocupado = true;
+    document.body.setAttribute("aria-busy", "true");
+    try {
+      return await fazer();
+    } catch (e) {
+      if (e && e.status !== 401) toast({ titulo: "Não deu para concluir", texto: e.message, icone: "info", duracao: 6000 });
+      return null;
+    } finally {
+      ocupado = false;
+      document.body.removeAttribute("aria-busy");
+    }
+  }
+  /* busca de novo e redesenha tudo (a agenda, o mapa de calor, a fila e os contadores) */
+  async function recarregarTudo(partes) {
+    await C.recarregar(partes || ["fila", "agenda"]);
+    redesenhar();
+  }
+  function redesenhar() {
+    desenharVista();
+    desenharCalor();
+    desenharFila();
+    desenharResumo(false);
+  }
+  function destacar(id) {
+    const el = blocoEl(id);
+    if (!el) return;
+    if (!M.reduzido()) el.animate([{ transform: "scale(1.06)" }, { transform: "none" }], { duration: 360, easing: M.EASE_OUT });
+  }
+  const consulta = (id) => C.consultas.find((x) => A.mesmoId(x.id, id)) || null;
 
   function rotuloConsulta(k) {
     const m = medico(k.medico);
     const e = ESTADOS[chave(k)];
-    const quem = k.horario === "livre" ? "Horário livre" : k.paciente;
+    const quem = quemDe(k);
     return quem + ", " + C.txt(k.ini) + " às " + C.txt(k.ini + k.dur) + ", " + curtoData(k.data) + ", " + m.nome + ". " + e.rotulo + "." +
       (k.presencaConfirmada && k.status === "confirmada" ? " Presença confirmada pelo paciente." : "") +
       (MOVEIS.includes(k.status) ? " Enter abre as opções." : "");
@@ -79,10 +128,10 @@
   /* ─── Blocos ─── */
   function blocoHTML(k, c) {
     const e = ESTADOS[chave(k)];
-    const nome = k.horario === "livre" ? "Horário livre" : k.paciente;
+    const nome = quemDe(k);
     const sub = k.horario === "oferecido" ? C.txt(k.ini) + " · aguarda" : k.presencaConfirmada && k.status === "confirmada" ? C.txt(k.ini) + " · vai vir" : C.txt(k.ini);
     return (
-      '<button type="button" class="cbloco cbloco--' + chave(k) + '" data-id="' + k.id + '" style="--c:' + c + ";--ini:" + k.ini + ";--dur:" + k.dur + '"' +
+      '<button type="button" class="cbloco cbloco--' + chave(k) + '" data-id="' + A.esc(k.id) + '" style="--c:' + c + ";--ini:" + k.ini + ";--dur:" + k.dur + '"' +
       ' aria-label="' + A.esc(rotuloConsulta(k)) + '" aria-haspopup="menu">' +
       (e.icone ? I(e.icone) : "") +
       '<span class="cbloco__texto"><span class="cbloco__nome">' + A.esc(nome) + '</span><span class="cbloco__hora">' + sub + "</span></span></button>"
@@ -130,7 +179,11 @@
     for (let t = INICIO; t <= C.FIM; t += 30) {
       h += '<div class="linhas__vlinha' + (t % 60 ? " linhas__vlinha--meia" : "") + '" style="left:' + (t - INICIO) * PXH + 'px"></div>';
     }
-    h += '<div class="grade__almoco">' + (semana ? "" : "Almoço") + "</div>";
+    /* a faixa do almoço só aparece quando todos os médicos param no mesmo horário */
+    const a0 = C.MEDICOS.length ? C.almocoDe(C.MEDICOS[0]) : null;
+    if (a0 && C.MEDICOS.every((m) => String(C.almocoDe(m)) === String(a0))) {
+      h += '<div class="grade__almoco" style="left:calc(' + (a0[0] - INICIO) + " * var(--pxh));width:calc(" + (a0[1] - a0[0]) + ' * var(--pxh))">' + (semana ? "" : "Almoço") + "</div>";
+    }
     for (let i = 1; i < n; i++) {
       const dia = semana && i % 6 === 0;
       h += '<div class="linhas__hsep' + (dia ? " linhas__hsep--dia" : "") + '" style="top:calc(' + i + " * var(--h))\"></div>";
@@ -141,11 +194,11 @@
     const md = medico(m);
     const nf = filaDe(m).length;
     if (semana) {
-      return '<div class="linhas__med" style="--cor:' + md.cor + '">' + A.avatarMedico(md, 22) +
-        '<span class="linhas__med-texto"><span class="linhas__med-nome">' + md.nome + "</span></span></div>";
+      return '<div class="linhas__med" style="--cor:' + A.esc(md.cor) + '">' + A.avatarMedico(md, 22) +
+        '<span class="linhas__med-texto"><span class="linhas__med-nome">' + A.esc(md.nome) + "</span></span></div>";
     }
-    return '<div class="linhas__med" style="--cor:' + md.cor + '">' + A.avatarMedico(md, 36) +
-      '<span class="linhas__med-texto"><span class="linhas__med-nome">' + md.nome + '</span><span class="linhas__med-sub">' + esp(md.esp).nome + "</span>" +
+    return '<div class="linhas__med" style="--cor:' + A.esc(md.cor) + '">' + A.avatarMedico(md, 36) +
+      '<span class="linhas__med-texto"><span class="linhas__med-nome">' + A.esc(md.nome) + '</span><span class="linhas__med-sub">' + A.esc(esp(md.esp).nome) + "</span>" +
       (nf ? '<span class="linhas__med-sub linhas__med-fila">' + nf + " na fila</span>" : "") + "</span></div>";
   }
 
@@ -162,9 +215,9 @@
     } else {
       rotulos = [0, 1, 2, 3, 4, 5].map((i) => {
         const dia = C.somaDias(est.semana, i);
-        const f = (D.feriados || []).find((x) => x.data === dia);
-        return '<div class="linhas__grupo"><div class="linhas__dia' + (dia === D.hoje ? " linhas__dia--hoje" : "") + '">' + curtoData(dia) +
-          (f ? "<small>" + f.nome + "</small>" : "") + (dia === D.hoje ? '<span class="visualmente-oculto">, hoje</span>' : "") + "</div>" +
+        const f = C.feriadoDe(dia);
+        return '<div class="linhas__grupo"><div class="linhas__dia' + (dia === HOJE ? " linhas__dia--hoje" : "") + '">' + curtoData(dia) +
+          (f ? "<small>" + A.esc(f.nome) + "</small>" : "") + (dia === HOJE ? '<span class="visualmente-oculto">, hoje</span>' : "") + "</div>" +
           '<div class="linhas__meds">' + C.MEDICOS.map((m) => rotuloMedicoHTML(m, true)).join("") + "</div></div>";
       }).join("");
     }
@@ -185,7 +238,7 @@
     const rol = $("#rolagem");
     rol.scrollLeft = Math.max(0, (agora() - 90 - INICIO) * PXH);
     if (semana) {
-      const idx = cols.findIndex((c) => c.data === D.hoje);
+      const idx = cols.findIndex((c) => c.data === HOJE);
       if (idx >= 0) rol.scrollTop = Math.max(0, idx * ($("#pista").offsetHeight / n) - 4);
     }
   }
@@ -200,16 +253,16 @@
       cab = '<div class="grade__colunas">' + C.MEDICOS.map((m) => {
         const md = medico(m);
         const nf = filaDe(m).length;
-        return '<div class="grade__medico" style="--cor:' + md.cor + '">' +
-          '<span class="grade__medico-texto"><span class="grade__medico-nome">' + md.nome + '</span><span class="grade__medico-esp">' + esp(md.esp).nome + "</span>" +
+        return '<div class="grade__medico" style="--cor:' + A.esc(md.cor) + '">' +
+          '<span class="grade__medico-texto"><span class="grade__medico-nome">' + A.esc(md.nome) + '</span><span class="grade__medico-esp">' + A.esc(esp(md.esp).nome) + "</span>" +
           (nf ? '<span class="grade__medico-fila">' + nf + " na fila</span>" : "") + "</span></div>";
       }).join("") + "</div>";
     } else {
       cab = '<div class="grade__dias">' + [0, 1, 2, 3, 4, 5].map((i) => {
         const dia = C.somaDias(est.semana, i);
-        const f = (D.feriados || []).find((x) => x.data === dia);
-        return '<div class="grade__dia-cab' + (dia === D.hoje ? " grade__dia-cab--hoje" : "") + '"><span class="grade__dia-nome">' + curtoData(dia) + (f ? " · " + f.nome : "") + (dia === D.hoje ? '<span class="visualmente-oculto">, hoje</span>' : "") + "</span>" +
-          '<span class="grade__faixas" aria-hidden="true">' + C.MEDICOS.map((m) => '<span class="grade__faixa" style="background:' + medico(m).cor + '">' + A.iniciais(medico(m).nome) + "</span>").join("") + "</span></div>";
+        const f = C.feriadoDe(dia);
+        return '<div class="grade__dia-cab' + (dia === HOJE ? " grade__dia-cab--hoje" : "") + '"><span class="grade__dia-nome">' + curtoData(dia) + (f ? " · " + A.esc(f.nome) : "") + (dia === HOJE ? '<span class="visualmente-oculto">, hoje</span>' : "") + "</span>" +
+          '<span class="grade__faixas" aria-hidden="true">' + C.MEDICOS.map((m) => '<span class="grade__faixa" style="background:' + A.esc(medico(m).cor) + '">' + A.esc(A.iniciais(medico(m).nome)) + "</span>").join("") + "</span></div>";
       }).join("") + "</div>";
     }
     const blocos = C.consultas.filter(ativas).map((k) => {
@@ -217,7 +270,7 @@
       return c < 0 ? "" : blocoHTML(k, c);
     }).join("");
     vistaEl.innerHTML =
-      (semana ? '<ul class="legenda-medicos" aria-label="Ordem das faixas de cada dia">' + C.MEDICOS.map((m) => '<li>' + A.avatarMedico(medico(m), 22) + medico(m).nome + " · " + esp(medico(m).esp).nome + "</li>").join("") + "</ul>" : "") +
+      (semana ? '<ul class="legenda-medicos" aria-label="Ordem das faixas de cada dia">' + C.MEDICOS.map((m) => '<li>' + A.avatarMedico(medico(m), 22) + A.esc(medico(m).nome) + " · " + A.esc(esp(medico(m).esp).nome) + "</li>").join("") + "</ul>" : "") +
       '<div class="grade' + (semana ? " grade--semana" : "") + '" style="--n:' + n + '">' +
       '<div class="grade__cabeca"><span></span>' + cab + "</div>" +
       '<div class="grade__rolagem" id="rolagem"><div class="grade__corpo">' +
@@ -234,7 +287,7 @@
     if (!linha) return;
     const cols = colunas();
     const n = cols.length;
-    const idx = cols.findIndex((c) => c.data === D.hoje);
+    const idx = cols.findIndex((c) => c.data === HOJE);
     if (idx < 0) { linha.hidden = true; return; }
     linha.hidden = false;
     const largura = est.vista === "dia" ? n : 6;
@@ -257,8 +310,8 @@
   function semanasDoMes() {
     const lista = [];
     /* as semanas que tocam o mês de hoje */
-    const mesHoje = D.hoje.slice(0, 7);
-    const ultimo = C.iso(new Date(C.data(D.hoje).getFullYear(), C.data(D.hoje).getMonth() + 1, 0));
+    const mesHoje = HOJE.slice(0, 7);
+    const ultimo = C.iso(new Date(C.data(HOJE).getFullYear(), C.data(HOJE).getMonth() + 1, 0));
     for (let s = segunda(mesHoje + "-01"); s <= ultimo; s = C.somaDias(s, 7)) {
       const dias = [0, 1, 2, 3, 4, 5].map((i) => {
         const dia = C.somaDias(s, i);
@@ -272,7 +325,7 @@
         consultas: ks.filter(ocupa).length,
         vagas: ks.filter((k) => k.horario).length,
         media: Math.round((dias.filter((d) => !d.fechado).reduce((t, d) => t + d.o, 0) / Math.max(1, dias.filter((d) => !d.fechado).length)) * 100),
-        atual: s === segunda(D.hoje),
+        atual: s === segunda(HOJE),
       });
     }
     return lista;
@@ -292,7 +345,7 @@
         '<span class="camada__total">' + w.consultas + " consultas · " + w.vagas + " vagas · " + w.media + "% ocupado</span></button>"
       ).join("") +
       "</div></div>" +
-      '<ul class="semanas" aria-label="Semanas de ' + A.MESES_LONGOS[C.data(D.hoje).getMonth()] + '">' +
+      '<ul class="semanas" aria-label="Semanas de ' + A.MESES_LONGOS[C.data(HOJE).getMonth()] + '">' +
       semanas.map((w) =>
         '<li><button type="button" data-semana="' + w.s + '"><span class="semanas__nome">Semana de ' + nomeSemana(w.s) + (w.atual ? " (esta semana)" : "") + "</span>" +
         '<span class="semanas__n num">' + w.media + "%</span>" +
@@ -319,7 +372,7 @@
   function abrirSemana(s, origem) {
     const fim = () => {
       est.semana = s;
-      est.dia = s <= D.hoje && D.hoje <= C.somaDias(s, 5) ? D.hoje : s;
+      est.dia = s <= HOJE && HOJE <= C.somaDias(s, 5) ? HOJE : s;
       trocarVista("semana");
     };
     const camada = vistaEl.querySelector('.camada[data-semana="' + s + '"]');
@@ -333,9 +386,9 @@
   /* ─── Trocar de visão / navegar ─── */
   function tituloAgenda() {
     const t = $("#t-agenda");
-    if (est.vista === "dia") t.textContent = cap(A.extenso(est.dia)) + (est.dia === D.hoje ? " · hoje" : "");
+    if (est.vista === "dia") t.textContent = cap(A.extenso(est.dia)) + (est.dia === HOJE ? " · hoje" : "");
     else if (est.vista === "semana") t.textContent = "Semana de " + nomeSemana(est.semana);
-    else t.textContent = cap(A.MESES_LONGOS[C.data(D.hoje).getMonth()]) + " de " + D.hoje.slice(0, 4) + ", semana a semana";
+    else t.textContent = cap(A.MESES_LONGOS[C.data(HOJE).getMonth()]) + " de " + HOJE.slice(0, 4) + ", semana a semana";
     $("#dica").textContent = est.vista === "mes"
       ? "Passe o mouse sobre as folhas para abrir a pilha. Clique numa semana para ver os horários."
       : "Arraste uma consulta para remarcar, ou clique nela para ver as opções. Pelo teclado: Tab até a consulta e Enter.";
@@ -377,6 +430,16 @@
     desenharVista();
     desenharCalor();
     vistaEl.animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 150, easing: "ease" });
+    garantirSemana();
+  }
+
+  /* A agenda carregada vai do começo do mês até 2 meses à frente. Fora disso, busca a semana que falta. */
+  async function garantirSemana() {
+    try {
+      if (await C.garantirPeriodo(est.semana, C.somaDias(est.semana, 6))) { desenharVista(); desenharCalor(); }
+    } catch (e) {
+      if (e && e.status !== 401) toast({ titulo: "Não deu para carregar esta semana", texto: e.message, icone: "info" });
+    }
   }
 
   /* ─── Mapa de calor da semana ─── */
@@ -413,7 +476,7 @@
     let tabela = "<caption>Ocupação da semana de " + nomeSemana(est.semana) + ", por hora</caption><tr><th>Dia</th>" + horas.map((x) => "<th>" + x + "h</th>").join("") + "</tr>";
     for (let i = 0; i < 6; i++) {
       const dia = C.somaDias(est.semana, i);
-      h += '<span class="calor__dia' + (dia === D.hoje ? " calor__dia--hoje" : "") + '">' + curtoData(dia) + "</span>";
+      h += '<span class="calor__dia' + (dia === HOJE ? " calor__dia--hoje" : "") + '">' + curtoData(dia) + "</span>";
       tabela += "<tr><th>" + cap(A.extenso(dia)) + "</th>";
       horas.forEach((x) => {
         const c = celulaCalor(dia, x);
@@ -464,18 +527,19 @@
     const c = ev.target.closest("[data-dica]");
     if (c) { mostrarDica(c, c.dataset.dica); return; }
     const b = ev.target.closest(".grade--semana .cbloco");
-    if (b) { const k = C.consultas.find((x) => A.mesmoId(x.id, b.dataset.id)); mostrarDica(b, "<b>" + A.esc(k.horario === "livre" ? "Horário livre" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + curtoData(k.data) + " · " + medico(k.medico).nome + "<br>" + ESTADOS[chave(k)].rotulo + (k.presencaConfirmada && k.status === "confirmada" ? " · presença confirmada" : "")); return; }
+    if (b) { const k = consulta(b.dataset.id); if (k) mostrarDica(b, "<b>" + A.esc(quemDe(k)) + "</b>" + C.txt(k.ini) + " · " + curtoData(k.data) + " · " + A.esc(medico(k.medico).nome) + "<br>" + ESTADOS[chave(k)].rotulo + (k.presencaConfirmada && k.status === "confirmada" ? " · presença confirmada" : "")); return; }
     dica.hidden = true;
   });
   document.addEventListener("focusin", (ev) => {
     const b = ev.target.closest(".grade--semana .cbloco");
-    if (b) { const k = C.consultas.find((x) => A.mesmoId(x.id, b.dataset.id)); mostrarDica(b, "<b>" + A.esc(k.horario === "livre" ? "Horário livre" : k.paciente) + "</b>" + C.txt(k.ini) + " · " + medico(k.medico).nome); }
+    const k = b && consulta(b.dataset.id);
+    if (k) mostrarDica(b, "<b>" + A.esc(quemDe(k)) + "</b>" + C.txt(k.ini) + " · " + A.esc(medico(k.medico).nome));
     else dica.hidden = true;
   });
 
   /* ─── Contadores do topo ─── */
   function desenharResumo(animar) {
-    const hoje = doDia(D.hoje);
+    const hoje = doDia(HOJE);
     const consultas = hoje.filter(C.ehConsulta).length;
     const atendidas = hoje.filter((k) => k.status === "atendida").length;
     const vagas = hoje.filter((k) => k.horario).length;
@@ -503,18 +567,18 @@
       return;
     }
     $("#fila-medicos").innerHTML = '<label for="fila-sel">Médico</label><select id="fila-sel">' + C.MEDICOS.map((x) =>
-      '<option value="' + x + '"' + (x === m ? " selected" : "") + ">" + medico(x).nome + " · " + filaDe(x).length + " na fila</option>"
+      '<option value="' + A.esc(x) + '"' + (A.mesmoId(x, m) ? " selected" : "") + ">" + A.esc(medico(x).nome) + " · " + filaDe(x).length + " na fila</option>"
     ).join("") + "</select>";
     const lista = filaDe(m);
     $("#fila-meta").textContent = lista.length + (lista.length === 1 ? " pessoa" : " pessoas") + " · " + esp(medico(m).esp).nome;
     $("#fila-lista").innerHTML = lista.length
       ? lista.map((p, i) =>
-          '<li class="fila__item" data-nome="' + A.esc(p.nome) + '"><span class="fila__pos num" aria-hidden="true">' + (i + 1) + "º</span>" +
-          '<span><span class="fila__nome"><span class="visualmente-oculto">Posição ' + (i + 1) + ": </span>" + A.esc(p.nome) +
-          (p.app ? '<span class="fila__app">' + I("smartphone") + "pelo app</span>" : "") + "</span>" +
-          '<span class="fila__sub" style="display:block">Desde ' + A.extenso(p.desde, false) + " · tel. " + p.tel + "</span></span></li>"
+          '<li class="fila__item" data-id="' + A.esc(p.id) + '"><span class="fila__pos num" aria-hidden="true">' + (i + 1) + "º</span>" +
+          '<span><span class="fila__nome"><span class="visualmente-oculto">Posição ' + (i + 1) + ": </span>" + A.esc(p.pessoa.nome) +
+          (p.usaApp ? '<span class="fila__app">' + I("smartphone") + "pelo app</span>" : "") + "</span>" +
+          '<span class="fila__sub" style="display:block">Desde ' + A.extenso(p.desde, false) + C.telefoneHTML(p) + "</span></span></li>"
         ).join("")
-      : '<li class="fila__vazia">Ninguém aguardando vaga com ' + medico(m).nome + ".</li>";
+      : '<li class="fila__vazia">Ninguém aguardando vaga com ' + A.esc(medico(m).nome) + ".</li>";
   }
   $("#fila-medicos").addEventListener("change", (ev) => {
     est.filaMedico = ev.target.value;
@@ -527,6 +591,8 @@
   const PROXIMOS_VISIVEIS = 4;
   const semAcento = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const medicoCurto = (id) => medico(id).nome.split(" ").slice(0, 2).join(" ");
+  /* "Chamar no painel" fica só nesta tela (não há coluna no banco): id da consulta → hora em que foi chamado */
+  const chamados = new Map();
   est.busca = "";
   est.proximosTodos = false;
 
@@ -534,7 +600,7 @@
      Quem está em atendimento já está com o médico e só aparece na busca. */
   function restantesHoje() {
     const t = agora();
-    return doDia(D.hoje)
+    return doDia(HOJE)
       .filter((k) => ["na_recepcao", "confirmada"].includes(k.status) && k.ini + k.dur > t)
       .sort((a, b) => a.ini - b.ini || (a.status === "na_recepcao" ? -1 : 1));
   }
@@ -543,8 +609,8 @@
     const t = agora();
     if (k.status === "em_atendimento") return '<span class="selo selo--em_atendimento">' + SC.em_atendimento + "</span>";
     if (k.status === "na_recepcao") {
-      return k.chamado
-        ? '<span class="selo selo--chamado">Chamado às ' + k.chamado + "</span>"
+      return chamados.has(k.id)
+        ? '<span class="selo selo--chamado">Chamado às ' + chamados.get(k.id) + "</span>"
         : '<span class="selo selo--na_recepcao">' + SC.na_recepcao + "</span>";
     }
     if (k.status === "confirmada") {
@@ -562,10 +628,10 @@
 
   function acaoProximo(k) {
     if (k.status === "confirmada") {
-      return '<button type="button" class="botao botao--secundario" data-chegou="' + k.id + '" aria-label="Marcar chegada de ' + A.esc(k.paciente) + '">Chegou</button>';
+      return '<button type="button" class="botao botao--secundario" data-chegou="' + A.esc(k.id) + '" aria-label="Marcar chegada de ' + A.esc(k.paciente) + '">Chegou</button>';
     }
     if (k.status === "na_recepcao") {
-      return '<button type="button" class="botao botao--menta" data-chamar="' + k.id + '" aria-label="Chamar ' + A.esc(k.paciente) + ' no painel">Chamar</button>';
+      return '<button type="button" class="botao botao--menta" data-chamar="' + A.esc(k.id) + '" aria-label="Chamar ' + A.esc(k.paciente) + ' no painel">Chamar</button>';
     }
     return "";
   }
@@ -576,7 +642,7 @@
     const termo = semAcento(est.busca);
     let mostrados;
     if (termo) {
-      mostrados = doDia(D.hoje)
+      mostrados = doDia(HOJE)
         .filter((k) => k.paciente && C.ehConsulta(k) && semAcento(k.paciente).includes(termo))
         .sort((a, b) => a.ini - b.ini);
       $("#proximos-meta").textContent = mostrados.length + (mostrados.length === 1 ? " encontrado hoje" : " encontrados hoje");
@@ -592,11 +658,11 @@
         : "Todos os pacientes de hoje já foram atendidos.") + "</li>";
     } else {
       lista.innerHTML = mostrados.map((k, i) =>
-        '<li class="proximo' + (!termo && i === 0 ? " proximo--primeiro" : "") + '" data-id="' + k.id + '">' +
+        '<li class="proximo' + (!termo && i === 0 ? " proximo--primeiro" : "") + '" data-id="' + A.esc(k.id) + '">' +
         '<span class="proximo__folha"><span class="proximo__h">' + C.txt(k.ini) + "</span></span>" +
         '<span class="proximo__corpo">' +
-        '<button type="button" class="proximo__nome" data-ver="' + k.id + '" title="Mostrar na agenda">' + A.esc(k.paciente) + "</button>" +
-        '<span class="proximo__sub"><span class="proximo__medico">' + medicoCurto(k.medico) + "</span>" + situacaoProximo(k) + "</span>" +
+        '<button type="button" class="proximo__nome" data-ver="' + A.esc(k.id) + '" title="Mostrar na agenda">' + A.esc(k.paciente) + "</button>" +
+        '<span class="proximo__sub"><span class="proximo__medico">' + A.esc(medicoCurto(k.medico)) + "</span>" + situacaoProximo(k) + "</span>" +
         "</span>" +
         '<span class="proximo__acao">' + acaoProximo(k) + "</span></li>"
       ).join("");
@@ -611,9 +677,9 @@
 
   /* aponta o bloco da consulta na agenda (troca para o dia de hoje se for preciso) */
   function mostrarNaAgenda(k) {
-    if (est.vista !== "dia" || est.dia !== D.hoje) {
-      est.dia = D.hoje;
-      est.semana = segunda(D.hoje);
+    if (est.vista !== "dia" || est.dia !== HOJE) {
+      est.dia = HOJE;
+      est.semana = segunda(HOJE);
       est.vista = "dia";
       desenharVista();
       desenharCalor();
@@ -627,18 +693,33 @@
     setTimeout(() => el.classList.remove("apontado"), 1600);
   }
 
-  function marcarChegada(k) {
-    k.status = "na_recepcao";
-    C.salvar();
-    const el = blocoEl(k.id);
-    if (el) atualizarBloco(el, k);
-    desenharProximos();
+  /* PUT /api/consultas/{id}/status: a mudança de status pedida pela recepção (Apêndice I) */
+  const mudarStatus = (k, status) => API.chamar("PUT", "/api/consultas/" + k.id + "/status", { status });
+
+  async function marcarChegada(k) {
+    const feito = await acao(async () => { await mudarStatus(k, "na_recepcao"); await recarregarTudo(["agenda"]); return true; });
+    if (!feito) return;
+    destacar(k.id);
     toast({
       titulo: k.paciente + " está na recepção",
       texto: medico(k.medico).nome + ", " + C.txt(k.ini),
       icone: "user-check",
-      acao: { rotulo: "Desfazer", fazer: () => { k.status = "confirmada"; delete k.chamado; C.salvar(); const e2 = blocoEl(k.id); if (e2) atualizarBloco(e2, k); desenharProximos(); } },
+      acao: {
+        rotulo: "Desfazer",
+        fazer: async () => {
+          const ok = await acao(async () => { await mudarStatus(k, "confirmada"); chamados.delete(k.id); await recarregarTudo(["agenda"]); return true; });
+          if (ok) anunciar("Chegada desfeita.");
+        },
+      },
     });
+  }
+
+  /* "Iniciar atendimento" pela recepção: só a partir de na_recepcao (F23) */
+  async function iniciarAtendimento(k) {
+    const feito = await acao(async () => { await mudarStatus(k, "em_atendimento"); chamados.delete(k.id); await recarregarTudo(["agenda"]); return true; });
+    if (!feito) return;
+    destacar(k.id);
+    toast({ titulo: k.paciente + " está em atendimento", texto: medico(k.medico).nome + ", " + C.txt(k.ini), icone: "stethoscope" });
   }
 
   function devolverFoco(id, seletor) {
@@ -650,13 +731,12 @@
   $("#proximos-lista").addEventListener("click", (ev) => {
     const b = ev.target.closest("button");
     if (!b) return;
-    const k = C.consultas.find((x) => A.mesmoId(x.id, b.dataset.chegou || b.dataset.chamar || b.dataset.ver));
+    const k = consulta(b.dataset.chegou || b.dataset.chamar || b.dataset.ver);
     if (!k) return;
     if (b.dataset.ver) { mostrarNaAgenda(k); return; }
-    if (b.dataset.chegou) { marcarChegada(k); devolverFoco(k.id, "[data-chamar]"); return; }
+    if (b.dataset.chegou) { marcarChegada(k).then(() => devolverFoco(k.id, "[data-chamar]")); return; }
     if (b.dataset.chamar) {
-      k.chamado = C.txt(Math.floor(agora()));
-      C.salvar();
+      chamados.set(k.id, C.txt(Math.floor(agora())));
       desenharProximos();
       devolverFoco(k.id, "[data-chamar]");
       toast({ titulo: "Chamamos " + k.paciente, texto: "No painel da recepção, para " + medico(k.medico).nome + ".", icone: "bell-ring", duracao: 3600 });
@@ -668,16 +748,13 @@
     desenharProximos();
   });
   /* Falta: só a recepção (aqui, no menu da consulta) ou o médico marcam. Atraso não é falta. */
-  function marcarFalta(k) {
-    k.status = "faltou";
-    C.registrarFalta(k, "Não compareceu", K.conta.nome);
-    const el = blocoEl(k.id);
-    if (el) atualizarBloco(el, k);
-    desenharProximos();
-    desenharResumo(false);
+  /* POST /api/consultas/{id}/falta → a falta gravada (confirmou = tinha dito "Vou") */
+  async function marcarFalta(k) {
+    const f = await acao(async () => { const r = await API.chamar("POST", "/api/consultas/" + k.id + "/falta"); await recarregarTudo(["agenda"]); return r; });
+    if (!f) return;
     toast({
       titulo: "Falta registrada: " + k.paciente,
-      texto: k.presencaConfirmada ? "Tinha confirmado presença: conta como falta sem aviso. Dá para retirar na ficha do paciente, se for justificada." : "Não tinha confirmado presença: fica registrada, mas não conta para restrição.",
+      texto: f.confirmou ? "Tinha confirmado presença: conta como falta sem aviso. Dá para retirar na ficha do paciente, se for justificada." : "Não tinha confirmado presença: fica registrada, mas não conta para restrição.",
       icone: "x", duracao: 6000,
     });
   }
@@ -688,42 +765,8 @@
     desenharProximos();
   }, 30000);
 
-  /* ─── Banco de dados: o trigger ─── */
-  
-  function acender(grupo) {
-    document.querySelectorAll("#codigo span").forEach((s) => s.classList.toggle("aceso", s.dataset.g === grupo));
-  }
-  async function registrar(texto) {
-    const log = $("#log");
-    /* o painel do banco saiu da tela: mantém só a pausa entre os passos */
-    if (!log) { await M.esperar(380); return; }
-    const vazio = log.querySelector(".vazio");
-    if (vazio) log.innerHTML = "";
-    const li = document.createElement("li");
-    li.innerHTML = "<time>" + relogio() + "</time><span>" + texto + "</span>";
-    log.prepend(li);
-    while (log.children.length > 6) log.lastElementChild.remove();
-    if (!M.reduzido()) li.animate([{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }], { duration: 220, easing: M.EASE_OUT });
-    await M.esperar(380);
-  }
-
-  /* ─── Toasts ─── */
-  function toast(o) {
-    const el = document.createElement("div");
-    el.className = "toast";
-    el.setAttribute("role", "status");
-    el.innerHTML = I(o.icone || "bell-ring") + "<p>" + o.titulo + (o.texto ? "<small>" + o.texto + "</small>" : "") + "</p>" +
-      (o.acao ? '<button type="button" class="botao botao--pequeno">' + I("undo", "ic-sm") + o.acao.rotulo + "</button>" : "");
-    $("#toasts").appendChild(el);
-    el.animate(M.reduzido() ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: "translateY(16px) scale(0.98)" }, { opacity: 1, transform: "none" }], { duration: 260, easing: M.EASE_OUT });
-    const fechar = () => {
-      if (!el.isConnected) return;
-      el.animate([{ opacity: 1 }, { opacity: 0, transform: M.reduzido() ? "none" : "translateY(8px)" }], { duration: 180, easing: "ease", fill: "forwards" }).finished.then(() => el.remove());
-    };
-    if (o.acao) el.querySelector("button").addEventListener("click", () => { fechar(); o.acao.fazer(); });
-    setTimeout(fechar, o.duracao || 5200);
-    anunciar(o.titulo + (o.texto ? ". " + o.texto : ""));
-  }
+  /* ─── Avisos: o da casca, que escapa o título, o texto e o rótulo (nomes vêm da API) ─── */
+  const toast = (o) => K.toast(o);
 
   /* ─── Mover uma consulta (arrastar ou teclado) ─── */
   function validar(k, col, ini) {
@@ -735,7 +778,7 @@
     const e = C.expediente(alvo.medico, alvo.data);
     if (!e || ini < e[0] || ini + k.dur > e[1]) return "Fora do expediente";
     if (C.noAlmoco(alvo.medico, ini, k.dur)) return "Horário de almoço";
-    if (alvo.data < D.hoje || (alvo.data === D.hoje && ini < agora())) return "Esse horário já passou";
+    if (alvo.data < HOJE || (alvo.data === HOJE && ini < agora())) return "Esse horário já passou";
     const choque = C.consultas.find((x) => x !== k && ativas(x) && x.horario !== "livre" && x.medico === alvo.medico && x.data === alvo.data && x.ini < ini + k.dur && ini < x.ini + x.dur);
     if (choque) return "Ocupado: " + (choque.paciente || "vaga oferecida");
     return null;
@@ -801,40 +844,34 @@
     if (motivo) toast({ titulo: "Não dá para remarcar aí", texto: motivo, icone: "info", duracao: 3200 });
   }
 
-  function remarcar(k, el, col, ini, de) {
+  /* PUT /api/consultas/{id} { medico, data, hora }: a API cancela a consulta e marca a nova na mesma transação.
+     A nova tem outro id (F34). O horário antigo volta para a agenda e, se houver fila, o banco já o oferece.
+     O bloco assenta no lugar novo na hora; se a API recusar, ele volta e a mensagem dela aparece.
+     Sem "Desfazer": o horário antigo pode já ter sido oferecido à fila. */
+  async function remarcar(k, el, col, ini, de) {
+    if (ocupado) { voltar(el, de); return; }
     const antes = { medico: k.medico, data: k.data, ini: k.ini };
     const alvo = colunas()[col];
-    /* um horário livre que estava ali deixa de existir: a consulta passa a ocupá-lo */
-    for (let i = C.consultas.length - 1; i >= 0; i--) {
-      const x = C.consultas[i];
-      if (x.horario === "livre" && x.medico === alvo.medico && x.data === alvo.data && x.ini < ini + k.dur && ini < x.ini + x.dur) {
-        C.consultas.splice(i, 1);
-        const v = blocoEl(x.id);
-        if (v) v.remove();
-      }
-    }
     k.medico = alvo.medico; k.data = alvo.data; k.ini = ini;
-    C.salvar();
     assentar(el, k, de);
-    desenharCalor();
-    desenharResumo(true);
+    el.setAttribute("aria-busy", "true");
+    const nova = await acao(async () => {
+      const r = await API.chamar("PUT", "/api/consultas/" + encodeURIComponent(k.id), { medico: Number(alvo.medico), data: alvo.data, hora: C.txt(ini) });
+      await recarregarTudo();
+      return r;
+    });
+    if (!nova) {
+      Object.assign(k, antes);
+      redesenhar();
+      return;
+    }
+    destacar(String(nova.id));
+    const antigo = C.consultas.find((x) => x.horario && x.medico === antes.medico && x.data === antes.data && x.ini === antes.ini);
     toast({
       titulo: "Consulta de " + k.paciente + " remarcada",
-      texto: curtoData(k.data) + ", " + C.txt(k.ini) + " · " + medico(k.medico).nome,
-      icone: "calendar-days",
-      acao: {
-        rotulo: "Desfazer",
-        fazer: () => {
-          const e2 = blocoEl(k.id);
-          const r = e2 ? e2.getBoundingClientRect() : null;
-          Object.assign(k, antes);
-          C.salvar();
-          if (e2 && indiceColuna(k) >= 0) assentar(e2, k, r); else desenharVista();
-          desenharCalor();
-          desenharProximos();
-          anunciar("Remarcação desfeita.");
-        },
-      },
+      texto: curtoData(alvo.data) + ", " + C.txt(ini) + " · " + medico(alvo.medico).nome + ". " +
+        (antigo && antigo.horario === "oferecido" ? "O horário antigo foi oferecido à lista de espera." : "O horário antigo ficou livre."),
+      icone: "calendar-days", duracao: 6000,
     });
   }
 
@@ -842,7 +879,8 @@
   vistaEl.addEventListener("pointerdown", (ev) => {
     const el = ev.target.closest(".cbloco");
     if (!el || ev.button !== 0 || est.sessao) return;
-    const k = C.consultas.find((x) => A.mesmoId(x.id, el.dataset.id));
+    const k = consulta(el.dataset.id);
+    if (!k || ocupado) return;
     const pista = $("#pista");
     const rp = pista.getBoundingClientRect();
     const r0 = el.getBoundingClientRect();
@@ -925,7 +963,8 @@
     const s = est.sessao;
     if (!s || !s.teclado) {
       const el = ev.target.closest(".cbloco");
-      if (el && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); abrirMenu(C.consultas.find((x) => A.mesmoId(x.id, el.dataset.id)), el); }
+      const k = el && consulta(el.dataset.id);
+      if (k && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); abrirMenu(k, el); }
       return;
     }
     const n = colunas().length;
@@ -976,12 +1015,13 @@
   function abrirMenu(k, el) {
     menuOrigem = el;
     const m = medico(k.medico);
-    const hojeFuturo = k.data === D.hoje && k.ini >= agora() - 30;
+    const hojeFuturo = k.data === HOJE && k.ini >= agora() - 30;
     const itens = [];
     if (MOVEIS.includes(k.status)) {
       itens.push(["mover", "move", "Remarcar (mover)"]);
       if (k.status === "confirmada" && hojeFuturo) itens.push(["chegada", "user-check", "Marcar chegada"]);
-      if (k.status === "confirmada" && (k.data < D.hoje || (k.data === D.hoje && k.ini <= agora()))) itens.push(["falta", "x", "Marcar falta"]);
+      if (k.status === "na_recepcao" && k.data === HOJE) itens.push(["iniciar", "stethoscope", "Iniciar atendimento"]);
+      if (k.status === "confirmada" && (k.data < HOJE || (k.data === HOJE && k.ini <= agora()))) itens.push(["falta", "x", "Marcar falta"]);
       itens.push(["cancelar", "calendar-x", "Cancelar consulta", true]);
     } else if (C.podeOferecer(k) && filaDe(k.medico).length) {
       /* "Oferecer horário": só em vaga (sobra de um cancelamento quando ninguém estava na fila) */
@@ -994,8 +1034,8 @@
       : "Consulta já atendida: não há o que mudar.";
     menuCamada.innerHTML =
       '<div class="menu" role="dialog" aria-label="Opções da consulta">' +
-      '<div class="menu__cab"><p class="menu__nome">' + A.esc(k.horario === "livre" ? "Horário livre" : k.paciente) + "</p>" +
-      '<p class="menu__sub">' + curtoData(k.data) + ", " + C.txt(k.ini) + " às " + C.txt(k.ini + k.dur) + "<br>" + m.nome + " · " + ESTADOS[chave(k)].rotulo + "</p>" +
+      '<div class="menu__cab"><p class="menu__nome">' + A.esc(quemDe(k)) + "</p>" +
+      '<p class="menu__sub">' + curtoData(k.data) + ", " + C.txt(k.ini) + " às " + C.txt(k.ini + k.dur) + "<br>" + A.esc(m.nome) + " · " + ESTADOS[chave(k)].rotulo + "</p>" +
       (k.motivo ? '<p class="menu__sub">Motivo: ' + A.esc(k.motivo) + "</p>" : "") +
       (k.presencaConfirmada && MOVEIS.includes(k.status) ? '<p class="menu__sub">' + I("circle-check", "ic-sm") + " Presença confirmada pelo paciente</p>" : "") + "</div>" +
       '<div class="menu__itens" role="menu">' +
@@ -1022,6 +1062,7 @@
       if (acao === "fechar") return fecharMenu(true);
       if (acao === "mover") { fecharMenu(false); moverPeloTeclado(k, el); return; }
       if (acao === "falta") { fecharMenu(true); marcarFalta(k); return; }
+      if (acao === "iniciar") { fecharMenu(true); iniciarAtendimento(k); return; }
       if (acao === "chegada") {
         fecharMenu(true);
         marcarChegada(k);
@@ -1065,118 +1106,72 @@
     }
   });
 
-  /* ─── Cancelamento ───
-     A consulta fica "cancelada" (continua no histórico do paciente) e o horário dela volta como "livre".
-     Se houver lista de espera para o médico, o horário vira "oferecido" à 1ª pessoa da fila. */
-  let ocupado = false;
+  /* ─── Cancelamento: DELETE /api/consultas/{id} → { falta, oferecidoAFila } ───
+     A consulta fica "cancelada" (continua no histórico do paciente) e o banco devolve o horário à agenda.
+     Se houver lista de espera para o médico, o próprio banco já o oferece à 1ª pessoa (F19): a tela não chama
+     "oferecer" depois, só mostra o resultado. */
+  const mesmoHorario = (slot) => C.consultas.find((x) => x.horario && x.medico === slot.medico && x.data === slot.data && x.ini === slot.ini) || null;
 
   async function cancelar(k) {
-    if (ocupado) return;
-    ocupado = true;
     const el = blocoEl(k.id);
     const nome = k.paciente;
-    anunciar("Consulta de " + nome + " cancelada.");
-    /* 1. o bloco da consulta some */
-    if (el) {
-      if (!M.reduzido()) {
-        await el.animate([{ opacity: 1, transform: "none", filter: "blur(0)" }, { opacity: 0, transform: "scale(0.9)", filter: "blur(3px)" }], { duration: 280, easing: M.EASE_OUT }).finished;
-      } else {
-        await el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140 }).finished;
-      }
-    }
-    /* 2. consulta → cancelada; no mesmo lugar nasce um horário livre */
-    const h = C.cancelarConsulta(k, "Cancelada pela recepção");
-    if (el) {
-      el.dataset.id = h.id;
-      atualizarBloco(el, h);
-      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
-    }
-    desenharResumo(true);
-    desenharCalor();
-    acender("c1");
-    await registrar("Consulta de " + A.esc(nome) + ": status <b>cancelada</b> · horário " + C.txt(h.ini) + " <b>livre</b>");
-    /* 3. se houver fila, o horário livre é oferecido */
-    await oferecerVaga(h, true);
-    ocupado = false;
-  }
-
-  async function oferecerVaga(k, viaTrigger) {
-    const lista = filaDe(k.medico);
     const m = medico(k.medico);
-    if (!viaTrigger) { acender("c3"); }
-    if (!lista.length || !C.podeOferecer(k)) {
-      await registrar("Ninguém na fila de " + m.nome + ": o horário fica <b>livre</b>");
-      acender(null);
-      toast({ titulo: "Consulta cancelada · horário livre", texto: "Ninguém está esperando vaga com " + m.nome + ".", icone: "info" });
+    const slot = { medico: k.medico, data: k.data, ini: k.ini };
+    if (el) {
+      el.setAttribute("aria-busy", "true");
+      el.animate([{ opacity: 1 }, { opacity: 0.35 }], { duration: M.reduzido() ? 1 : 220, easing: M.EASE_OUT, fill: "forwards" });
+    }
+    const r = await acao(async () => {
+      const x = await API.chamar("DELETE", "/api/consultas/" + encodeURIComponent(k.id));
+      await recarregarTudo();
+      return x;
+    });
+    if (!r) { redesenhar(); return; }
+    anunciar("Consulta de " + nome + " cancelada.");
+    const h = mesmoHorario(slot);
+    if (h) destacar(h.id);
+    if (r.oferecidoAFila && h && h.horario === "oferecido") {
+      if (!A.mesmoId(est.filaMedico, slot.medico)) { est.filaMedico = slot.medico; desenharFila(); }
+      toast({
+        titulo: "Consulta cancelada · vaga oferecida a " + (h.paciente || "1ª pessoa da fila"),
+        texto: "Vaga de " + curtoData(slot.data) + ", " + C.txt(slot.ini) + " com " + m.nome + ". A pessoa tem 30 minutos para confirmar.",
+        icone: "bell-ring", duracao: 6000,
+      });
       return;
     }
-    acender("c3");
-    const p = lista[0];
-    await registrar("Horário " + C.txt(k.ini) + " com " + m.nome + " <b>oferecido</b> à 1ª pessoa da fila: " + A.esc(p.nome));
-    /* 3. a 1ª pessoa da fila desliza até o horário livre */
-    if (est.filaMedico !== k.medico) { est.filaMedico = k.medico; desenharFila(); }
-    const card = $("#fila-lista .fila__item");
-    const el = blocoEl(k.id);
-    if (el) el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: M.reduzido() ? "auto" : "smooth" });
-    await M.esperar(M.reduzido() ? 0 : 260);
-    const antes = new Map(Array.from(document.querySelectorAll("#fila-lista .fila__item")).map((li) => [li.dataset.nome, li.getBoundingClientRect()]));
-    if (card && el && !M.reduzido()) {
-      const rc = card.getBoundingClientRect();
-      const rb = el.getBoundingClientRect();
-      const voo = card.cloneNode(true);
-      voo.classList.add("voando");
-      voo.style.cssText = "left:" + rc.left + "px;top:" + rc.top + "px;width:" + rc.width + "px;height:" + rc.height + "px";
-      document.body.appendChild(voo);
-      card.style.visibility = "hidden";
-      const mola = M.mola({ duracao: 0.7, bounce: 0.12 });
-      const sx = rb.width / rc.width, sy = rb.height / rc.height;
-      await voo.animate(
-        [
-          { transform: "none", transformOrigin: "top left", opacity: 1 },
-          { transform: "translate(" + (rb.left - rc.left) + "px," + (rb.top - rc.top) + "px) scale(" + sx + "," + sy + ")", transformOrigin: "top left", opacity: 0.85 },
-        ],
-        { duration: mola.duracao, easing: mola.easing, fill: "forwards" }
-      ).finished;
-      voo.remove();
-    }
-    lista.shift();
-    K.guardar.saiuDaFila(k.medico, p.nome);
-    C.oferecerHorario(k, p.nome);
-    if (el) {
-      atualizarBloco(el, k);
-      if (!M.reduzido()) el.animate([{ transform: "scale(1.08)" }, { transform: "none" }], { duration: 320, easing: M.EASE_OUT });
-      else el.animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 200 });
-    }
-    /* o resto da fila sobe um lugar (FLIP) */
-    desenharFila();
-    if (!M.reduzido()) {
-      document.querySelectorAll("#fila-lista .fila__item").forEach((li) => {
-        const r0 = antes.get(li.dataset.nome);
-        if (r0) M.flip(li, r0, { duracao: 360, easing: M.EASE_OUT });
-        const pos = li.querySelector(".fila__pos");
-        pos.animate([{ transform: "translateY(6px)", opacity: 0.3 }, { transform: "none", opacity: 1 }], { duration: 360, easing: M.EASE_OUT });
-      });
-    }
-    desenharResumo(true);
-    desenharCalor();
-    acender(null);
-    await registrar("Aviso enviado para " + A.esc(p.nome));
-    /* 4. o aviso */
-    toast({ titulo: (viaTrigger ? "Consulta cancelada · vaga oferecida a " : "Vaga oferecida a ") + p.nome, texto: "Vaga de " + curtoData(k.data) + ", " + C.txt(k.ini) + " com " + m.nome + ". A pessoa tem 30 minutos para confirmar.", icone: "bell-ring", duracao: 6000 });
-    /* 5. quem usa o app vê a vaga na área do paciente: a fila e a agenda ficam gravadas (clinica-dados.js) */
+    toast({
+      titulo: "Consulta de " + nome + " cancelada · horário livre",
+      texto: filaDe(slot.medico).length
+        ? "Ninguém da fila de " + m.nome + " pôde receber este horário."
+        : "Ninguém está esperando vaga com " + m.nome + ".",
+      icone: "info",
+    });
   }
 
-  /* outra aba mudou a agenda ou a fila (o paciente aceitou ou recusou a vaga): redesenha */
-  C.aoMudar(() => {
-    if (est.sessao) return;
-    desenharVista();
-    desenharCalor();
-    desenharFila();
-    desenharResumo(false);
-  });
-
-
- 
+  /* "Oferecer horário": POST /api/consultas/{id}/oferecer, só numa vaga (VAGA: sobra de um cancelamento quando ninguém
+     da fila pôde receber). A API escolhe a pessoa (F20) e devolve { oferecidaA } ou null. */
+  async function oferecerVaga(k) {
+    const m = medico(k.medico);
+    const slot = { medico: k.medico, data: k.data, ini: k.ini };
+    const r = await acao(async () => {
+      const x = await API.chamar("POST", "/api/consultas/" + encodeURIComponent(k.id) + "/oferecer");
+      await recarregarTudo();
+      return x;
+    });
+    if (!r) return;
+    const h = mesmoHorario(slot);
+    if (h) destacar(h.id);
+    if (r.oferecidaA) {
+      if (!A.mesmoId(est.filaMedico, slot.medico)) { est.filaMedico = slot.medico; desenharFila(); }
+      toast({
+        titulo: "Vaga oferecida a " + r.oferecidaA.pessoa.nome,
+        texto: "Vaga de " + curtoData(slot.data) + ", " + C.txt(slot.ini) + " com " + m.nome + ". A pessoa tem 30 minutos para confirmar.",
+        icone: "bell-ring", duracao: 6000,
+      });
+    } else {
+      toast({ titulo: "Ninguém da fila pôde receber esta vaga", texto: "Quem está na fila já tem consulta nesse horário. O horário continua livre.", icone: "info", duracao: 6000 });
+    }
+  }
 
   /* ─── Controles ─── */
   document.querySelectorAll(".vistas [role=tab]").forEach((b) => b.addEventListener("click", () => { if (b.dataset.vista !== est.vista) trocarVista(b.dataset.vista); }));
@@ -1199,7 +1194,7 @@
   });
   $("#ant").addEventListener("click", () => navegar(-1));
   $("#prox").addEventListener("click", () => navegar(1));
-  $("#hoje").addEventListener("click", () => { est.dia = D.hoje; est.semana = segunda(D.hoje); desenharVista(); desenharCalor(); });
+  $("#hoje").addEventListener("click", () => { est.dia = HOJE; est.semana = segunda(HOJE); desenharVista(); desenharCalor(); });
   vistaEl.addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-semana]");
     if (b) abrirSemana(b.dataset.semana, b);
@@ -1258,9 +1253,9 @@
 
   /* ─── Cabeçalho e primeira pintura ─── */
   desenharLegenda();
-  $("#folha-hoje").innerHTML = A.folha(D.hoje, { menta: true });
+  $("#folha-hoje").innerHTML = A.folha(HOJE, { menta: true });
   const nMed = C.MEDICOS.length;
-  $("#subtitulo").textContent = cap(A.extenso(D.hoje)) + " · " + D.clinica.nome + " · " +
+  $("#subtitulo").textContent = cap(A.extenso(HOJE)) + " · " + C.clinica.nome + " · " +
     (nMed ? nMed + (nMed === 1 ? " médico atendendo" : " médicos atendendo") : "nenhum médico cadastrado ainda");
   document.querySelectorAll("[data-marca]").forEach((el) => { el.outerHTML = A.marca(Number(el.dataset.marca)); });
 
@@ -1276,5 +1271,10 @@
       el.textContent = "0"; el.dataset.valor = 0;
       setTimeout(() => M.contador(el, v, { duracao: 900, pulso: false }), 200);
     });
+  }
+
+  /* outra pessoa mudou a agenda ou a fila (o paciente aceitou ou recusou a vaga, outra recepção marcou):
+     a cada 30 s a tela pergunta de novo à API, menos enquanto alguém arrasta, usa o menu ou espera uma resposta */
+  C.vigiar(redesenhar, () => !!est.sessao || !menuCamada.hidden || ocupado);
   }
 })();

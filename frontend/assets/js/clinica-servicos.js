@@ -225,6 +225,25 @@
   }
   const filaDoMedico = (m) => CLINICA.fila.find((f) => A.mesmoId(f.medico.id, m)) || null;
 
+  /* Telefone de quem está na fila (F21): mascarado na tela (•••• 1234). "Ver telefone" mostra o número inteiro só
+     naquela linha, para a recepção ligar a quem não usa o app. */
+  const mascarar = (t) => { const d = String(t || "").replace(/\D/g, ""); return d ? "•••• " + d.slice(-4) : ""; };
+  function telefoneHTML(p) {
+    if (!p.telefone) return " · sem telefone";
+    return ' · tel. <span class="tel-numero">' + A.esc(mascarar(p.telefone)) + "</span>" +
+      ' <button type="button" class="link-acao link-acao--discreto" data-ver-tel="' + A.esc(p.telefone) + '" aria-label="Ver o telefone de ' +
+      A.esc(p.pessoa ? p.pessoa.nome : "") + '">Ver telefone</button>';
+  }
+  document.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-ver-tel]");
+    if (!b) return;
+    const alvo = b.previousElementSibling;
+    if (alvo && alvo.classList.contains("tel-numero")) alvo.textContent = b.dataset.verTel;
+    const foco = alvo || b.parentElement;
+    b.remove();
+    if (foco) { foco.setAttribute("tabindex", "-1"); foco.focus(); }
+  });
+
   const medico = (id) => CLINICA.medicos.find((m) => A.mesmoId(m.id, id)) || null;
   const esp = (id) => CLINICA.especialidades[String(id)] || null;
 
@@ -263,7 +282,7 @@
   }
 
   Object.assign(CLINICA, {
-    iniciar, carregar, recarregar, garantirPeriodo, vigiar, totalFila, filaDoMedico, medico, esp, feriadoDe,
+    iniciar, carregar, recarregar, garantirPeriodo, vigiar, totalFila, filaDoMedico, medico, esp, feriadoDe, mascarar, telefoneHTML,
     horarioDe, ehConsulta, ativa, futuro, podeOferecer, expediente, almocoDe, noAlmoco, livres,
     minutoAgora, hm, txt, iso, data, somaDias, segunda,
   });
