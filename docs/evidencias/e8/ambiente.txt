@@ -1,0 +1,74 @@
+# Ambiente: banco AgendaPro_Saude_App (2026-11-23)
+
+Instância .\SQLEXPRESS. Script do banco a partir da linha 13 (sem CREATE DATABASE e sem USE), com -I -f 65001.
+
+## sp_TesteSistema no _App (depois: dados do teste apagados e procedure removida)
+1a. Cadastrar clínica com código TST-0001|PASSOU|Clínica criada
+1b. Recusar código inválido (ab-12)|PASSOU|A instrução INSERT conflitou com a restrição do CHECK "CK_Clinica_Codigo". O conflito ocorreu no banco de dados "AgendaPro_Saude_App", tabela "dbo.Clinica", column 'Codigo'.
+2. Recusar recepção sem clínica|PASSOU|A instrução INSERT conflitou com a restrição do CHECK "CK_Usuarios_Clinica". O conflito ocorreu no banco de dados "AgendaPro_Saude_App", tabela "dbo.Usuarios".
+3. Recusar nascimento no futuro|PASSOU|A instrução INSERT conflitou com a restrição do CHECK "CK_Pacientes_Nascimento". O conflito ocorreu no banco de dados "AgendaPro_Saude_App", tabela "dbo.Pacientes", column 'Data_Nascimento'.
+3b. Recusar CPF repetido|PASSOU|Violação da restrição UNIQUE KEY 'UQ_Pacientes_CPF'. Não é possível inserir a chave duplicada no objeto 'dbo.Pacientes'. O valor de chave duplicada é (11111111111).
+3c. Recusar CPF fora do formato|PASSOU|A instrução INSERT conflitou com a restrição do CHECK "CK_Pacientes_CPF". O conflito ocorreu no banco de dados "AgendaPro_Saude_App", tabela "dbo.Pacientes", column 'CPF'.
+4a. Agendar consulta (amanhã 10h)|PASSOU|Consulta 1
+4b. Recusar outro paciente no mesmo horário|PASSOU|Este horário acabou de ser ocupado. Escolha outro.
+5. Cancelar: vaga criada e oferecida ao 1º da fila|PASSOU|Vaga 2; fila do paciente 3: OFERECIDA
+6a. Recusar: vaga passa ao 2º da fila|PASSOU|Fila do paciente 4: OFERECIDA
+6b. Aceitar: consulta confirmada para o 2º|PASSOU|Consulta 2
+7. Oferta vencida (30 min) passa ao próximo|PASSOU|Paciente 3: EXPIRADA; paciente 1: OFERECIDA
+8a. 1ª falta: registra, sem restrição|PASSOU|Situação: NORMAL
+8b. 2ª falta: só lista de espera por 30 dias|PASSOU|Situação: SO_FILA até 23/12/2026
+9a. Com SO_FILA: agendamento pelo app bloqueado|PASSOU|Por enquanto, você pode agendar só pela lista de espera.
+9b. Com SO_FILA: recepção consegue agendar|PASSOU|Consulta 8
+10a. Nova falta durante restrição: só recepção|PASSOU|Situação: SO_RECEPCAO
+10b. Com SO_RECEPCAO: lista de espera bloqueada|PASSOU|Por enquanto, agende pela recepção da clínica.
+11. Recepção retira falta justificada: volta ao normal|PASSOU|Situação: NORMAL
+12a. Responder "Vou" grava a confirmação|PASSOU|NULL
+12b. "Não vou" no dia, depois de "Vou": cancela e conta falta|PASSOU|NULL
+13. "Não vou" na véspera: cancela sem falta|PASSOU|NULL
+14. Sair da lista de espera|PASSOU|NULL
+15a. Incluir exame de prevenção para o paciente|PASSOU|NULL
+15b. Recusar o mesmo exame repetido|PASSOU|Violação da restrição UNIQUE KEY 'UQ_Prevencao_Paciente_Exame'. Não é possível inserir a chave duplicada no objeto 'dbo.Pessoa_Prevencao'. O valor de chave duplicada é (1, 1, 1).
+TOTAL: 25 de 25 passaram|NULL|NULL
+
+## Catálogos
+dados-prevencao.sql: 7 campanhas, 9 exames sugeridos. dados-feriados.sql: 20 feriados, rodado 2 vezes (continua 20).
+
+## O banco AgendaPro_Saude não foi tocado
+Foto antes e depois (linhas por tabela e modify_date de tabelas, procedures, visão e triggers): 37 linhas, 0 diferenças.
+T|Campanhas_Prevencao|7|2026-11-17 15:56:31.463
+T|Clinica|3|2026-11-17 15:56:31.510
+T|Consultas|23|2026-11-17 15:56:31.640
+T|Especialidades|7|2026-11-17 15:56:31.380
+T|Exames|2|2026-11-17 15:56:31.503
+T|Exames_Prevencao|9|2026-11-17 15:56:31.463
+T|Faltas|4|2026-11-17 15:56:31.510
+T|Feriados|0|2026-11-17 15:56:31.420
+T|Horarios_Atendimento|29|2026-11-17 15:56:31.380
+T|Lista_Espera|9|2026-11-17 15:56:31.503
+T|Medicos|5|2026-11-17 15:56:31.440
+T|Notificacoes|5|2026-11-17 15:56:31.500
+T|Paciente_Clinica|6|2026-11-17 15:56:31.470
+T|Pacientes|8|2026-11-17 15:56:31.480
+T|Parametros|3|2026-11-17 15:56:31.483
+T|Pessoa_Prevencao|2|2026-11-17 15:56:31.457
+T|Retornos|3|2026-11-17 15:56:31.503
+T|Status_Consulta|8|2026-11-17 15:56:31.417
+T|Usuarios|15|2026-11-17 15:56:31.480
+O|P |sp_AceitarOferta|2026-11-17 15:56:31.573
+O|P |sp_AdquirirLock|2026-11-17 15:56:31.520
+O|P |sp_AgendarConsulta|2026-11-17 15:56:31.543
+O|P |sp_AplicarFalta|2026-11-17 15:56:31.617
+O|P |sp_CancelarConsulta|2026-11-17 15:56:31.590
+O|P |sp_ConfirmarPresenca|2026-11-17 15:56:31.620
+O|P |sp_EntrarListaEspera|2026-11-17 15:56:31.550
+O|P |sp_ExpirarOfertasVencidas|2026-11-17 15:56:31.583
+O|P |sp_OferecerVaga|2026-11-17 15:56:31.563
+O|P |sp_RecusarOferta|2026-11-17 15:56:31.580
+O|P |sp_RegistrarFalta|2026-11-17 15:56:31.627
+O|P |sp_ReordenarFila|2026-11-17 15:56:31.527
+O|P |sp_RetirarFalta|2026-11-17 15:56:31.630
+O|P |sp_SairListaEspera|2026-11-17 15:56:31.633
+O|TR|trg_Consultas_Falta|2026-11-17 15:56:31.640
+O|TR|trg_VagaLiberada|2026-11-17 15:56:31.607
+O|V |vw_SituacaoConta|2026-11-17 15:56:31.510
+D|2026-11-17 15:56:30.917

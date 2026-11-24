@@ -15,9 +15,14 @@ O que a web e o app precisam ajustar para usar a API está em [docs/ajustes-fron
    ```
    sqlcmd -S localhost -E -C -I -f 65001 -i banco\agendapro_saude_sqlserver.sql
    sqlcmd -S localhost -E -C -I -f 65001 -d AgendaPro_Saude -i backend\docs\dados-prevencao.sql
+   sqlcmd -S localhost -E -C -I -f 65001 -d AgendaPro_Saude -i backend\docs\dados-feriados.sql
    ```
 
-   O segundo comando grava o catálogo de campanhas de prevenção (sem ele, a tela de prevenção fica vazia).
+   O segundo comando grava o catálogo de campanhas de prevenção (sem ele, a tela de prevenção fica vazia). O terceiro
+   grava os feriados nacionais de 2026 e 2027: a API só lê os feriados (`GET /api/feriados`), porque a tabela vale
+   para todas as clínicas e nenhum perfil pode gravar nela. Os dois arquivos podem rodar mais de uma vez.
+   Se o SQL Server for uma instância nomeada (por exemplo o SQL Express), troque `localhost` por `.\SQLEXPRESS` nos
+   comandos e na connection string.
    Para usar outro nome de banco (por exemplo `AgendaPro_Saude_App`), faça uma cópia do script trocando o nome nas
    linhas do `IF DB_ID(...)`, do `CREATE DATABASE` e do `USE`, e passe o mesmo nome no `-d` e na connection string.
 3. **Segredos** (ficam fora do código, nos user-secrets). Na pasta `backend/AgendaPro.Api`:

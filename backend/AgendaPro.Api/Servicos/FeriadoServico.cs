@@ -6,8 +6,8 @@ using AgendaPro.Api.Repositorios;
 namespace AgendaPro.Api.Servicos;
 
 // L3: feriados do calendário. A tabela Feriados (Apêndice Q) não tem clínica: cada feriado vale para todas.
-// A sp_AgendarConsulta (erro 50004) e os horários livres já leem esta tabela, então cadastrar ou remover
-// um feriado muda na hora o que pode ser agendado.
+// Só leitura: os feriados entram pelo script backend/docs/dados-feriados.sql. A sp_AgendarConsulta
+// (erro 50004) e os horários livres leem esta tabela.
 public class FeriadoServico : IFeriadoServico
 {
     private readonly IHorarioRepositorio _horarios;
@@ -26,24 +26,5 @@ public class FeriadoServico : IFeriadoServico
 
         var feriados = await _horarios.ListarFeriadosAsync(de.ToDateTime(TimeOnly.MinValue), ate.ToDateTime(TimeOnly.MinValue));
         return feriados.Select(Resposta).ToList();
-    }
-
-    public async Task<FeriadoResposta> CadastrarAsync(FeriadoRequisicao dados)
-    {
-        var feriado = new Feriado { Data = dados.Data!.Value.ToDateTime(TimeOnly.MinValue), Nome = dados.Nome.Trim() };
-        if (feriado.Nome == "")
-            throw new ErroApi(StatusCodes.Status400BadRequest, "Escreva o nome do feriado.");
-
-        if (await _horarios.FeriadoExisteNaDataAsync(feriado.Data))
-            throw new ErroApi(StatusCodes.Status400BadRequest, "Já existe um feriado nesta data.");
-
-        feriado.Id = await _horarios.CriarFeriadoAsync(feriado);
-        return Resposta(feriado);
-    }
-
-    public async Task RemoverAsync(int id)
-    {
-        if (!await _horarios.RemoverFeriadoAsync(id))
-            throw new ErroApi(StatusCodes.Status404NotFound, "Feriado não encontrado.");
     }
 }

@@ -5,7 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AgendaPro.Api.Controllers;
 
-// L3: feriados (tabela global do Apêndice Q, sem clínica). Todos os perfis leem; recepção e dono cadastram e removem.
+// L3: feriados (tabela global do Apêndice Q, sem clínica). Todos os perfis leem; ninguém grava pela API.
+// Como um feriado vale para todas as clínicas, deixar o dono ou a recepção de uma clínica criar ou apagar
+// feriados mexeria na agenda das outras (seção 5.4, isolamento). Os feriados nacionais entram pelo script
+// backend/docs/dados-feriados.sql.
 [ApiController]
 public class FeriadosController : ApiControllerBase
 {
@@ -21,21 +24,5 @@ public class FeriadosController : ApiControllerBase
     public async Task<ActionResult<IEnumerable<FeriadoResposta>>> Listar([FromQuery] PeriodoAgendaRequisicao periodo)
     {
         return Ok(await _servico.ListarAsync(periodo.De!.Value, periodo.Ate!.Value));
-    }
-
-    [Authorize(Roles = "recepcao,dono")]
-    [HttpPost("api/feriados")]
-    public async Task<ActionResult<FeriadoResposta>> Cadastrar(FeriadoRequisicao dados)
-    {
-        var resposta = await _servico.CadastrarAsync(dados);
-        return StatusCode(StatusCodes.Status201Created, resposta);
-    }
-
-    [Authorize(Roles = "recepcao,dono")]
-    [HttpDelete("api/feriados/{id:int}")]
-    public async Task<IActionResult> Remover(int id)
-    {
-        await _servico.RemoverAsync(id);
-        return NoContent();
     }
 }
