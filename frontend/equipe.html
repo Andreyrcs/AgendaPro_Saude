@@ -121,12 +121,8 @@
               </div>
               <div class="campo" id="c-nova-email">
                 <label for="f-nova-email">E-mail de acesso</label>
-                <input id="f-nova-email" name="email" type="email" autocomplete="off" />
-              </div>
-                <div class="campo" id="c-nova-senha">
-                  <label for="f-nova-senha">Senha provisória</label>
-                  <input id="f-nova-senha" name="senha" type="password" autocomplete="new-password" />
-                  <span class="campo__dica">A pessoa troca a senha em Minha conta.</span>
+                <input id="f-nova-email" name="email" type="email" autocomplete="off" aria-describedby="dica-nova-senha" />
+                <span class="campo__dica" id="dica-nova-senha">O sistema cria uma senha provisória, que aparece aqui uma única vez. A pessoa troca a senha em Minha conta.</span>
               </div>
               <div class="ajuste__acoes">
                 <button type="submit" class="botao botao--principal botao--pequeno">Adicionar à equipe</button>
@@ -147,7 +143,7 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/comum.js"></script>
     <script src="assets/js/movimento.js"></script>
-    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-servicos.js"></script>
     <script src="assets/js/clinica-casca.js"></script>
     <script src="assets/js/pagina-equipe.js"></script>
   </body>

@@ -1,26 +1,31 @@
-/* AgendaPro Saúde — Minha conta, da recepção
-   Dados pessoais e senha salvam com o botão de cada bloco; as preferências mudam na hora.
-   A senha não é guardada em lugar nenhum: no sistema real, isso é trabalho da API. */
+/* AgendaPro Saúde — Minha conta, do dono e da recepção, pela API.
+   Nome e e-mail vêm da sessão (token do login) e ficam só para leitura: a API ainda não tem rota para a equipe
+   mudar os próprios dados (pendência registrada no plano de integração). A senha troca por
+   PUT /api/usuarios/{id}/senha. As preferências mudam na hora e ficam só neste computador. */
 (function () {
   "use strict";
 
-  const D = window.DADOS;
-  const C = window.CLIDADOS;
   const A = window.AP;
   const M = window.MOV;
   const K = window.CASCA;
+  const CL = window.CLINICA;
   const $ = (s) => document.querySelector(s);
+
+  CL.iniciar(iniciar);
+  function iniciar() {
+  const dono = K.conta.papel === "dono";
+  const nomeClinica = () => (CL.clinica && CL.clinica.nome) || "";
 
   const PERMISSOES = [
     "Marcar, remarcar e cancelar consultas",
     "Registrar a chegada e chamar pacientes",
     "Oferecer vagas e organizar a lista de espera",
     "Cadastrar e editar médicos, especialidades e horários",
-  ].concat(K.conta.papel === "dono" ? ["Mudar o nome e os dados da clínica", "Cadastrar e remover recepcionistas"] : []);
+  ].concat(dono ? ["Mudar o nome e os dados da clínica", "Cadastrar e remover recepcionistas"] : []);
 
   function desenharTopo() {
-    $("#conta-avatar").textContent = A.iniciais(K.conta.nome);
-    $("#subtitulo").innerHTML = "<b>" + A.esc(K.conta.nome) + "</b> · " + A.esc(K.conta.funcao) + " da " + D.clinica.nome;
+    $("#conta-avatar").textContent = K.conta.nome ? A.iniciais(K.conta.nome) : "";
+    $("#subtitulo").innerHTML = "<b>" + A.esc(K.conta.nome) + "</b> · " + A.esc(K.conta.funcao) + " da " + A.esc(nomeClinica());
   }
 
   /* ─── Erros de campo ─── */
@@ -32,7 +37,7 @@
   function erro(campo, entrada, texto) {
     const c = $(campo);
     c.classList.add("campo--erro");
-    c.insertAdjacentHTML("beforeend", '<span class="campo__erro" id="' + entrada.id + '-erro">' + texto + "</span>");
+    c.insertAdjacentHTML("beforeend", '<span class="campo__erro" id="' + entrada.id + '-erro">' + A.esc(texto) + "</span>");
     entrada.setAttribute("aria-describedby", entrada.id + "-erro");
     entrada.focus();
     M.tremer(entrada);
@@ -43,28 +48,12 @@
     if (!M.reduzido()) el.animate([{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }], { duration: 200, easing: M.EASE_OUT });
   }
 
-  /* ─── Dados pessoais ─── */
-  const fd = $("#form-dados");
-  fd.nome.value = K.conta.nome;
-  fd.email.value = K.conta.email;
-  fd.tel.value = K.conta.tel;
-  fd.ramal.value = K.conta.ramal;
-  fd.addEventListener("input", () => { $("#salvo-dados").textContent = ""; });
-  fd.addEventListener("submit", (ev) => {
-    ev.preventDefault();
-    limpar(fd);
-    const nome = fd.nome.value.trim().replace(/\s+/g, " ");
-    const email = fd.email.value.trim();
-    const digitos = fd.tel.value.replace(/\D/g, "");
-    if (nome.split(" ").length < 2) return erro("#c-nome", fd.nome, "Escreva o nome e o sobrenome.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return erro("#c-email", fd.email, "Confira o e-mail: falta o @ ou o domínio.");
-    if (digitos.length < 10 || digitos.length > 11) return erro("#c-tel", fd.tel, "Use o DDD e o número, com 10 ou 11 dígitos.");
-    const tel = "(" + digitos.slice(0, 2) + ") " + digitos.slice(2, -4) + "-" + digitos.slice(-4);
-    fd.tel.value = tel;
-    K.salvarConta({ nome, email, tel, ramal: fd.ramal.value.replace(/\D/g, "") });
-    desenharTopo();
-    carimbo("#salvo-dados", "Salvo agora");
-  });
+  /* ─── Dados pessoais (só leitura) ─── */
+  $("#f-nome").value = K.conta.nome;
+  $("#f-email").value = K.conta.email;
+  $("#dados-nota").textContent = dono
+    ? "Por enquanto, o nome e o e-mail da conta não mudam pelo sistema."
+    : "Para mudar o nome ou o e-mail, fale com o responsável pela clínica.";
 
   /* ─── Senha ─── */
   const fs = $("#form-senha");
@@ -80,11 +69,13 @@
     if (nova.length < 8 || !/[a-zA-Z]/.test(nova) || !/\d/.test(nova)) return erro("#c-nova", fs.nova, "Pelo menos 8 caracteres, com letras e números.");
     if (nova === fs.atual.value) return erro("#c-nova", fs.nova, "A nova senha precisa ser diferente da atual.");
     if (fs.repete.value !== nova) return erro("#c-repete", fs.repete, "As duas senhas não estão iguais.");
+    const botao = fs.querySelector('button[type="submit"]');
+    botao.disabled = true;
     window.API.trocarSenha(fs.atual.value, nova).then(() => {
       fs.reset();
       carimbo("#salvo-senha", "Senha trocada");
       K.toast({ titulo: "Senha trocada", texto: "Use a nova senha no próximo login.", icone: "check" });
-    }).catch((e) => erro("#c-atual", fs.atual, e.message));
+    }).catch((e) => erro("#c-atual", fs.atual, e.message)).finally(() => { botao.disabled = false; });
   });
 
   /* ─── Preferências ─── */
@@ -112,31 +103,13 @@
   /* o botão do próprio menu também muda essa preferência */
   document.querySelector(".lateral").addEventListener("click", (ev) => { if (ev.target.closest(".lateral__recolher")) desenharPref(); });
 
-  /* ─── Acesso ─── */
+  /* ─── Acesso: médicos na agenda = os da clínica que já têm expediente (GET /api/clinicas/{id}/medicos) ─── */
+  const naAgenda = CL.medicos.filter((m) => m.expediente).length;
   $("#acesso").innerHTML =
     "<div><dt>Função</dt><dd>" + A.esc(K.conta.funcao) + "</dd></div>" +
-    "<div><dt>Clínica</dt><dd>" + D.clinica.nome + "</dd></div>" +
-    "<div><dt>Médicos na agenda</dt><dd>" + C.MEDICOS.length + "</dd></div>";
-  $("#permissoes").innerHTML = PERMISSOES.map((p) => "<li>" + A.icone("check", "ic-sm") + "<span>" + p + "</span></li>").join("");
-
-  /* ─── Dados guardados neste computador (até a API: depois, ficam no banco) ─── */
-  function desenharRestaurar() {
-    const caixa = $("#restaurar-caixa");
-    caixa.innerHTML = '<p>A agenda, os médicos, os horários e a lista de espera desta clínica estão guardados neste navegador.</p><div class="ajuste__acoes ajuste__acoes--inicio">' +
-        '<button type="button" class="botao botao--secundario botao--pequeno" id="restaurar">Voltar à carga inicial</button></div>';
-    const b = $("#restaurar");
-    if (b) b.addEventListener("click", () => {
-      caixa.innerHTML = '<p><b>Apagar as consultas, médicos, horários e mudanças na fila feitos aqui?</b> Isso não pode ser desfeito.</p>' +
-        '<div class="ajuste__acoes ajuste__acoes--inicio"><button type="button" class="botao botao--secundario botao--pequeno" id="manter">Manter</button>' +
-        '<button type="button" class="botao botao--perigo botao--pequeno" id="apagar">Sim, voltar à carga inicial</button></div>';
-      $("#manter").focus();
-      $("#manter").addEventListener("click", () => { desenharRestaurar(); $("#restaurar").focus(); });
-      $("#apagar").addEventListener("click", () => {
-        K.guardar.tudoDeVolta();
-        location.reload();
-      });
-    });
-  }
+    "<div><dt>Clínica</dt><dd>" + A.esc(nomeClinica()) + "</dd></div>" +
+    "<div><dt>Médicos na agenda</dt><dd>" + naAgenda + "</dd></div>";
+  $("#permissoes").innerHTML = PERMISSOES.map((p) => "<li>" + A.icone("check", "ic-sm") + "<span>" + A.esc(p) + "</span></li>").join("");
 
   $("#sair").addEventListener("click", async () => {
     await window.API.sair();
@@ -145,5 +118,5 @@
 
   desenharTopo();
   desenharPref();
-  desenharRestaurar();
+  }
 })();

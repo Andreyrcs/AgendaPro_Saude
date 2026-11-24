@@ -1,0 +1,7 @@
+# Etapa 8a — tela × banco (sqlcmd, texto em hexadecimal UTF-16LE)
+Clinica.Telefone (id 3): hex 2800310031002900200033003300330033002D003200330037003200 = '(11) 3333-2372'; na tela depois de recarregar: '(11) 3333-2372'; iguais: True
+Clinica.Nome_Clinica (id 3): hex 43006C00ED006E00690063006100200054006500730074006500200041006C0066006100 = 'Clínica Teste Alfa' (o nome com XSS foi gravado e depois voltou ao original)
+Clinica.Codigo (id 3): TES-3028 (o mesmo de equipe.html)
+Usuarios RECEPCAO da clínica 3: 'Recepção Alfa Teste', Ativo=1
+Usuarios RECEPCAO da clínica 3: '<img src=x onerror=alert(1)> Silva', Ativo=0
+Usuarios RECEPCAO da clínica 3: '<img src=x onerror=alert(1)> Silva', Ativo=0

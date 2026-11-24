@@ -65,3 +65,20 @@ html {
 .pular:focus {
   top: 12px;
 }
+
+/* aviso do portão CLINICA.iniciar: "Carregando…" e o erro com "Tentar de novo" */
+.carregando-area {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--tinta-2);
+}
+.carregando-area--erro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  background: var(--ambar);
+  color: var(--ambar-tinta);
+}

@@ -56,3 +56,17 @@ Colhidas em 23/11/2026, depois dos commits 7a, 7b e 7c.
 não do sistema: o `sqlcmd` devolvia os acentos na página de código do console (CP850) e "Médica" chegava como
 "M�dica" para a comparação. O script passou a pedir o texto ao banco em hexadecimal (UTF-16) e a decodificar no Node;
 a nova rodada está em `e7-verificacao-a.txt`, com tudo `OK`.
+
+## Etapa 8 (telas do dono e da recepção pela API)
+
+Pasta `e8/`. A Etapa 8a foi colhida em 23/11/2026, antes do commit, com o banco `AgendaPro_Saude_App` recriado do
+zero na instância `.\SQLEXPRESS`. Nos arquivos de tela, cada verificação aparece como `PASSOU` ou `FALHOU`.
+
+| Arquivo | O que prova |
+|---|---|
+| `e8/ambiente.txt` | Banco `_App` criado sem tocar no `AgendaPro_Saude`; `sp_TesteSistema` 25 de 25; prevenção e feriados carregados; a foto do `AgendaPro_Saude` antes e depois tem 0 diferenças |
+| `e8/back-feriados-curl.txt` | Feriados só leitura: o `POST /api/feriados` dá 405 e o `DELETE /api/feriados/{id}` dá 404 para o dono e para a recepção; o GET dá 401 sem token e 200 nos 4 perfis; nada foi gravado |
+| `e8/e8a-tela.txt` | 8a pela tela (Edge): código e telefone da clínica (o telefone continua depois de recarregar); recepcionista criada com a senha provisória mostrada uma vez; tela só para leitura da recepção; troca de senha do dono e da recepção (a senha antiga dá 401); remoção da recepcionista (o token dela dá 401 e o navegador volta ao login); XSS no nome da recepcionista e da clínica, no computador e a 390 px; 0 erros de JavaScript nas 9 telas, com o dono e com a recepção; token em todas as chamadas, menos no login |
+| `e8/e8a-curl.txt` | Rotas da 8a: o caso certo, 401 sem token, 403 da recepção nas ações só do dono, 403 do médico e do paciente, isolamento A × B (14 pedidos, todos 403, e a linha da clínica B com o mesmo SHA-256 antes e depois); no fim, o token antigo do dono depois da troca de senha (pendência) |
+| `e8/e8a-banco.txt` | Telefone, nome e código da clínica na tela conferidos no banco em hexadecimal; as recepcionistas removidas ficam com `Ativo=0` |
+| `e8/e8a-*.png` | equipe.html e conta.html com os nomes XSS, no computador e a 390 px (a senha provisória não aparece) |

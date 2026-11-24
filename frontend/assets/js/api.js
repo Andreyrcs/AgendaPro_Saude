@@ -315,6 +315,24 @@
 
   /* ─── Clínica e equipe ─── */
 
+  /* A clínica que voltou da API passa a ser a clínica aberta na sessão (e o nome dela vale em todas as telas) */
+  function guardarClinicaNaSessao(c) {
+    const s = sessao();
+    if (!s) return c;
+    s.clinica = c;
+    gravarSessao(s);
+    aplicarClinicaNasTelas();
+    return c;
+  }
+
+  /* GET /api/clinicas/{id}  (L1: dono e recepção, só a própria clínica). A cópia guardada no login pode estar velha:
+     as telas da equipe buscam de novo a cada carga (clinica-servicos.js). */
+  async function recarregarClinica() {
+    const c = clinicaAtual();
+    if (!c) throw new Error("Nenhuma clínica aberta.");
+    return guardarClinicaNaSessao(await chamar("GET", "/api/clinicas/" + c.id));
+  }
+
   /* PUT /api/clinicas/{id}  (só o dono). A API pede todos os campos: os que a tela não mandou vêm da clínica aberta. */
   async function atualizarClinica(campos) {
     const c = clinicaAtual();
@@ -325,11 +343,7 @@
       nome: String(pega("nome")).trim(), telefone: pega("telefone"), endereco: String(pega("endereco")).trim(),
       cidade: pega("cidade"), uf: String(pega("uf")).trim(), publica: !!pega("publica"),
     });
-    const s = sessao();
-    s.clinica = nova;
-    gravarSessao(s);
-    aplicarClinicaNasTelas();
-    return nova;
+    return guardarClinicaNaSessao(nova);
   }
 
   /* GET /api/clinicas/{id}/equipe → [{ idUsuario, nome, email, papel }] (id = idUsuario, para as telas) */
@@ -447,7 +461,7 @@
     pronto, PAPEIS, liberada,
     sessao, usuarioAtual, clinicaAtual, destinoDe,
     entrar, sair, trocarSenha,
-    cadastrarClinica, atualizarClinica,
+    cadastrarClinica, atualizarClinica, recarregarClinica,
     listarEquipe, cadastrarRecepcionista, removerDaEquipe, cadastrarContaMedico, emailLivre,
     telefoneDoMedico, salvarTelefoneMedico,
     cadastrarPaciente, buscarClinicas, clinicaPorCodigo, vincularClinica, clinicasDoPaciente, usarClinica, normalizarCodigo,

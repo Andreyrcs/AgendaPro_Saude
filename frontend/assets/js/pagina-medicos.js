@@ -54,8 +54,8 @@
     const dados = C.MEDICOS.map((m) => ({ m, md: K.medico(m), n: numeros(m) }));
 
     const cheio = dados.slice().sort((a, b) => b.n.ocupacao - a.n.ocupacao)[0];
-    $("#subtitulo").innerHTML = "<b>" + dados.length + " médicos</b> com agenda na " + D.clinica.nome + ". " +
-      "Agenda mais cheia da semana: " + cheio.md.nome + ", " + Math.round(cheio.n.ocupacao * 100) + "% ocupada" +
+    $("#subtitulo").innerHTML = "<b>" + dados.length + " médicos</b> com agenda na " + A.esc(D.clinica.nome) + ". " +
+      "Agenda mais cheia da semana: " + A.esc(cheio.md.nome) + ", " + Math.round(cheio.n.ocupacao * 100) + "% ocupada" +
       (cheio.n.fila ? " e " + cheio.n.fila + " pessoas na fila." : ".");
     $("#meta-semana").textContent = "Semana de " + C.data(SEG).getDate() + " a " + C.data(SEMANA[5]).getDate() + " de " + A.MESES_LONGOS[C.data(SEMANA[5]).getMonth()];
 

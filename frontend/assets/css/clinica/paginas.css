@@ -1209,6 +1209,9 @@ a.botao {
     padding-bottom: 16px;
     border-bottom: 1px solid var(--linha);
 }
+.ajuste[hidden] {
+    display: none;
+}
 .ajuste:last-child {
     border-bottom: 0;
 }

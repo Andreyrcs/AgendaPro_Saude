@@ -48,31 +48,18 @@
               <h2 id="t-dados">Dados pessoais</h2>
               <p>Seu nome aparece para a equipe da clínica e no registro de quem marcou cada consulta.</p>
             </div>
-            <form class="painel ajuste__painel" id="form-dados" novalidate>
+            <div class="painel ajuste__painel" id="form-dados">
               <div class="campo" id="c-nome">
                 <label for="f-nome">Nome completo</label>
-                <input id="f-nome" name="nome" autocomplete="name" />
+                <input id="f-nome" name="nome" autocomplete="name" readonly />
               </div>
               <div class="campo" id="c-email">
                 <label for="f-email">E-mail</label>
-                <input id="f-email" name="email" type="email" autocomplete="email" />
-                <span class="campo__dica">É por ele que você entra no sistema e recupera a senha.</span>
+                <input id="f-email" name="email" type="email" autocomplete="email" readonly aria-describedby="dica-email" />
+                <span class="campo__dica" id="dica-email">É por ele que você entra no sistema.</span>
               </div>
-              <div class="campos-dupla">
-                <div class="campo" id="c-tel">
-                  <label for="f-tel">Telefone da recepção</label>
-                  <input id="f-tel" name="tel" inputmode="tel" autocomplete="tel" />
-                </div>
-                <div class="campo">
-                  <label for="f-ramal">Ramal</label>
-                  <input id="f-ramal" name="ramal" inputmode="numeric" autocomplete="off" />
-                </div>
-              </div>
-              <div class="ajuste__acoes">
-                <span class="ajuste__salvo" id="salvo-dados" aria-live="polite"></span>
-                <button type="submit" class="botao botao--principal botao--pequeno">Salvar dados</button>
-              </div>
-            </form>
+              <p class="campo__dica" id="dados-nota"></p>
+            </div>
           </section>
 
           <section class="ajuste" aria-labelledby="t-senha">
@@ -139,14 +126,6 @@
             </div>
           </section>
 
-          <section class="ajuste" aria-labelledby="t-dados-proto">
-            <div class="ajuste__rotulo">
-              <h2 id="t-dados-proto">Dados neste computador</h2>
-              <p>Enquanto a clínica não estiver ligada ao servidor, o que a recepção faz fica guardado neste navegador.</p>
-            </div>
-            <div class="painel ajuste__painel" id="restaurar-caixa"></div>
-          </section>
-
           <section class="ajuste ajuste--sair" aria-label="Sair">
             <div class="ajuste__rotulo"></div>
             <div class="ajuste__painel ajuste__painel--solto">
@@ -168,7 +147,7 @@
     <script src="assets/js/api.js"></script>
     <script src="assets/js/comum.js"></script>
     <script src="assets/js/movimento.js"></script>
-    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-servicos.js"></script>
     <script src="assets/js/clinica-casca.js"></script>
     <script src="assets/js/pagina-conta.js"></script>
   </body>

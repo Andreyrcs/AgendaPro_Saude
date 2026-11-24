@@ -1,0 +1,60 @@
+# Etapa 8a — rotas da casca, da clínica e da equipe (curl, 2026-11-23 23:05)
+Clínica A = 3, clínica B = 4. [perfil] = token de quem chama (omitido). Corpos cortados em 110 caracteres.
+
+## O caso certo (dono e recepção da clínica A)
+GET     /api/clinicas/3                    [dono]       → 200 | {"id":3,"nome":"Clínica Teste Alfa","endereco":"Rua das Flores, 100, Centro","telefone":"(11) 3333-2372","cnp
+GET     /api/clinicas/3                    [recep]      → 200 | {"id":3,"nome":"Clínica Teste Alfa","endereco":"Rua das Flores, 100, Centro","telefone":"(11) 3333-2372","cnp
+GET     /api/clinicas/3/equipe             [recep]      → 200 | [{"idUsuario":9,"nome":"Dono A Teste","email":"dono.a.mwu1eaow@teste.local","papel":"dono"},{"idUsuario":14,"n
+
+## 401 sem token
+GET     /api/clinicas/3                    [-]          → 401 
+GET     /api/clinicas/3/equipe             [-]          → 401 
+PUT     /api/clinicas/3                    [-]          → 401 
+POST    /api/clinicas/3/equipe             [-]          → 401 
+
+## (e) recepção nas ações só do dono → 403
+PUT     /api/clinicas/3                    [recep]      → 403 
+POST    /api/clinicas/3/equipe             [recep]      → 403 
+DELETE  /api/clinicas/3/equipe/14          [recep]      → 403 
+
+## (e) médico e paciente nas rotas do dono e da recepção → 403
+GET     /api/clinicas/3                    [medico]     → 403 
+GET     /api/clinicas/3/equipe             [medico]     → 403 
+PUT     /api/clinicas/3                    [medico]     → 403 
+POST    /api/clinicas/3/equipe             [medico]     → 403 
+DELETE  /api/clinicas/3/equipe/14          [medico]     → 403 
+GET     /api/clinicas/3/lista-espera       [medico]     → 403 
+GET     /api/clinicas/3/medicos            [medico]     → 403 
+GET     /api/clinicas/3                    [paciente]   → 403 
+GET     /api/clinicas/3/equipe             [paciente]   → 403 
+PUT     /api/clinicas/3                    [paciente]   → 403 
+POST    /api/clinicas/3/equipe             [paciente]   → 403 
+DELETE  /api/clinicas/3/equipe/14          [paciente]   → 403 
+GET     /api/clinicas/3/lista-espera       [paciente]   → 403 
+GET     /api/clinicas/3/medicos            [paciente]   → 403 
+
+## (d) isolamento: dono e recepção da clínica A trocando o id para a clínica B
+Clínica B antes  (SHA-256 da linha + equipe ativa): 3B4BF4BB3D093517730DFD5243C765ABA2E710680E807AE01DB3DE149D583A18 / equipe ativa: 2
+GET     /api/clinicas/4                    [dono]       → 403 
+PUT     /api/clinicas/4                    [dono]       → 403 
+GET     /api/clinicas/4/equipe             [dono]       → 403 
+POST    /api/clinicas/4/equipe             [dono]       → 403 
+DELETE  /api/clinicas/4/equipe/11          [dono]       → 403 
+GET     /api/clinicas/4/lista-espera       [dono]       → 403 
+GET     /api/clinicas/4/medicos            [dono]       → 403 
+GET     /api/clinicas/4                    [recep]      → 403 
+PUT     /api/clinicas/4                    [recep]      → 403 
+GET     /api/clinicas/4/equipe             [recep]      → 403 
+POST    /api/clinicas/4/equipe             [recep]      → 403 
+DELETE  /api/clinicas/4/equipe/11          [recep]      → 403 
+GET     /api/clinicas/4/lista-espera       [recep]      → 403 
+GET     /api/clinicas/4/medicos            [recep]      → 403 
+Clínica B depois (SHA-256 da linha + equipe ativa): 3B4BF4BB3D093517730DFD5243C765ABA2E710680E807AE01DB3DE149D583A18 / equipe ativa: 2
+Contas criadas com e-mail invasor.*: 0
+
+## O dono da clínica B não altera a recepção da clínica A
+DELETE  /api/clinicas/3/equipe/14          [donoB]      → 403 
+GET     /api/clinicas/3/equipe             [donoB]      → 403 
+
+## Pendência (não implementada): o token emitido antes da troca de senha do dono continua valendo
+GET     /api/clinicas/3                    [donoAntigo] → 200 | {"id":3,"nome":"Clínica Teste Alfa","endereco":"Rua das Flores, 100, Centro","telefone":"(11) 3333-2372","cnp

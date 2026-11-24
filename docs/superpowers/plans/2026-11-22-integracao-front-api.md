@@ -253,6 +253,11 @@ A tabela `Feriados` continua como está: global, com `Data_Feriado` UNIQUE. A `s
 
 **Risco aceito pelo grupo:** como a tabela é global, um feriado cadastrado pela recepção de uma clínica vale para todas as clínicas, e qualquer recepção pode removê-lo. Isso fica registrado no relatório.
 
+> **Revisão de 2026-11-23 (antes da 8b):** o risco foi reavaliado como falha de isolamento (seção 5.4). As rotas
+> `POST /api/feriados` e `DELETE /api/feriados/{id}` foram **retiradas**; fica só o GET, para todos os perfis. Os
+> feriados nacionais de 2026 e 2027 entram por `backend/docs/dados-feriados.sql`. Commit:
+> `back: feriados só leitura e dados-feriados.sql`. Na 8b, `horarios.html` só lista os feriados (`GET /api/feriados`).
+
 **Passos:**
 - [ ] Testar com curl:
   - recepção cadastra o feriado de 2026-12-25 e recebe 201;
@@ -598,3 +603,27 @@ O que a Fase 0 marcou como "pela metade" ou "não existe" e que ainda não foi r
 
 - **Fase 3:** os roteiros 0–6 do prompt, com o banco vazio.
 - **Fase 4:** o relatório final, com a seção "Mudanças no back-end" para o Thiago: as rotas novas e os bugs corrigidos. O banco não muda.
+
+## Pendências registradas durante a Etapa 8 (decisão do Andrey)
+
+1. **Dados pessoais da equipe sem rota para alterar.** Nenhuma rota deixa o dono ou a recepção mudar o próprio nome,
+   e-mail ou telefone (`Usuarios.Telefone` existe, mas não há rota para ele; o ramal não existe no banco). Desde a 8a,
+   `conta.html` mostra o nome e o e-mail só para leitura, e saíram o telefone e o ramal, que antes eram gravados só no
+   navegador. Para resolver, seria preciso uma rota nova (por exemplo `PUT /api/usuarios/{id}`, só a própria conta).
+2. **Token antigo continua valendo depois da troca de senha.** O `PUT /api/usuarios/{id}/senha` troca o `SenhaHash`,
+   mas os tokens já emitidos continuam válidos até vencer (8 h para a equipe, 30 dias para o paciente). O que existe
+   hoje: o `OnTokenValidated` (`Program.cs`) já consulta o banco em toda requisição (`EstaAtivoAsync`), e `Usuarios`
+   não tem coluna com a data da troca de senha (só `CriadoEm`). As opções:
+   - **A. Selo da senha no token, sem coluna nova.** No login, o token ganha uma claim com os 16 primeiros caracteres
+     de um HMAC-SHA256 do `SenhaHash`, feito com a `Jwt:Chave`. O hash da senha não vai para o token. A consulta que
+     já confere `Ativo` passa a ler também o `SenhaHash` e compara os dois; se não bater, a resposta é 401. Como o
+     BCrypt usa um sal novo a cada troca, qualquer troca derruba todos os tokens antigos. Custo: umas 25 linhas
+     (TokenServico, Program, UsuarioRepositorio), nenhuma consulta a mais e nenhuma mudança no banco. Efeitos: quem
+     troca a senha precisa entrar de novo, e as telas teriam de fazer o login depois da troca. Os tokens emitidos
+     antes da mudança, que não têm o selo, passam a dar 401, e cada pessoa entra de novo uma vez.
+   - **B. Comparar o `iat` do token com a data da troca.** Precisa de uma coluna nova (`SenhaAlteradaEm`) e da
+     gravação dela na troca. Muda o banco.
+   - **C. Token do paciente mais curto.** Muda só a configuração (`Jwt:DiasValidadePaciente` no appsettings). A janela diminui, mas o
+     problema continua.
+   - **D. Tabela de tokens revogados (`jti`).** Tabela nova, uma consulta a mais em toda requisição e limpeza
+     periódica dos tokens vencidos. É a mais cara.
