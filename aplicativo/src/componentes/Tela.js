@@ -17,6 +17,7 @@ export default function Tela({
   voltar = false,
   acaoDireita, // { icone, rotulo, onPress }
   rolavel = true,
+  rolagemRef, // para a tela poder rolar até um ponto (ex.: o médico aberto no "Marcar consulta")
   rodape,
   children,
 }) {
@@ -68,6 +69,7 @@ export default function Tela({
       <Entrada style={estilos.corpo}>
         {rolavel ? (
           <ScrollView
+            ref={rolagemRef}
             style={estilos.corpo}
             contentContainerStyle={estilos.conteudo}
             keyboardShouldPersistTaps="handled"

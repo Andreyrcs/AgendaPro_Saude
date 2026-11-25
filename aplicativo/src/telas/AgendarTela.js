@@ -1,10 +1,10 @@
-// Marcar consulta: para quem → médico e horário → confirmar.
+// Marcar consulta: para quem → médico → dia → horário → confirmar.
 // Parâmetros da rota (todos opcionais):
 //   especialidade: id da especialidade (sem ela, a tela pede para escolher uma)
 //   pessoa: id do familiar já escolhido (vindo do assistente ou da família)
 //   itemPrevencao: id do item de prevenção que esta consulta resolve
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import Tela from '../componentes/Tela';
@@ -12,13 +12,15 @@ import Texto from '../componentes/Texto';
 import Botao from '../componentes/Botao';
 import Cartao from '../componentes/Cartao';
 import FolhaDia from '../componentes/FolhaDia';
+import MedicoAcordeao from '../componentes/MedicoAcordeao';
 import Selo from '../componentes/Selo';
 import SucessoConsulta from '../componentes/SucessoConsulta';
 import CabecalhoSecao from '../componentes/CabecalhoSecao';
-import { AvatarFamiliar, AvatarMedico } from '../componentes/Avatar';
+import { AvatarFamiliar } from '../componentes/Avatar';
 import { Carregando, MensagemErro } from '../componentes/Estados';
 import useDadosDaTela from '../componentes/useDadosDaTela';
 import { useSessao } from '../contexto/SessaoContext';
+import { usePreferencias } from '../contexto/PreferenciasContext';
 import { buscarEspecialidade, calcularPrimeiroHorario, listarEspecialidades, listarHorariosLivres } from '../servicos/medicos';
 import { listarFamiliares } from '../servicos/familia';
 import { marcarConsulta, buscarSituacao } from '../servicos/consultas';
@@ -28,7 +30,7 @@ import { buscarMinhaFila, entrarNaFila } from '../servicos/espera';
 import { marcarItemPrevencao } from '../servicos/prevencao';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
-import { curto, extenso, relativo } from '../utilitarios/datas';
+import { extenso, relativo } from '../utilitarios/datas';
 import { clinicaDaSessao, ehPediatria, nomeParaExibir } from '../utilitarios/texto';
 
 export default function AgendarTela({ route, navigation }) {
@@ -79,14 +81,30 @@ function EscolherEspecialidade({ navigation, params }) {
   );
 }
 
-// Passos 1 a 3: para quem, horário, confirmar
+// Passos 1 a 4: para quem, médico, dia e horário, confirmar
 function EscolherHorario({ navigation, params }) {
   const { usuario } = useSessao();
   const [quemEscolhido, setQuemEscolhido] = useState(null);
+  const [aberta, setAberta] = useState({ medico: null, dia: null }); // o médico aberto (só um) e o dia escolhido nele
   const [escolha, setEscolha] = useState(null); // { medico, data, hora }
   const [enviando, setEnviando] = useState(false);
   const [erroEnvio, setErroEnvio] = useState(null);
   const [marcada, setMarcada] = useState(null); // consulta criada → tela de sucesso
+  const { reduzirMovimento } = usePreferencias();
+  const rolagem = useRef(null);
+  const posicoes = useRef({}); // onde está cada cartão de médico na tela
+
+  // Ao abrir um médico, o cartão dele vai para o alto: o que estava aberto antes fechou e a tela mudou de altura
+  useEffect(() => {
+    if (!aberta.medico) return undefined;
+    const espera = setTimeout(() => {
+      const { lista, [aberta.medico]: cartao } = posicoes.current;
+      if (rolagem.current && lista !== undefined && cartao !== undefined) {
+        rolagem.current.scrollTo({ y: Math.max(0, lista + cartao - espaco.m), animated: !reduzirMovimento });
+      }
+    }, 120);
+    return () => clearTimeout(espera);
+  }, [aberta.medico]);
 
   const { dados, erro, recarregar } = useDadosDaTela(async () => {
     const [esp, familia, horarios, fila, situacao] = await Promise.all([
@@ -123,6 +141,17 @@ function EscolherHorario({ navigation, params }) {
 
   const ehEscolha = (medico, data, hora) =>
     escolha && escolha.medico.id === medico.id && escolha.data === data && escolha.hora === hora;
+
+  // Abre um médico (e um dia). Trocar de médico ou de dia desfaz a escolha: só se confirma o que está à vista.
+  function abrir(medico, dia = null) {
+    setAberta({ medico, dia });
+    setEscolha(null);
+  }
+
+  function escolherPrimeiro() {
+    setAberta({ medico: primeiro.medico.id, dia: primeiro.data });
+    setEscolha({ medico: primeiro.medico, data: primeiro.data, hora: primeiro.hora });
+  }
 
   async function confirmar() {
     setEnviando(true);
@@ -161,13 +190,14 @@ function EscolherHorario({ navigation, params }) {
 
   const resumo = escolha
     ? `${esp.nome} para ${nomeParaExibir(quem)}: ${extenso(escolha.data)}, às ${escolha.hora}, com ${escolha.medico.nome}.`
-    : 'Escolha um horário acima.';
+    : 'Escolha o médico, o dia e o horário acima.';
 
   return (
     <Tela
       titulo="Marcar consulta"
       subtitulo={esp.nome}
       voltar
+      rolagemRef={rolagem}
       rodape={
         <>
           {erroEnvio && (
@@ -175,7 +205,8 @@ function EscolherHorario({ navigation, params }) {
               <Texto cor={cores.domingo}>{erroEnvio}</Texto>
             </View>
           )}
-          <Texto variante="meta">{textoDasFaltas(situacao.faltas)} {TEXTO_DA_REGRA}</Texto>
+          {/* a regra das faltas aparece antes de confirmar; enquanto se procura o horário, o rodapé fica pequeno */}
+          {escolha && <Texto variante="meta">{textoDasFaltas(situacao.faltas)} {TEXTO_DA_REGRA}</Texto>}
           <Texto variante="meta" accessibilityLiveRegion="polite">
             {resumo}
           </Texto>
@@ -226,11 +257,11 @@ function EscolherHorario({ navigation, params }) {
         </Texto>
       )}
 
-      <CabecalhoSecao titulo="Escolha o horário" />
+      <CabecalhoSecao titulo="Escolha o médico" />
       <AvisoRestricao situacao={situacao} />
       {primeiro && (
         <Cartao
-          onPress={() => setEscolha({ medico: primeiro.medico, data: primeiro.data, hora: primeiro.hora })}
+          onPress={escolherPrimeiro}
           style={[estilos.primeiro, ehEscolha(primeiro.medico, primeiro.data, primeiro.hora) && estilos.primeiroMarcado]}
           accessibilityLabel={`Primeiro horário livre: ${relativo(primeiro.data)}, ${extenso(primeiro.data)} às ${primeiro.hora}, com ${primeiro.medico.nome}`}
         >
@@ -251,72 +282,30 @@ function EscolherHorario({ navigation, params }) {
           {clinicaDaSessao(usuario).telefone ? `: ${clinicaDaSessao(usuario).telefone}` : ''}.
         </Texto>
       )}
-      <View style={estilos.lista}>
-        {horarios.map(({ medico, dias }) => (
-          <Cartao key={medico.id} style={estilos.medico}>
-            <View style={estilos.linha}>
-              <AvatarMedico medico={medico} tamanho={48} />
-              <View style={estilos.flex}>
-                <Texto variante="negrito">{medico.nome}</Texto>
-                <Texto variante="meta">
-                  {clinicaDaSessao(usuario).nome}{medico.sala ? ` · ${medico.sala}` : ''}
-                </Texto>
-              </View>
+      <View style={estilos.lista} onLayout={(e) => { posicoes.current.lista = e.nativeEvent.layout.y; }}>
+        {horarios.map(({ medico, dias }) => {
+          const aberto = aberta.medico === medico.id;
+          return (
+            <View key={medico.id} onLayout={(e) => { posicoes.current[medico.id] = e.nativeEvent.layout.y; }}>
+              <MedicoAcordeao
+                medico={medico}
+                dias={dias}
+                clinica={clinicaDaSessao(usuario).nome}
+                aberto={aberto}
+                aoTocar={() => abrir(aberto ? null : medico.id)}
+                diaAberto={aberto ? aberta.dia : null}
+                aoEscolherDia={(dia) => dia !== aberta.dia && abrir(medico.id, dia)}
+                horaEscolhida={aberto && escolha && escolha.medico.id === medico.id && escolha.data === aberta.dia ? escolha.hora : null}
+                aoEscolherHora={(hora) => setEscolha({ medico, data: aberta.dia, hora })}
+                desativado={enviando}
+                restrito={restrito}
+                naFila={!!fila && fila.medico.id === medico.id}
+                aoIrParaFila={() => irParaFila(medico)}
+                podeEntrarNaFila={!!quem}
+              />
             </View>
-
-            {dias.length === 0 ? (
-              <View style={estilos.semHorario}>
-                <Texto>
-                  <Texto variante="negrito">{restrito ? 'Agendamento direto indisponível por enquanto.' : 'Sem horários livres agora.'}</Texto> Entre na lista de
-                  espera e avisamos quando abrir uma vaga.
-                </Texto>
-                {fila && fila.medico.id === medico.id ? (
-                  <>
-                    <Texto variante="meta">Você já está nesta fila.</Texto>
-                    <Botao titulo="Ver minha posição" variante="menta" icone="list" pequeno onPress={() => irParaFila(medico)} />
-                  </>
-                ) : (
-                  <Botao
-                    titulo="Entrar na lista de espera"
-                    variante="menta"
-                    icone="list"
-                    pequeno
-                    onPress={() => irParaFila(medico)}
-                    desativado={!quem}
-                  />
-                )}
-              </View>
-            ) : (
-              dias.map((dia) => (
-                <View key={dia.data} style={estilos.dia}>
-                  <Texto variante="rotulo" style={estilos.diaRotulo}>
-                    {curto(dia.data)}
-                  </Texto>
-                  <View style={estilos.horas}>
-                    {dia.horas.map((hora) => {
-                      const ativo = ehEscolha(medico, dia.data, hora);
-                      return (
-                        <Pressable
-                          key={hora}
-                          onPress={() => setEscolha({ medico, data: dia.data, hora })}
-                          disabled={enviando}
-                          accessibilityRole="button"
-                          accessibilityLabel={`${extenso(dia.data)} às ${hora} com ${medico.nome}`}
-                          accessibilityState={{ selected: !!ativo }}
-                          style={[estilos.hora, ativo && estilos.horaAtiva]}
-                        >
-                          <Texto variante="negrito" cor={ativo ? cores.sobreNoite : cores.noite}>
-                            {hora}
-                          </Texto>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
-              ))
-            )}
-          </Cartao>
-        ))}
+          );
+        })}
       </View>
     </Tela>
   );
@@ -345,21 +334,5 @@ const estilos = StyleSheet.create({
   desativado: { opacity: 0.5 },
   primeiro: { flexDirection: 'row', alignItems: 'center', gap: espaco.m, borderColor: cores.menta, borderWidth: 2 },
   primeiroMarcado: { borderColor: cores.noite, backgroundColor: cores.menta2 },
-  medico: { gap: espaco.m },
-  semHorario: { gap: espaco.p, backgroundColor: cores.gelo, borderRadius: raios.folha, padding: espaco.m },
-  dia: { gap: espaco.xs },
-  diaRotulo: { color: cores.tinta },
-  horas: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.p },
-  hora: {
-    minHeight: TOQUE_MINIMO,
-    minWidth: 76,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: raios.controle,
-    borderWidth: 1.5,
-    borderColor: cores.noite,
-    backgroundColor: cores.papel,
-  },
-  horaAtiva: { backgroundColor: cores.noite },
   erro: { backgroundColor: cores.domingoClaro, borderRadius: raios.folha, padding: espaco.m },
 });
