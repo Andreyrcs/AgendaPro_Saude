@@ -161,7 +161,7 @@
     const a0 = C.MEDICOS.length ? C.almocoDe(C.MEDICOS[0]) : null;
     if (a0 && C.MEDICOS.every((m) => String(C.almocoDe(m)) === String(a0))) h += '<div class="grade__almoco" style="top:' + ((a0[0] - INICIO) * PX) + "px;height:" + ((a0[1] - a0[0]) * PX) + 'px">' + (semana ? "" : "Almoço") + "</div>";
     for (let i = 1; i < n; i++) {
-      const dia = semana && i % 6 === 0;
+      const dia = semana && i % C.MEDICOS.length === 0;
       if (semana && !dia) continue;
       h += '<div class="grade__sep' + (dia ? " grade__sep--dia" : "") + '" style="left:calc(' + i + " * 100% / " + n + ')"></div>';
     }
@@ -185,7 +185,7 @@
       h += '<div class="grade__almoco" style="left:calc(' + (a0[0] - INICIO) + " * var(--pxh));width:calc(" + (a0[1] - a0[0]) + ' * var(--pxh))">' + (semana ? "" : "Almoço") + "</div>";
     }
     for (let i = 1; i < n; i++) {
-      const dia = semana && i % 6 === 0;
+      const dia = semana && i % C.MEDICOS.length === 0;
       h += '<div class="linhas__hsep' + (dia ? " linhas__hsep--dia" : "") + '" style="top:calc(' + i + " * var(--h))\"></div>";
     }
     return h;
@@ -206,6 +206,9 @@
     const semana = est.vista === "semana";
     const cols = colunas();
     const n = cols.length;
+    const nm = C.MEDICOS.length; /* cada dia da semana tem uma linha por médico */
+    /* com poucos médicos, a linha fica mais alta para o nome do dia (e do feriado) caber */
+    const alturaLinha = semana ? ";--h:" + Math.max(34, Math.ceil(96 / nm)) + "px" : "";
     let horas = "";
     for (let t = INICIO; t <= C.FIM; t += 60) horas += '<span class="linhas__hora" style="left:' + (t - INICIO) * PXH + 'px">' + C.txt(t) + "</span>";
 
@@ -228,7 +231,7 @@
     }).join("");
 
     vistaEl.innerHTML =
-      '<div class="grade grade--linha' + (semana ? " grade--semana" : "") + '" style="--n:' + n + ";--larg:" + LARG + '">' +
+      '<div class="grade grade--linha' + (semana ? " grade--semana" : "") + '" style="--n:' + n + ";--nm:" + nm + ";--larg:" + LARG + alturaLinha + '">' +
       '<div class="grade__rolagem" id="rolagem"><div class="linhas">' +
       '<div class="linhas__cab"><span class="linhas__canto">' + (semana ? "Dia e médico" : "Médico") + '</span><div class="linhas__eixo" aria-hidden="true">' + horas + "</div></div>" +
       '<div class="linhas__corpo"><div class="linhas__rotulos">' + rotulos + "</div>" +
@@ -271,7 +274,7 @@
     }).join("");
     vistaEl.innerHTML =
       (semana ? '<ul class="legenda-medicos" aria-label="Ordem das faixas de cada dia">' + C.MEDICOS.map((m) => '<li>' + A.avatarMedico(medico(m), 22) + A.esc(medico(m).nome) + " · " + A.esc(esp(medico(m).esp).nome) + "</li>").join("") + "</ul>" : "") +
-      '<div class="grade' + (semana ? " grade--semana" : "") + '" style="--n:' + n + '">' +
+      '<div class="grade' + (semana ? " grade--semana" : "") + '" style="--n:' + n + ";--nm:" + C.MEDICOS.length + '">' +
       '<div class="grade__cabeca"><span></span>' + cab + "</div>" +
       '<div class="grade__rolagem" id="rolagem"><div class="grade__corpo">' +
       '<div class="grade__horas" aria-hidden="true">' + horasHTML() + "</div>" +
@@ -288,9 +291,10 @@
     const cols = colunas();
     const n = cols.length;
     const idx = cols.findIndex((c) => c.data === HOJE);
-    if (idx < 0) { linha.hidden = true; return; }
+    /* fora da semana aberta, ou antes das 7h e depois das 19h: sem linha (ela passaria da grade) */
+    if (idx < 0 || agora() < INICIO || agora() > C.FIM) { linha.hidden = true; return; }
     linha.hidden = false;
-    const largura = est.vista === "dia" ? n : 6;
+    const largura = C.MEDICOS.length; /* a linha do agora cobre só as colunas (ou linhas) do dia de hoje */
     if (primeira) linha.style.transition = "none";
     if (emLinha()) {
       linha.style.top = "calc(" + idx + " * var(--h))";

@@ -481,7 +481,8 @@
         const cols = colunas();
         const n = cols.length;
         const idx = cols.findIndex((c) => c.data === HOJE);
-        if (idx < 0) {
+        /* fora da semana aberta, ou antes das 7h e depois das 19h: sem linha (ela passaria da grade) */
+        if (idx < 0 || agora() < INICIO || agora() > C.FIM) {
             linha.hidden = true;
             return;
         }
