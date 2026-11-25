@@ -516,6 +516,7 @@
   const dica = $("#dica-flutuante");
   function mostrarDica(alvo, html) {
     dica.innerHTML = html;
+    dica.style.left = dica.style.top = "0px"; /* mede sem o aperto da posição anterior, perto da borda */
     dica.hidden = false;
     const r = alvo.getBoundingClientRect();
     const d = dica.getBoundingClientRect();

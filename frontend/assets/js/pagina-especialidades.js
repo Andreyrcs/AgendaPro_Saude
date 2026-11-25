@@ -46,13 +46,47 @@
     return '<span class="contagem"><button type="button" class="contagem__botao" aria-label="' + todos.length + " médicos: " + A.esc(nomes) + '">' +
       '<span class="contagem__avatares" aria-hidden="true">' + todos.slice(0, 3).map((x) => A.avatarMedico(x.md, 28)).join("") + "</span>" +
       todos.length + " médicos</button>" +
-      '<ul class="contagem__lista" aria-hidden="true">' + todos.map(({ md, agenda }) =>
+      "<template>" + todos.map(({ md, agenda }) =>
         "<li>" + A.avatarMedico(md, 28) + "<span><b>" + A.esc(md.nome) + "</b><small>" +
         (agenda ? "Com agenda nesta clínica" : "Sem horário nesta clínica") + (md.sala ? " · " + A.esc(md.sala) : "") + "</small></span></li>"
-      ).join("") + "</ul></span>";
+      ).join("") + "</template></span>";
   }
 
+  /* A lista dos médicos fica solta no body, por cima de tudo: dentro da tabela ela era cortada pela rolagem do cartão.
+     Abre embaixo do botão; se não couber, em cima. (Os leitores de tela já ouvem os nomes no aria-label do botão.) */
+  const lista = document.createElement("ul");
+  lista.className = "contagem__lista";
+  lista.setAttribute("aria-hidden", "true");
+  lista.hidden = true;
+  document.body.appendChild(lista);
+  let alvoLista = null;
+  function abrirLista(alvo) {
+    if (alvo === alvoLista) return;
+    alvoLista = alvo;
+    lista.hidden = true;
+    if (!alvo) return;
+    const itens = alvo.querySelector("template").innerHTML;
+    lista.innerHTML = itens;
+    lista.classList.toggle("contagem__lista--duas", lista.children.length > 8 && window.innerWidth > 640);
+    lista.style.left = lista.style.top = "0px";
+    lista.hidden = false;
+    const r = alvo.getBoundingClientRect();
+    const d = lista.getBoundingClientRect();
+    const cabeEmbaixo = r.bottom + 6 + d.height <= window.innerHeight - 8;
+    const y = cabeEmbaixo || r.top - 6 - d.height < 8 ? r.bottom + 6 : r.top - 6 - d.height;
+    lista.style.left = Math.max(8, Math.min(r.left, window.innerWidth - d.width - 8)) + "px";
+    lista.style.top = Math.max(8, Math.min(y, window.innerHeight - d.height - 8)) + "px";
+  }
+  const contagemDe = (ev) => (ev.target.closest ? ev.target.closest(".contagem") : null);
+  document.addEventListener("pointerover", (ev) => abrirLista(contagemDe(ev)));
+  document.addEventListener("focusin", (ev) => abrirLista(contagemDe(ev)));
+  document.addEventListener("focusout", () => abrirLista(null));
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") abrirLista(null); });
+  window.addEventListener("scroll", () => abrirLista(null), true);
+  window.addEventListener("resize", () => abrirLista(null));
+
   function desenhar() {
+    abrirLista(null);
     const lista = Object.keys(CL.especialidades).map((id) => ({ id, e: CL.especialidades[id], n: numeros(id) }));
     lista.sort((a, b) => (b.n.naAgenda.length > 0) - (a.n.naAgenda.length > 0) || b.n.fila - a.n.fila || a.e.nome.localeCompare(b.e.nome, "pt-BR"));
     const com = lista.filter((x) => x.n.naAgenda.length);
