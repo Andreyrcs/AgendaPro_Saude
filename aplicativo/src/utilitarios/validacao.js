@@ -29,13 +29,38 @@ export function cpfValido(texto) {
   const d1 = digitoCPF(c.slice(0, 9));
   return c.endsWith(`${d1}${digitoCPF(c.slice(0, 9) + d1)}`);
 }
-// Máscara 000.000.000-00: só entram números
+// ─── Máscaras (as mesmas da web: frontend/assets/js/mascaras.js). São só visuais: a API recebe o formato de sempre ───
+// O limite dos campos com máscara é a própria máscara, e não o maxLength: o maxLength cortaria o texto colado
+// ANTES da máscara, e "CPF: 529.982.247-25" perderia os últimos números.
+
+// 000.000.000-00: só entram números
 export function mascararCPF(texto) {
   return soDigitos(texto).slice(0, 11)
     .replace(/^(\d{3})(\d)/, '$1.$2')
     .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
     .replace(/\.(\d{3})(\d)/, '.$1-$2');
 }
+
+// (00) 00000-0000 no celular (11 números) e (00) 0000-0000 no fixo (10 números)
+export function mascararTelefone(texto) {
+  let n = soDigitos(texto);
+  if (n.length > 11 && /^\s*\+?\s*55/.test(texto)) n = n.slice(2); // colado com o código do Brasil
+  n = n.replace(/^0+/, '').slice(0, 11); // DDD não começa com zero
+  if (n.length < 3) return n ? `(${n}` : '';
+  if (n.length < 7) return `(${n.slice(0, 2)}) ${n.slice(2)}`;
+  const meio = n.length === 11 ? 7 : 6;
+  return `(${n.slice(0, 2)}) ${n.slice(2, meio)}-${n.slice(meio)}`;
+}
+
+// Código da clínica, AAA-0000: 3 letras e 4 números
+export function mascararCodigo(texto) {
+  const letras = normalizarCodigo(texto).replace(/[^A-Z]/g, '').slice(0, 3);
+  const numeros = letras.length === 3 ? soDigitos(texto).slice(0, 4) : '';
+  return numeros ? `${letras}-${numeros}` : letras;
+}
+
+// Limites dos textos: o tamanho das colunas no banco (e o da senha na API)
+export const LIMITES = { nome: 150, email: 150, senha: 64, alergias: 500 };
 
 export function validarLogin(email, senha) {
   return !String(email || '').trim() || !senha ? ERRO_PREENCHA : null;

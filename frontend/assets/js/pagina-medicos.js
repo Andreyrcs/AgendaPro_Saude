@@ -168,13 +168,14 @@
     remover.hidden = !md;
     remover.textContent = "Remover médico";
     $("#aviso-remover").hidden = true;
+    /* o "CRM/" já vem escrito (mascaras.js); falta a sigla do estado e o número */
+    form.crm.value = MASCARAS.crm(md ? md.crm : "");
     /* o e-mail de acesso só é pedido no cadastro: ele cria a conta do médico */
     $("#c-email").hidden = !!md;
     if (md) {
       form.nome.value = md.nome;
-      form.crm.value = md.crm || "";
       form.esp.value = md.esp;
-      form.tel.value = md.telefone || "";
+      form.tel.value = MASCARAS.telefone(md.telefone);
       form.sala.value = md.sala || "";
     }
     K.abrirDialogo(dlg);
@@ -205,7 +206,8 @@
     if (semTitulo.split(" ").length < 2) { erro("#c-nome", form.nome, "Escreva o nome e o sobrenome."); return; }
     /* CRM: obrigatório e único (coluna Medicos.CRM); a API confere de novo, inclusive contra os desativados */
     const crm = form.crm.value.trim().toUpperCase().replace(/\s+/g, " ");
-    if (!/^CRM\/[A-Z]{2} ?\d{4,7}$/.test(crm)) { erro("#c-crm", form.crm, "Use o formato CRM/UF e o número, como CRM/SP 123456."); return; }
+    if (!/^CRM\/[A-Z]{2} ?\d{4,7}$/.test(crm)) { erro("#c-crm", form.crm, "Complete o CRM com a sigla do estado e o número, como CRM/SP 123456."); return; }
+    if (!API.validarUF(crm.slice(4, 6))) { erro("#c-crm", form.crm, "A sigla do estado não existe. Use uma como SP, MA ou PR."); return; }
     if (CL.medicos.some((x) => x !== editando && (x.crm || "").replace(/\s/g, "") === crm.replace(/\s/g, ""))) { erro("#c-crm", form.crm, "Já existe um médico com este CRM."); return; }
     const email = form.email.value.trim().toLowerCase();
     if (!editando && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { erro("#c-email", form.email, "Informe o e-mail que o médico vai usar para entrar."); return; }

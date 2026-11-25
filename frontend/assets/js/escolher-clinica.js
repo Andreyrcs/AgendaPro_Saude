@@ -87,9 +87,6 @@
 
   const codigo = $("#codigo");
   codigo.addEventListener("input", () => {
-    let t = codigo.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (t.length > 3) t = t.slice(0, 3) + "-" + t.slice(3, 7);
-    codigo.value = t;
     codigo.classList.remove("campo__entrada--erro");
     $("#erro-codigo").textContent = "";
   });

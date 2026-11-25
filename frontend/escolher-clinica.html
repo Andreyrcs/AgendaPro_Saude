@@ -50,7 +50,7 @@
                         <form id="form-codigo" class="codigo-form" novalidate>
                             <div class="campo">
                                 <label class="campo__rotulo" for="codigo">Código</label>
-                                <input class="campo__entrada num" id="codigo" type="text" placeholder="AAA-0000" maxlength="8" autocomplete="off" autocapitalize="characters" />
+                                <input class="campo__entrada num" id="codigo" type="text" data-mascara="codigo" placeholder="AAA-0000" maxlength="8" autocomplete="off" autocapitalize="characters" />
                                 <span class="campo__erro" id="erro-codigo" aria-live="polite"></span>
                             </div>
                             <button type="submit" class="btn btn--principal">Entrar com o código</button>
@@ -67,6 +67,7 @@
         <script src="assets/js/dados.js"></script>
         <script src="assets/js/config.js"></script>
         <script src="assets/js/api.js"></script>
+        <script src="assets/js/mascaras.js"></script>
         <script src="assets/js/comum.js"></script>
         <script src="assets/js/escolher-clinica.js"></script>
     </body>

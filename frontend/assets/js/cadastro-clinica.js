@@ -16,13 +16,7 @@
     setTimeout(() => { a.textContent = t; }, 30);
   }
 
-  /* ─── Máscaras ─── */
-  const cnpj = $("#cnpj");
-  cnpj.addEventListener("input", () => { cnpj.value = API.formatarCNPJ(cnpj.value); });
-  const tel = $("#telefone");
-  tel.addEventListener("blur", () => { tel.value = API.formatarTelefone(tel.value); });
-  const uf = $("#uf");
-  uf.addEventListener("input", () => { uf.value = uf.value.replace(/[^a-zA-Z]/g, "").toUpperCase(); });
+  /* CNPJ, telefone e UF: as máscaras ficam em mascaras.js (data-mascara) */
   $("#ver-senha").addEventListener("change", (ev) => {
     ["#senha", "#confirmar"].forEach((s) => { $(s).type = ev.target.checked ? "text" : "password"; });
   });

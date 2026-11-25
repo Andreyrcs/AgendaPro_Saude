@@ -71,6 +71,7 @@
                                 name="nome"
                                 type="text"
                                 placeholder="Seu nome completo"
+                                maxlength="150"
                                 autocomplete="name"
                                 required
                             />
@@ -92,6 +93,7 @@
                                 name="email"
                                 type="email"
                                 placeholder="seu@email.com"
+                                maxlength="150"
                                 autocomplete="email"
                                 required
                             />
@@ -119,9 +121,18 @@
                                 id="telefone"
                                 name="telefone"
                                 type="tel"
-                                placeholder="(11) 99999-0000"
+                                inputmode="tel"
+                                data-mascara="telefone"
+                                placeholder="(00) 00000-0000"
+                                maxlength="20"
                                 autocomplete="tel"
+                                aria-describedby="erro-telefone"
                             />
+                            <span
+                                class="campo__erro"
+                                id="erro-telefone"
+                                aria-live="polite"
+                            ></span>
                             
                         </div>
                         <!-- CPF (obrigatório e único: Pacientes.CPF) -->
@@ -133,6 +144,7 @@
                                 name="cpf"
                                 type="text"
                                 inputmode="numeric"
+                                data-mascara="cpf"
                                 placeholder="000.000.000-00"
                                 maxlength="14"
                                 autocomplete="off"
@@ -155,7 +167,11 @@
                                 class="campo__entrada"
                                 id="nascimento"
                                 name="nascimento"
-                                type="date"
+                                type="text"
+                                inputmode="numeric"
+                                data-mascara="data"
+                                placeholder="dd/mm/aaaa"
+                                maxlength="10"
                                 autocomplete="bday"
                                 required
                                 aria-describedby="erro-nascimento"
@@ -179,6 +195,7 @@
                                     name="senha"
                                     type="password"
                                     placeholder="Mínimo 8 caracteres"
+                                    maxlength="64"
                                     autocomplete="new-password"
                                     required
                                 />
@@ -217,6 +234,7 @@
                                     name="confirmar"
                                     type="password"
                                     placeholder="Repita a senha"
+                                    maxlength="64"
                                     autocomplete="new-password"
                                     required
                                 />
@@ -367,6 +385,7 @@
         <script src="assets/js/dados.js"></script>
         <script src="assets/js/config.js"></script>
         <script src="assets/js/api.js"></script>
+        <script src="assets/js/mascaras.js"></script>
         <script src="assets/js/comum.js"></script>
         <script>
             (function () {
@@ -436,10 +455,15 @@
                 setupVerSenha('btn-ver-senha', 'senha');
                 setupVerSenha('btn-ver-confirmar', 'confirmar');
 
-                /* ─── CPF: máscara 000.000.000-00 que só aceita números (api.js) ─── */
-                cpfEl.addEventListener('input', function () {
-                    cpfEl.value = window.API.formatarCPF(cpfEl.value);
-                });
+                /* CPF, telefone e data: as máscaras ficam em mascaras.js (data-mascara) */
+                var telefoneEl = document.getElementById('telefone');
+                var nascimentoEl = document.getElementById('nascimento');
+                /* dd/mm/aaaa → AAAA-MM-DD, o formato da API ('' se a data não existe, como 31/02) */
+                function nascimentoIso() {
+                    var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(nascimentoEl.value);
+                    var iso = m ? m[3] + '-' + m[2] + '-' + m[1] : '';
+                    return iso && Number(m[3]) >= 1900 && window.API.dataISO(new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]))) === iso ? iso : '';
+                }
 
                 /* ─── Validação ─── */
                 function limparErros() {
@@ -506,10 +530,17 @@
                         valido = false;
                     }
 
-                    var nascimento = document.getElementById('nascimento').value;
+                    /* telefone é opcional; se foi digitado, precisa estar inteiro */
+                    var telDigitos = telefoneEl.value.replace(/\D/g, '');
+                    if (telDigitos && telDigitos.length < 10) {
+                        mostrarErroCampo('telefone', 'Use o DDD e o número, com 10 ou 11 dígitos.');
+                        valido = false;
+                    }
+
+                    var nascimento = nascimentoIso();
                     var hojeIso = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
                     if (!nascimento) {
-                        mostrarErroCampo('nascimento', 'Informe a data de nascimento.');
+                        mostrarErroCampo('nascimento', nascimentoEl.value ? 'Confira a data: use dd/mm/aaaa.' : 'Informe a data de nascimento.');
                         valido = false;
                     } else if (nascimento > hojeIso) {
                         mostrarErroCampo('nascimento', 'A data de nascimento não pode ser no futuro.');
@@ -561,9 +592,9 @@
                         nome: nomeEl.value.trim(),
                         email: emailEl.value.trim(),
                         senha: senhaEl.value,
-                        telefone: document.getElementById('telefone').value.trim(),
+                        telefone: telefoneEl.value.trim(),
                         cpf: cpfEl.value.replace(/\D/g, ''),
-                        nascimento: (document.getElementById('nascimento') || {}).value || '',
+                        nascimento: nascimentoIso(),
                     })
                         .then(function (r) {
                             /* sem clínica ainda: escolher-clinica.html */
@@ -588,7 +619,7 @@
                 });
 
                 /* ─── Limpar erros ao digitar ─── */
-                [nomeEl, emailEl, cpfEl, senhaEl, confirmarEl].forEach(function (el) {
+                [nomeEl, emailEl, telefoneEl, cpfEl, nascimentoEl, senhaEl, confirmarEl].forEach(function (el) {
                     el.addEventListener('input', function () {
                         el.classList.remove('campo__entrada--erro');
                         var erroEl = document.getElementById('erro-' + el.id);

@@ -1017,9 +1017,9 @@ window.PACIENTE.iniciar(function () {
             '<div class="grupo">' +
             cabecaSecao('Trocar a senha') +
             '<form class="cartao formulario" id="form-senha" novalidate style="padding:16px 20px">' +
-            '<div class="campo"><label for="s-atual">Senha atual</label><input id="s-atual" type="password" autocomplete="current-password"></div>' +
-            '<div class="campo"><label for="s-nova">Nova senha</label><input id="s-nova" type="password" autocomplete="new-password"><span class="item__sub">De 8 a 64 caracteres.</span></div>' +
-            '<div class="campo"><label for="s-repete">Repita a nova senha</label><input id="s-repete" type="password" autocomplete="new-password"></div>' +
+            '<div class="campo"><label for="s-atual">Senha atual</label><input id="s-atual" type="password" maxlength="64" autocomplete="current-password"></div>' +
+            '<div class="campo"><label for="s-nova">Nova senha</label><input id="s-nova" type="password" maxlength="64" autocomplete="new-password"><span class="item__sub">De 8 a 64 caracteres.</span></div>' +
+            '<div class="campo"><label for="s-repete">Repita a nova senha</label><input id="s-repete" type="password" maxlength="64" autocomplete="new-password"></div>' +
             '<p class="campo__erro" id="s-erro" role="alert" hidden></p>' +
             '<button type="submit" class="botao botao--secundario">Trocar a senha</button></form></div>' +
             '</div></div>' +
@@ -1729,9 +1729,9 @@ window.PACIENTE.iniciar(function () {
             '<div>' +
             '<form id="form-familiar" class="formulario" novalidate>' +
             '<div class="campo" id="c-nome"><label for="f-nome">Nome completo</label>' +
-            '<input id="f-nome" type="text" autocomplete="off" placeholder="Ex.: Ana Beatriz Santos" required' + val(editar && p.nome) + '></div>' +
+            '<input id="f-nome" type="text" maxlength="150" autocomplete="off" placeholder="Ex.: Ana Beatriz Santos" required' + val(editar && p.nome) + '></div>' +
             '<div class="campo" id="c-cpf"><label for="f-cpf">CPF</label>' +
-            '<input id="f-cpf" type="text" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required' + val(editar && API.formatarCPF(p.cpf)) + '></div>' +
+            '<input id="f-cpf" type="text" inputmode="numeric" data-mascara="cpf" autocomplete="off" placeholder="000.000.000-00" maxlength="14" required' + val(editar && API.formatarCPF(p.cpf)) + '></div>' +
             (titular
                 ? ''
                 : '<div class="campo" id="c-rel"><span class="campo__rotulo" id="f-rel-label">Parentesco (obrigatório)</span>' +
@@ -1741,9 +1741,9 @@ window.PACIENTE.iniciar(function () {
                   ).join('') +
                   '</div></div>') +
             '<div class="campo" id="c-nasc"><label for="f-nasc">Data de nascimento</label>' +
-            '<input id="f-nasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" required' + val(editar && dataBr(p.nascimento)) + '></div>' +
+            '<input id="f-nasc" type="text" inputmode="numeric" data-mascara="data" placeholder="dd/mm/aaaa" maxlength="10" required' + val(editar && dataBr(p.nascimento)) + '></div>' +
             '<div class="campo"><label for="f-alergias">Alergias (opcional)</label>' +
-            '<input id="f-alergias" type="text" placeholder="Ex.: Penicilina, dipirona"' + val(editar && p.alergiasApi) + '></div>' +
+            '<input id="f-alergias" type="text" maxlength="500" placeholder="Ex.: Penicilina, dipirona"' + val(editar && p.alergiasApi) + '></div>' +
             '<p class="campo__erro" id="f-erro-geral" role="alert" hidden></p>' +
             '<div class="gaveta__acoes">' +
             '<button type="submit" class="botao botao--principal">' + (editar ? 'Salvar' : 'Adicionar familiar') + '</button>' +
@@ -1777,9 +1777,7 @@ window.PACIENTE.iniciar(function () {
 
         function montar(el) {
             let corSelecionada = editar ? p.cor : corAtual;
-            /* máscara do CPF: só números, no formato 000.000.000-00 */
-            const cpf = el.querySelector('#f-cpf');
-            cpf.addEventListener('input', () => { cpf.value = API.formatarCPF(cpf.value); });
+            const cpf = el.querySelector('#f-cpf'); /* CPF e data: máscaras em mascaras.js */
 
             el.querySelectorAll('#grade-cores .cor-btn').forEach((b) =>
                 b.addEventListener('click', () => {

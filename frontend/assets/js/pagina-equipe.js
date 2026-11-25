@@ -50,7 +50,7 @@
   function preencher() {
     const c = clinica();
     fc.nome.value = c.nome || "";
-    fc.telefone.value = c.telefone || "";
+    fc.telefone.value = MASCARAS.telefone(c.telefone);
     fc.endereco.value = c.endereco || "";
     fc.cidade.value = c.cidade || "";
     fc.uf.value = c.uf || "";
@@ -66,7 +66,6 @@
     $("#secao-nova").hidden = true;
   }
   fc.addEventListener("input", () => { $("#salvo-clinica").textContent = ""; });
-  fc.uf.addEventListener("input", () => { fc.uf.value = fc.uf.value.replace(/[^a-zA-Z]/g, "").toUpperCase(); });
   fc.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     if (!dono) return;

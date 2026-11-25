@@ -104,7 +104,7 @@
         <p class="dialogo__texto" id="dlg-texto">Depois do cadastro, defina o expediente em Horários para abrir a agenda.</p>
         <div class="campo" id="c-nome">
           <label for="f-nome">Nome completo</label>
-          <input id="f-nome" name="nome" autocomplete="off" placeholder="Ex.: Dra. Marta Siqueira" required />
+          <input id="f-nome" name="nome" maxlength="143" autocomplete="off" placeholder="Ex.: Dra. Marta Siqueira" required />
         </div>
         <div class="campo">
           <label for="f-esp">Especialidade</label>
@@ -113,21 +113,21 @@
         <div class="campos-dupla">
           <div class="campo" id="c-crm">
             <label for="f-crm">CRM</label>
-            <input id="f-crm" name="crm" autocomplete="off" placeholder="Ex.: CRM/SP 123456" required />
+            <input id="f-crm" name="crm" data-mascara="crm" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CRM/SP 123456" required />
           </div>
           <div class="campo" id="c-email">
             <label for="f-email">E-mail de acesso</label>
-            <input id="f-email" name="email" type="email" autocomplete="off" placeholder="nome@clinica.com.br" required />
+            <input id="f-email" name="email" type="email" maxlength="150" autocomplete="off" placeholder="nome@clinica.com.br" required />
           </div>
         </div>
         <div class="campos-dupla">
           <div class="campo" id="c-tel">
             <label for="f-tel">Telefone</label>
-            <input id="f-tel" name="tel" inputmode="tel" autocomplete="off" placeholder="(11) 90000-0000" />
+            <input id="f-tel" name="tel" type="tel" inputmode="tel" data-mascara="telefone" maxlength="20" autocomplete="off" placeholder="(00) 00000-0000" />
           </div>
           <div class="campo">
             <label for="f-sala">Sala ou consultório</label>
-            <input id="f-sala" name="sala" autocomplete="off" placeholder="Ex.: Sala 3" />
+            <input id="f-sala" name="sala" maxlength="30" autocomplete="off" placeholder="Ex.: Sala 3" />
           </div>
         </div>
         <p class="campo__erro" id="e-medico" role="alert" hidden></p>
@@ -147,6 +147,7 @@
     <script src="assets/js/dados.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/mascaras.js"></script>
     <script src="assets/js/comum.js"></script>
     <script src="assets/js/movimento.js"></script>
     <script src="assets/js/clinica-servicos.js"></script>

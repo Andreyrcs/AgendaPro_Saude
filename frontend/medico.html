@@ -317,6 +317,7 @@
                                         >
                                         <input
                                             type="date"
+                                            max="9999-12-31"
                                             id="hist-data"
                                             class="hist-data-input"
                                         />
@@ -482,15 +483,15 @@
                             <form id="form-senha" novalidate>
                                 <div class="campo-med">
                                     <label for="s-atual">Senha atual</label>
-                                    <input type="password" id="s-atual" autocomplete="current-password" />
+                                    <input type="password" maxlength="64" id="s-atual" autocomplete="current-password" />
                                 </div>
                                 <div class="campo-med">
                                     <label for="s-nova">Nova senha (pelo menos 8 caracteres, com letras e números)</label>
-                                    <input type="password" id="s-nova" autocomplete="new-password" />
+                                    <input type="password" maxlength="64" id="s-nova" autocomplete="new-password" />
                                 </div>
                                 <div class="campo-med">
                                     <label for="s-repete">Repita a nova senha</label>
-                                    <input type="password" id="s-repete" autocomplete="new-password" />
+                                    <input type="password" maxlength="64" id="s-repete" autocomplete="new-password" />
                                 </div>
                                 <p id="s-aviso" role="alert" style="margin: 8px 0" hidden></p>
                                 <button type="submit" class="botao botao--principal">Trocar a senha</button>
@@ -590,6 +591,7 @@
                     <textarea
                         id="ret-nota"
                         rows="3"
+                        maxlength="500"
                         placeholder="Ex.: Revisar exame de sangue, ajustar medicação…"
                     ></textarea>
                 </div>

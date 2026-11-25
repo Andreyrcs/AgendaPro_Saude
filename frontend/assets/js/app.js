@@ -867,15 +867,15 @@ window.PACIENTE.iniciar(function () {
       '<h2 class="gaveta__titulo" id="gaveta-titulo">' + (editar ? "Editar dados de " + E(p.curto) : "Adicionar familiar") + "</h2>" +
       (editar ? "" : '<p class="gaveta__texto">Depois de adicionar, você pode marcar consultas para essa pessoa.</p>') +
       '<form id="form-familiar" class="formulario" novalidate>' +
-      '<div class="campo" id="c-nome"><label for="f-nome">Nome completo</label><input id="f-nome" type="text" autocomplete="off" placeholder="Ex.: Ana Beatriz Santos" value="' + (editar ? E(p.nome) : "") + '"></div>' +
-      '<div class="campo" id="c-cpf"><label for="f-cpf">CPF</label><input id="f-cpf" type="text" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" maxlength="14" value="' + (editar ? E(API.formatarCPF(p.cpf)) : "") + '"></div>' +
+      '<div class="campo" id="c-nome"><label for="f-nome">Nome completo</label><input id="f-nome" type="text" maxlength="150" autocomplete="off" placeholder="Ex.: Ana Beatriz Santos" value="' + (editar ? E(p.nome) : "") + '"></div>' +
+      '<div class="campo" id="c-cpf"><label for="f-cpf">CPF</label><input id="f-cpf" type="text" inputmode="numeric" data-mascara="cpf" autocomplete="off" placeholder="000.000.000-00" maxlength="14" value="' + (editar ? E(API.formatarCPF(p.cpf)) : "") + '"></div>' +
       (titularEmEdicao
         ? ""
         : '<div class="campo" id="c-rel"><span class="campo__rotulo" id="f-rel">Parentesco (obrigatório)</span><div class="opcoes" role="radiogroup" aria-labelledby="f-rel" aria-required="true">' +
           PACIENTE.PARENTESCOS.map((o) => '<button type="button" role="radio" aria-checked="' + (editar && p.relacao === o) + '">' + E(o) + "</button>").join("") +
           "</div></div>") +
-      '<div class="campo" id="c-nasc"><label for="f-nasc">Data de nascimento</label><input id="f-nasc" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" value="' + (editar ? dataBr(p.nascimento) : "") + '"></div>' +
-      '<div class="campo"><label for="f-alergias">Alergias (opcional)</label><input id="f-alergias" type="text" placeholder="Ex.: Penicilina, dipirona" value="' + (editar && p.alergiasApi ? E(p.alergiasApi) : "") + '"></div>' +
+      '<div class="campo" id="c-nasc"><label for="f-nasc">Data de nascimento</label><input id="f-nasc" type="text" inputmode="numeric" data-mascara="data" placeholder="dd/mm/aaaa" maxlength="10" value="' + (editar ? dataBr(p.nascimento) : "") + '"></div>' +
+      '<div class="campo"><label for="f-alergias">Alergias (opcional)</label><input id="f-alergias" type="text" maxlength="500" placeholder="Ex.: Penicilina, dipirona" value="' + (editar && p.alergiasApi ? E(p.alergiasApi) : "") + '"></div>' +
       '<p class="campo__erro" id="f-erro-geral" role="alert" hidden></p>' +
       '<div class="gaveta__acoes"><button type="submit" class="botao botao--principal">' + (editar ? "Salvar" : "Adicionar") + '</button><button type="button" class="botao botao--secundario" data-fechar>Cancelar</button></div>' +
       "</form>",
@@ -884,9 +884,7 @@ window.PACIENTE.iniciar(function () {
           g.querySelectorAll('.opcoes [role="radio"]').forEach((b) =>
             b.addEventListener("click", () => g.querySelectorAll('.opcoes [role="radio"]').forEach((x) => x.setAttribute("aria-checked", String(x === b))))
           );
-          /* máscara do CPF: só números, no formato 000.000.000-00 */
-          const cpf = g.querySelector("#f-cpf");
-          cpf.addEventListener("input", () => { cpf.value = API.formatarCPF(cpf.value); });
+          const cpf = g.querySelector("#f-cpf"); /* CPF e data: máscaras em mascaras.js */
           const form = g.querySelector("#form-familiar");
           const botao = form.querySelector('[type="submit"]');
           form.addEventListener("submit", async (ev) => {
@@ -1204,9 +1202,9 @@ window.PACIENTE.iniciar(function () {
       "</div></div></section>" +
       '<section class="secao">' + cabecaSecao("Trocar a senha") +
       '<form class="cartao formulario" id="form-senha" novalidate>' +
-      '<div class="campo"><label for="s-atual">Senha atual</label><input id="s-atual" type="password" autocomplete="current-password"></div>' +
-      '<div class="campo"><label for="s-nova">Nova senha</label><input id="s-nova" type="password" autocomplete="new-password"><span class="item__sub">De 8 a 64 caracteres.</span></div>' +
-      '<div class="campo"><label for="s-repete">Repita a nova senha</label><input id="s-repete" type="password" autocomplete="new-password"></div>' +
+      '<div class="campo"><label for="s-atual">Senha atual</label><input id="s-atual" type="password" maxlength="64" autocomplete="current-password"></div>' +
+      '<div class="campo"><label for="s-nova">Nova senha</label><input id="s-nova" type="password" maxlength="64" autocomplete="new-password"><span class="item__sub">De 8 a 64 caracteres.</span></div>' +
+      '<div class="campo"><label for="s-repete">Repita a nova senha</label><input id="s-repete" type="password" maxlength="64" autocomplete="new-password"></div>' +
       '<p class="campo__erro" id="s-erro" role="alert" hidden></p>' +
       '<button type="submit" class="botao botao--secundario">Trocar a senha</button></form></section>' +
       '<div class="zona-perigo"><button type="button" class="botao botao--texto-perigo" id="sair">' + I("log-out") + "Sair da conta</button></div>";

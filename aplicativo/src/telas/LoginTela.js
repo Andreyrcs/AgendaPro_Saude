@@ -10,7 +10,7 @@ import CampoTexto from '../componentes/CampoTexto';
 import Marca from '../componentes/Marca';
 import { useSessao } from '../contexto/SessaoContext';
 import { entrar } from '../servicos/autenticacao';
-import { validarLogin } from '../utilitarios/validacao';
+import { LIMITES, validarLogin } from '../utilitarios/validacao';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 
@@ -68,6 +68,7 @@ export default function LoginTela({ navigation }) {
             autoComplete="email"
             textContentType="emailAddress"
             placeholder="seuemail@exemplo.com"
+            maxLength={LIMITES.email}
           />
           <CampoTexto
             rotulo="Senha"
@@ -77,6 +78,7 @@ export default function LoginTela({ navigation }) {
             autoCapitalize="none"
             autoComplete="password"
             textContentType="password"
+            maxLength={LIMITES.senha}
             onSubmitEditing={() => fazerLogin(email, senha)}
           />
 

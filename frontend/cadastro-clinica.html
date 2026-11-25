@@ -40,38 +40,38 @@
 
                             <div class="campo">
                                 <label class="campo__rotulo" for="nome-clinica">Nome da clínica</label>
-                                <input class="campo__entrada" id="nome-clinica" name="nome" type="text" placeholder="Ex.: Clínica Bem Viver" autocomplete="organization" />
+                                <input class="campo__entrada" id="nome-clinica" name="nome" type="text" maxlength="150" placeholder="Ex.: Clínica Bem Viver" autocomplete="organization" />
                                 <span class="campo__erro" id="erro-nome-clinica" aria-live="polite"></span>
                             </div>
 
                             <div class="campos-linha">
                                 <div class="campo">
                                     <label class="campo__rotulo" for="cnpj">CNPJ</label>
-                                    <input class="campo__entrada" id="cnpj" name="cnpj" type="text" inputmode="numeric" placeholder="00.000.000/0000-00" maxlength="18" />
+                                    <input class="campo__entrada" id="cnpj" name="cnpj" type="text" inputmode="numeric" data-mascara="cnpj" placeholder="00.000.000/0000-00" maxlength="18" />
                                     <span class="campo__erro" id="erro-cnpj" aria-live="polite"></span>
                                 </div>
                                 <div class="campo">
                                     <label class="campo__rotulo" for="telefone">Telefone da recepção</label>
-                                    <input class="campo__entrada" id="telefone" name="telefone" type="tel" inputmode="tel" placeholder="(00) 0000-0000" autocomplete="tel" />
+                                    <input class="campo__entrada" id="telefone" name="telefone" type="tel" inputmode="tel" data-mascara="telefone" placeholder="(00) 0000-0000" maxlength="20" autocomplete="tel" />
                                     <span class="campo__erro" id="erro-telefone" aria-live="polite"></span>
                                 </div>
                             </div>
 
                             <div class="campo">
                                 <label class="campo__rotulo" for="endereco">Endereço</label>
-                                <input class="campo__entrada" id="endereco" name="endereco" type="text" placeholder="Rua, número e bairro" autocomplete="street-address" />
+                                <input class="campo__entrada" id="endereco" name="endereco" type="text" maxlength="250" placeholder="Rua, número e bairro" autocomplete="street-address" />
                                 <span class="campo__erro" id="erro-endereco" aria-live="polite"></span>
                             </div>
 
                             <div class="campos-linha campos-linha--cidade">
                                 <div class="campo">
                                     <label class="campo__rotulo" for="cidade">Cidade</label>
-                                    <input class="campo__entrada" id="cidade" name="cidade" type="text" autocomplete="address-level2" />
+                                    <input class="campo__entrada" id="cidade" name="cidade" type="text" maxlength="100" autocomplete="address-level2" />
                                     <span class="campo__erro" id="erro-cidade" aria-live="polite"></span>
                                 </div>
                                 <div class="campo">
                                     <label class="campo__rotulo" for="uf">UF</label>
-                                    <input class="campo__entrada" id="uf" name="uf" type="text" maxlength="2" placeholder="SP" autocomplete="address-level1" />
+                                    <input class="campo__entrada" id="uf" name="uf" type="text" data-mascara="uf" maxlength="2" autocapitalize="characters" placeholder="SP" autocomplete="address-level1" />
                                     <span class="campo__erro" id="erro-uf" aria-live="polite"></span>
                                 </div>
                             </div>
@@ -87,25 +87,25 @@
 
                             <div class="campo">
                                 <label class="campo__rotulo" for="nome-dono">Seu nome completo</label>
-                                <input class="campo__entrada" id="nome-dono" name="nomeDono" type="text" autocomplete="name" />
+                                <input class="campo__entrada" id="nome-dono" name="nomeDono" type="text" maxlength="150" autocomplete="name" />
                                 <span class="campo__erro" id="erro-nome-dono" aria-live="polite"></span>
                             </div>
 
                             <div class="campo">
                                 <label class="campo__rotulo" for="email">E-mail de acesso</label>
-                                <input class="campo__entrada" id="email" name="email" type="email" placeholder="voce@suaclinica.com.br" autocomplete="email" />
+                                <input class="campo__entrada" id="email" name="email" type="email" maxlength="150" placeholder="voce@suaclinica.com.br" autocomplete="email" />
                                 <span class="campo__erro" id="erro-email" aria-live="polite"></span>
                             </div>
 
                             <div class="campos-linha">
                                 <div class="campo">
                                     <label class="campo__rotulo" for="senha">Senha</label>
-                                    <input class="campo__entrada" id="senha" name="senha" type="password" autocomplete="new-password" aria-describedby="dica-senha" />
+                                    <input class="campo__entrada" id="senha" name="senha" type="password" maxlength="64" autocomplete="new-password" aria-describedby="dica-senha" />
                                     <span class="campo__erro" id="erro-senha" aria-live="polite"></span>
                                 </div>
                                 <div class="campo">
                                     <label class="campo__rotulo" for="confirmar">Repita a senha</label>
-                                    <input class="campo__entrada" id="confirmar" name="confirmar" type="password" autocomplete="new-password" />
+                                    <input class="campo__entrada" id="confirmar" name="confirmar" type="password" maxlength="64" autocomplete="new-password" />
                                     <span class="campo__erro" id="erro-confirmar" aria-live="polite"></span>
                                 </div>
                             </div>
@@ -142,6 +142,7 @@
         <script src="assets/js/dados.js"></script>
         <script src="assets/js/config.js"></script>
         <script src="assets/js/api.js"></script>
+        <script src="assets/js/mascaras.js"></script>
         <script src="assets/js/comum.js"></script>
         <script src="assets/js/cadastro-clinica.js"></script>
     </body>

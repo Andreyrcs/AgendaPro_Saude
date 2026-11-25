@@ -52,24 +52,24 @@
               <fieldset class="ajuste__grupo" id="grupo-clinica">
                 <div class="campo" id="c-nome">
                   <label for="f-nome">Nome da clínica</label>
-                  <input id="f-nome" name="nome" autocomplete="organization" />
+                  <input id="f-nome" name="nome" maxlength="150" autocomplete="organization" />
                 </div>
                 <div class="campo" id="c-tel">
                   <label for="f-tel">Telefone da recepção</label>
-                  <input id="f-tel" name="telefone" inputmode="tel" autocomplete="tel" />
+                  <input id="f-tel" name="telefone" type="tel" inputmode="tel" data-mascara="telefone" maxlength="20" placeholder="(00) 0000-0000" autocomplete="tel" />
                 </div>
                 <div class="campo" id="c-endereco">
                   <label for="f-endereco">Endereço</label>
-                  <input id="f-endereco" name="endereco" autocomplete="street-address" />
+                  <input id="f-endereco" name="endereco" maxlength="250" autocomplete="street-address" />
                 </div>
                 <div class="campos-dupla campos-dupla--cidade">
                   <div class="campo" id="c-cidade">
                     <label for="f-cidade">Cidade</label>
-                    <input id="f-cidade" name="cidade" autocomplete="address-level2" />
+                    <input id="f-cidade" name="cidade" maxlength="100" autocomplete="address-level2" />
                   </div>
                   <div class="campo" id="c-uf">
                     <label for="f-uf">UF</label>
-                    <input id="f-uf" name="uf" maxlength="2" autocomplete="address-level1" />
+                    <input id="f-uf" name="uf" data-mascara="uf" maxlength="2" autocapitalize="characters" autocomplete="address-level1" />
                   </div>
                 </div>
                 <div class="campo">
@@ -117,11 +117,11 @@
             <form class="painel ajuste__painel" id="form-nova" novalidate>
               <div class="campo" id="c-nova-nome">
                 <label for="f-nova-nome">Nome completo</label>
-                <input id="f-nova-nome" name="nome" autocomplete="off" />
+                <input id="f-nova-nome" name="nome" maxlength="150" autocomplete="off" />
               </div>
               <div class="campo" id="c-nova-email">
                 <label for="f-nova-email">E-mail de acesso</label>
-                <input id="f-nova-email" name="email" type="email" autocomplete="off" aria-describedby="dica-nova-senha" />
+                <input id="f-nova-email" name="email" type="email" maxlength="150" autocomplete="off" aria-describedby="dica-nova-senha" />
                 <span class="campo__dica" id="dica-nova-senha">O sistema cria uma senha provisória, que aparece aqui uma única vez. A pessoa troca a senha em Minha conta.</span>
               </div>
               <div class="ajuste__acoes">
@@ -141,6 +141,7 @@
     <script src="assets/js/dados.js"></script>
     <script src="assets/js/config.js"></script>
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/mascaras.js"></script>
     <script src="assets/js/comum.js"></script>
     <script src="assets/js/movimento.js"></script>
     <script src="assets/js/clinica-servicos.js"></script>
