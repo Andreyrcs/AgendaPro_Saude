@@ -199,6 +199,22 @@ a.botao {
     padding: 10px 12px;
     resize: vertical;
 }
+/* texto fixo na frente do que se digita (o "CRM/" do médico) */
+.campo__com-prefixo {
+    position: relative;
+    display: block;
+}
+.campo__prefixo {
+    position: absolute;
+    z-index: 1; /* a animação de erro põe o campo por cima */
+    left: 13.5px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+.campo .campo__com-prefixo input {
+    padding-left: calc(13.5px + 3.9ch);
+}
 .campo input::placeholder,
 .campo textarea::placeholder {
     color: var(--tinta-3);

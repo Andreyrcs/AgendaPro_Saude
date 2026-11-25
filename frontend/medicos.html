@@ -113,7 +113,10 @@
         <div class="campos-dupla">
           <div class="campo" id="c-crm">
             <label for="f-crm">CRM</label>
-            <input id="f-crm" name="crm" data-mascara="crm" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CRM/SP 123456" required />
+            <span class="campo__com-prefixo">
+              <span class="campo__prefixo" aria-hidden="true">CRM/</span>
+              <input id="f-crm" name="crm" data-mascara="crm" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SP 12345" required />
+            </span>
           </div>
           <div class="campo" id="c-email">
             <label for="f-email">E-mail de acesso</label>

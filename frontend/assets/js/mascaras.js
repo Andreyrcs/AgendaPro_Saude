@@ -1,7 +1,7 @@
 /* AgendaPro Saúde — máscaras dos campos dos cadastros.
    Basta marcar o campo: <input data-mascara="cpf">. Vale também para formulários criados depois (a escuta é no document).
      cpf 000.000.000-00 · cnpj 00.000.000/0000-00 · telefone (00) 00000-0000 ou (00) 0000-0000 · data dd/mm/aaaa
-     crm CRM/UF 000000 · uf duas letras · codigo AAA-0000
+     crm UF 000000 (o "CRM/" fica fixo na frente do campo) · uf duas letras · codigo AAA-0000
    A máscara é só visual: cada tela continua mandando para a API o formato de sempre.
    Colar passa pela máscara ANTES do maxlength, para "CPF: 529.982.247-25" não perder os últimos números. */
 (function () {
@@ -32,17 +32,11 @@
     const n = iso ? iso[3] + iso[2] + iso[1] : numeros(t).slice(0, 8);
     return n.replace(/^(\d{2})(\d)/, "$1/$2").replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
   }
-  /* o "CRM/" já vem escrito; depois a sigla do estado (2 letras) e só números */
+  /* a sigla do estado (2 letras) e só números */
   function crm(t) {
-    let l = letras(t);
-    if (/^(CRM)+/.test(l)) l = l.replace(/^(CRM)+/, "");
-    else if (String(t).includes("/")) { /* apagou parte do "CRM" antes da barra */
-      const [antes, ...resto] = String(t).split("/");
-      if (/^C?R?M?$/.test(letras(antes)) && !/\d/.test(antes)) l = letras(resto.join(""));
-    }
-    const uf = l.slice(0, 2);
-    const n = uf.length === 2 ? numeros(t).slice(0, 7) : "";
-    return "CRM/" + uf + (n ? " " + n : "");
+    const sigla = letras(t).replace(/^(CRM)+/, "").slice(0, 2); /* "CRM" digitado ou colado não conta */
+    const n = sigla.length === 2 ? numeros(t).slice(0, 7) : "";
+    return sigla + (n ? " " + n : "");
   }
   const uf = (t) => letras(t).slice(0, 2);
   function codigo(t) {
