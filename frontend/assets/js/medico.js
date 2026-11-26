@@ -914,7 +914,9 @@
                 fecharDlg(document.getElementById('dlg-consulta'));
                 abrirRetorno(k);
             });
-        if (k.status === 'confirmada' || k.status === 'na_recepcao')
+        /* falta só depois que a consulta começou e com o paciente sem ter chegado: a mesma regra da
+           recepção (clinica.js, "Marcar falta"). A falta conta para a restrição da conta da família. */
+        if (k.status === 'confirmada' && (k.data < HOJE || (k.data === HOJE && k.ini <= agora())))
             botao('botao--texto', I('user-x', 'ic-sm') + 'Registrar ausência', (b) => registrarFaltou(k, b));
 
         abrirDlg(document.getElementById('dlg-consulta'));

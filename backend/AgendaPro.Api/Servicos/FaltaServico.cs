@@ -50,6 +50,11 @@ public class FaltaServico : IFaltaServico
         if (!pode)
             return null;
 
+        // A procedure confere só a data; a hora fica aqui: antes de a consulta começar não existe falta
+        // (a mesma regra das telas da recepção e do médico). DateTime.Now: hora local, como em HorariosLivresAsync.
+        if (consulta.Consulta.DataConsulta.Date + consulta.Consulta.HoraInicio > DateTime.Now)
+            throw new ErroApi(StatusCodes.Status400BadRequest, "A consulta ainda não começou. A falta só pode ser registrada depois do horário.");
+
         // A procedure confere status e data (erro 50032) e o trigger grava a falta
         await _faltas.RegistrarAsync(idConsulta, logado.IdUsuario);
 

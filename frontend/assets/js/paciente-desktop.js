@@ -8,7 +8,7 @@ window.PACIENTE.iniciar(function () {
     const MOV = window.MOV;
     const I = A.icone;
 
-    const pagina = document.getElementById('pagina');
+    let pagina = document.getElementById('pagina');
     const gavetaCamada = document.getElementById('gaveta');
     const avisos = document.getElementById('avisos');
     const anunciador = document.getElementById('anunciador');
@@ -1913,6 +1913,12 @@ window.PACIENTE.iniciar(function () {
         const r = rotaAtual();
         fecharGaveta(true);
         const def = TELAS[r.nome].apply(null, r.args);
+        /* cada tela num #pagina novo: os montar() põem ouvintes no próprio elemento (agendar, perfil,
+           prevenção) e, reaproveitando o mesmo, eles se acumulavam a cada visita (um clique na fila
+           mandava um POST por desenho anterior, cada um com a pessoa escolhida naquela vez) */
+        const nova = pagina.cloneNode(false);
+        pagina.replaceWith(nova);
+        pagina = nova;
         pagina.innerHTML = def.html;
         if (def.montar) def.montar(pagina);
         atualizarNavLateral(r.nome);
