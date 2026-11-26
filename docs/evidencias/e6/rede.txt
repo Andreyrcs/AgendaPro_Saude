@@ -1,0 +1,25 @@
+  1 POST   /api/clinicas -> 201  [sem token]  {"clinica":{"id":22,"nome":"Clínica Nova rvgee","codigo":"NOV-2509","publica":true},"usuario":{"idUsuario":100,"nome":"Dona Nova Teste","email":"dona.nova.rvgee
+  2 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  3 GET    /api/clinicas/22 -> 200  [Bearer]  {"id":22,"nome":"Clínica Nova rvgee","endereco":"Av. Nova, 200 - Centro","telefone":"(15) 99999-0000","cnpj":"34.852.470/3274-47","cidade":"Votorantim","uf":"SP
+  4 POST   /api/pacientes -> 201  [sem token]  {"idUsuario":101,"idPaciente":59,"nome":"Paciente Web Um","email":"web1.rvgee@teste.com"}
+  5 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  6 GET    /api/pacientes/101/clinicas -> 200  [Bearer]  
+  7 GET    /api/pacientes/101/clinicas -> 200  [Bearer]  []
+  8 GET    /api/clinicas -> 200  [Bearer]  [{"id":20,"nome":"Clínica Nova rsv6p","endereco":"Av. Nova, 200 - Centro","telefone":"(15) 99999-0000","cnpj":"25.214.791/6098-38","cidade":"Votorantim","uf":"S
+  9 GET    /api/clinicas?busca=Sorocaba -> 200  [Bearer]  [{"id":15,"nome":"Clínica Teste A","endereco":"Rua Teste, 100","telefone":"(15) 3333-0000","cnpj":"89.715.651/4098-19","cidade":"Sorocaba","uf":"SP","codigo":"T
+ 10 POST   /api/pacientes/101/clinicas -> 201  [Bearer]  
+ 11 POST   /api/pacientes -> 201  [sem token]  {"idUsuario":102,"idPaciente":60,"nome":"Paciente Web Dois","email":"web2.rvgee@teste.com"}
+ 12 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+ 13 GET    /api/pacientes/102/clinicas -> 200  [Bearer]  
+ 14 GET    /api/pacientes/102/clinicas -> 200  [Bearer]  []
+ 15 GET    /api/clinicas -> 200  [Bearer]  [{"id":20,"nome":"Clínica Nova rsv6p","endereco":"Av. Nova, 200 - Centro","telefone":"(15) 99999-0000","cnpj":"25.214.791/6098-38","cidade":"Votorantim","uf":"S
+ 16 POST   /api/pacientes/102/clinicas -> 201  [Bearer]  
+ 17 POST   /api/pacientes -> 400  [sem token]  {"mensagem":"Este CPF já está cadastrado."}
+ 18 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+ 19 GET    /api/pacientes/79/clinicas -> 200  [Bearer]  
+ 20 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+ 21 GET    /api/pacientes/103/clinicas -> 200  [Bearer]  
+ 22 GET    /api/pacientes/103/clinicas -> 200  [Bearer]  
+ 23 GET    /api/clinicas -> 200  [Bearer]  
+ 24 GET    /api/pacientes/103/clinicas -> 200  [Bearer]  []
+ 25 GET    /api/clinicas -> 200  [Bearer]  [{"id":20,"nome":"Clínica Nova rsv6p","endereco":"Av. Nova, 200 - Centro","telefone":"(15) 99999-0000","cnpj":"25.214.791/6098-38","cidade":"Votorantim","uf":"S

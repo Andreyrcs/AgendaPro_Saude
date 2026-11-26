@@ -12,15 +12,9 @@ import { useSessao } from '../contexto/SessaoContext';
 import { cadastrar } from '../servicos/autenticacao';
 import { config } from '../servicos/config';
 import { HOJE, brParaIso, mascararData } from '../utilitarios/datas';
-import { mascararCPF, normalizarCodigo, validarCadastro } from '../utilitarios/validacao';
+import { LIMITES, mascararCPF, mascararCodigo, mascararTelefone, validarCadastro } from '../utilitarios/validacao';
 import { cores } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
-
-// Máscara simples do código: letras maiúsculas e o hífen depois da 3ª letra (IPE-4821)
-function mascararCodigo(texto) {
-  const limpo = normalizarCodigo(texto).replace(/[^A-Z0-9]/g, '').slice(0, 7);
-  return limpo.length > 3 ? `${limpo.slice(0, 3)}-${limpo.slice(3)}` : limpo;
-}
 
 export default function CadastroTela() {
   const { abrirSessao } = useSessao();
@@ -66,7 +60,15 @@ export default function CadastroTela() {
   return (
     <Tela titulo="Criar conta" subtitulo="Leva menos de 2 minutos" voltar>
       <View style={estilos.campos}>
-        <CampoTexto rotulo="Nome completo" value={form.nome} onChangeText={mudar('nome')} erro={erros.nome} autoComplete="name" textContentType="name" />
+        <CampoTexto
+          rotulo="Nome completo"
+          value={form.nome}
+          onChangeText={mudar('nome')}
+          erro={erros.nome}
+          autoComplete="name"
+          textContentType="name"
+          maxLength={LIMITES.nome}
+        />
         <CampoTexto
           rotulo="E-mail"
           value={form.email}
@@ -76,16 +78,17 @@ export default function CadastroTela() {
           autoCapitalize="none"
           autoComplete="email"
           textContentType="emailAddress"
+          maxLength={LIMITES.email}
         />
         <CampoTexto
           rotulo="Telefone"
           value={form.telefone}
-          onChangeText={mudar('telefone')}
+          onChangeText={(t) => mudar('telefone')(mascararTelefone(t))}
           erro={erros.telefone}
           keyboardType="phone-pad"
           autoComplete="tel"
           textContentType="telephoneNumber"
-          placeholder="(11) 91234-5678"
+          placeholder="(00) 00000-0000"
         />
         <CampoTexto
           rotulo="CPF"
@@ -94,7 +97,6 @@ export default function CadastroTela() {
           erro={erros.cpf}
           keyboardType="number-pad"
           placeholder="000.000.000-00"
-          maxLength={14}
         />
         <CampoTexto
           rotulo="Senha"
@@ -106,6 +108,7 @@ export default function CadastroTela() {
           autoCapitalize="none"
           autoComplete="new-password"
           textContentType="newPassword"
+          maxLength={LIMITES.senha}
         />
         <CampoTexto
           rotulo="Confirmar senha"
@@ -115,6 +118,7 @@ export default function CadastroTela() {
           segredo
           autoCapitalize="none"
           textContentType="newPassword"
+          maxLength={LIMITES.senha}
         />
         <CampoTexto
           rotulo="Data de nascimento"
@@ -129,6 +133,7 @@ export default function CadastroTela() {
           value={form.alergias}
           onChangeText={mudar('alergias')}
           placeholder="Ex.: alergia a dipirona"
+          maxLength={LIMITES.alergias}
         />
         <CampoTexto
           rotulo="Código da clínica (opcional)"

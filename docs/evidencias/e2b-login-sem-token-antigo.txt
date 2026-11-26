@@ -1,0 +1,2 @@
+  1 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  2 GET    /api/clinicas/15 -> 200  [Bearer]  

@@ -1,0 +1,3 @@
+[clinica.html] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[clinica.html] Failed to load resource: the server responded with a status of 403 (Forbidden)
+[clinica.html] Failed to load resource: the server responded with a status of 400 (Bad Request)

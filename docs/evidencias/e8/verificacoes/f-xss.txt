@@ -1,0 +1,69 @@
+# Verificação f — XSS (24/11/2026, 10:45:52)
+Ataque: <img src=x onerror=alert(1)>
+Gravado pela API na Clínica A: especialidade 10 (nome), médico 18 (nome e sala), paciente 40 (nome e alergias), paciente 41 (nome, na fila do médico) e consulta 83 de hoje 16:30 (motivo).
+A API devolve o texto como foi gravado: {"pessoa":"<img src=x onerror=alert(1)> Pac qz9eq","medico":"<img src=x onerror=alert(1)> Med qz9eq","sala":"<img src=x onerror=alert(1)>","especialidade":"<img src=x onerror=alert(1)> Esp qz9eq","motivo":"<img src=x onerror=alert(1)> motivo"}
+
+Em cada tela: <img> no DOM | alert() | rolagem lateral (largura da página) | o texto do ataque aparece como texto
+
+## Dono A, 1440 px
+   OK  clinica.html         img 0 | larg 1440 | texto literal sim
+   OK  lista-espera.html    img 0 | larg 1440 | texto literal sim
+   OK  pacientes.html       img 0 | larg 1440 | texto literal sim
+   OK  nova-consulta.html   img 0 | larg 1440 | texto literal sim
+   OK  medicos.html         img 0 | larg 1440 | texto literal sim
+   OK  horarios.html        img 0 | larg 1440 | texto literal sim
+   OK  especialidades.html  img 0 | larg 1440 | texto literal sim
+   OK  equipe.html          img 0 | larg 1440 | texto literal sim
+   OK  conta.html           img 0 | larg 1440 | texto literal não
+OK  0 <img> no DOM nas 9 telas
+OK  0 alert
+OK  sem rolagem lateral (largura da página ≤ 1440)
+OK  o ataque aparece como texto literal em 8 de 9 telas (conta.html não mostra nome de médico, paciente nem especialidade)
+
+## Dono A, 390 px
+   OK  clinica.html         img 0 | larg 390 | texto literal sim
+   OK  lista-espera.html    img 0 | larg 390 | texto literal sim
+   OK  pacientes.html       img 0 | larg 390 | texto literal sim
+   OK  nova-consulta.html   img 0 | larg 390 | texto literal sim
+   OK  medicos.html         img 0 | larg 390 | texto literal sim
+   OK  horarios.html        img 0 | larg 390 | texto literal sim
+   OK  especialidades.html  img 0 | larg 390 | texto literal sim
+   OK  equipe.html          img 0 | larg 390 | texto literal sim
+   OK  conta.html           img 0 | larg 390 | texto literal não
+OK  0 <img> no DOM nas 9 telas
+OK  0 alert
+OK  sem rolagem lateral (largura da página ≤ 390)
+OK  o ataque aparece como texto literal em 8 de 9 telas (conta.html não mostra nome de médico, paciente nem especialidade)
+
+## Recepção A, 1440 px
+   OK  clinica.html         img 0 | larg 1440 | texto literal sim
+   OK  lista-espera.html    img 0 | larg 1440 | texto literal sim
+   OK  pacientes.html       img 0 | larg 1440 | texto literal sim
+   OK  nova-consulta.html   img 0 | larg 1440 | texto literal sim
+   OK  medicos.html         img 0 | larg 1440 | texto literal sim
+   OK  horarios.html        img 0 | larg 1440 | texto literal sim
+   OK  especialidades.html  img 0 | larg 1440 | texto literal sim
+   OK  equipe.html          img 0 | larg 1440 | texto literal sim
+   OK  conta.html           img 0 | larg 1440 | texto literal não
+OK  0 <img> no DOM nas 9 telas
+OK  0 alert
+OK  sem rolagem lateral (largura da página ≤ 1440)
+OK  o ataque aparece como texto literal em 8 de 9 telas (conta.html não mostra nome de médico, paciente nem especialidade)
+
+## Recepção A, 390 px
+   OK  clinica.html         img 0 | larg 390 | texto literal sim
+   OK  lista-espera.html    img 0 | larg 390 | texto literal sim
+   OK  pacientes.html       img 0 | larg 390 | texto literal sim
+   OK  nova-consulta.html   img 0 | larg 390 | texto literal sim
+   OK  medicos.html         img 0 | larg 390 | texto literal sim
+   OK  horarios.html        img 0 | larg 390 | texto literal sim
+   OK  especialidades.html  img 0 | larg 390 | texto literal sim
+   OK  equipe.html          img 0 | larg 390 | texto literal sim
+   OK  conta.html           img 0 | larg 390 | texto literal não
+OK  0 <img> no DOM nas 9 telas
+OK  0 alert
+OK  sem rolagem lateral (largura da página ≤ 390)
+OK  o ataque aparece como texto literal em 8 de 9 telas (conta.html não mostra nome de médico, paciente nem especialidade)
+OK  screenshots: 0 alert e 0 erro de JavaScript
+
+TODAS AS VERIFICAÇÕES PASSARAM

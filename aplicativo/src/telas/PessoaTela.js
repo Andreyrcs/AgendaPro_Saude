@@ -105,7 +105,7 @@ export default function PessoaTela({ route, navigation }) {
               <Cartao key={r.id} style={estilos.pendencia}>
                 <Texto variante="negrito">{r.titulo}</Texto>
                 <Texto variante="meta">{r.medico.nome}</Texto>
-                <Selo texto={`Marque até ${diaEMes(r.prazo)}`} tom="alerta" />
+                <Selo texto={r.prazo ? `Marcado para ${diaEMes(r.prazo)}` : 'A recepção vai marcar'} tom="alerta" />
               </Cartao>
             ))}
             {exames.map((e) => (

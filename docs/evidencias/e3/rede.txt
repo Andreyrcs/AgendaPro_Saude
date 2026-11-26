@@ -1,0 +1,10 @@
+  1 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  2 GET    /api/clinicas/15 -> 200  [Bearer]  
+  3 GET    /api/clinicas/15 -> 401  [Bearer]  
+  4 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  5 GET    /api/clinicas/15 -> 200  [Bearer]  
+  6 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  7 GET    /api/clinicas/15 -> 200  [Bearer]  
+  8 PUT    /api/clinicas/15 -> 403  [Bearer]  
+  9 POST   /api/feriados -> 201  [Bearer]  {"id":6,"data":"2027-01-02","nome":"Teste etapa 3"}
+ 10 POST   /api/feriados -> 400  [Bearer]  {"mensagem":"Já existe um feriado nesta data."}

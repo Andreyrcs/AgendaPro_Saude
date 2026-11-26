@@ -1,30 +1,108 @@
-/* AgendaPro Saúde — painel do médico: a agenda do médico que entrou, o detalhe de cada consulta
-   (iniciar e finalizar atendimento, ausência, retorno) e o histórico. Tudo grava em clinica-dados.js. */
+/* AgendaPro Saúde — tela do médico (seção 5.5 e Apêndice I), pela API:
+   GET  /api/medicos/{id}/agenda?data=  consultas do dia, histórico (todas as consultas com paciente), exames e retornos
+   GET  /api/medicos/{id}               perfil: CRM, especialidade, sala e expediente
+   GET  /api/feriados?de=&ate=          dias fechados nas vistas
+   PUT  /api/consultas/{id}/status      iniciar (de na_recepcao) e finalizar (atendida)
+   POST /api/consultas/{id}/falta       registrar falta
+   POST /api/retornos                   marcar retorno, com data e hora ou encaminhado à recepção
+   POST /api/exames                     pedir exame
+   O {id} do médico vem da sessão (claim medico, Apêndice F). Ids comparados como texto (A.mesmoId). */
 (function () {
     'use strict';
 
-    const D = window.DADOS;
-    const C = window.CLIDADOS;
+    const API = window.API;
     const A = window.AP;
     const I = A.icone;
+    if (!API || API.liberada === false) return; /* a página já está indo para o login */
 
-    /* o médico da sessão (login): a conta de médico guarda qual médico da clínica ela é */
-    const SESSAO = (window.API && window.API.sessao()) || {};
-    const MEDICO_ID =
-        SESSAO.medicoId ||
-        (D.medicos.find((m) => m.nome === SESSAO.nome) || {}).id ||
-        null;
-    if (!MEDICO_ID || !D.medicos.some((m) => m.id === MEDICO_ID)) {
+    const SESSAO = API.usuarioAtual() || {};
+    const MEDICO_ID = SESSAO.medicoId;
+    if (!MEDICO_ID) {
         const main = document.querySelector('main') || document.body;
         main.innerHTML =
             '<p class="painel" style="margin:32px">Esta conta de médico ainda não está ligada a um médico da clínica. Peça à recepção para conferir o cadastro em Médicos.</p>';
         return;
     }
+
+    /* ─── Datas e horas (no fuso do computador, nunca com toISOString) ─── */
+    const pad = (n) => String(n).padStart(2, '0');
+    const C = {
+        INICIO: 7 * 60,
+        FIM: 19 * 60,
+        txt: (min) => pad(Math.floor(min / 60)) + ':' + pad(Math.round(min % 60)),
+        hm: (t) => { const p = String(t).split(':').map(Number); return p[0] * 60 + p[1]; },
+        data: (s) => { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); },
+        somaDias: (s, n) => { const d = C.data(s); d.setDate(d.getDate() + n); return API.dataISO(d); },
+        minutoAgora: () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; },
+    };
+    const HOJE = API.dataISO(new Date());
+
+    /* ─── O que veio da API ─── */
+    const M = {
+        medico: null, /* GET /api/medicos/{id} */
+        dur: 30, /* duração da consulta: a da especialidade */
+        almoco: null, /* [ini, fim] em minutos, ou null */
+        dia: null, /* a data cujas consultas (com vagas) estão em doDia */
+        doDia: [],
+        historico: [],
+        exames: [],
+        retornos: [],
+        feriados: [],
+    };
+    /* ConsultaResposta → o item que a tela desenha. Vaga e oferta (Apêndice D: livre, oferecido) não têm paciente. */
+    function item(c) {
+        const horario = c.status === 'livre' || c.status === 'oferecido' ? c.status : null;
+        return {
+            id: String(c.id),
+            data: c.data,
+            ini: C.hm(c.hora),
+            dur: M.dur,
+            status: horario ? null : c.status,
+            horario,
+            paciente: c.pessoa ? c.pessoa.nome : '',
+            pessoaId: c.pessoa ? String(c.pessoa.id) : null,
+            sala: c.sala,
+            motivo: c.motivo,
+            presencaConfirmada: !!c.presencaConfirmada,
+        };
+    }
+    const ativa = (k) => !!k.horario || k.status !== 'cancelada';
+    let carregouPerfil = false;
+    async function carregar(dia) {
+        if (!carregouPerfil) {
+            const de = C.somaDias(HOJE, -366), ate = C.somaDias(HOJE, 366);
+            const [md, feriados] = await Promise.all([
+                API.chamar('GET', '/api/medicos/' + MEDICO_ID),
+                API.chamar('GET', '/api/feriados?de=' + de + '&ate=' + ate),
+            ]);
+            M.medico = md;
+            M.dur = (md.especialidade && md.especialidade.duracao) || 30;
+            const e = md.expediente;
+            M.almoco = e && e.almoco ? [C.hm(e.almoco.inicio), C.hm(e.almoco.fim)] : null;
+            M.feriados = feriados || [];
+            if (window.DADOS) window.DADOS.feriados = M.feriados; /* A.folha() pinta o feriado */
+            /* a clínica do cadastro do médico, só para o selo do menu; se falhar, a agenda abre do mesmo jeito */
+            try {
+                const c = await API.chamar('GET', '/api/clinicas/' + SESSAO.clinicaId);
+                if (window.DADOS && c && c.nome) window.DADOS.clinica.nome = c.nome;
+            } catch (e) { /* sem o selo */ }
+            carregouPerfil = true;
+        }
+        const r = await API.chamar('GET', '/api/medicos/' + MEDICO_ID + '/agenda?data=' + dia);
+        M.dia = dia;
+        M.doDia = (r.consultas || []).map(item);
+        M.historico = (r.historico || []).map(item);
+        M.exames = r.exames || [];
+        M.retornos = r.retornos || [];
+    }
+    const consultaPorId = (id) =>
+        M.doDia.find((k) => A.mesmoId(k.id, id)) || M.historico.find((k) => A.mesmoId(k.id, id));
+
     const PX = 1.5;
     const INICIO = C.INICIO;
     const agora = () => C.minutoAgora();
 
-    const est = { vista: 'dia', dia: D.hoje, semana: segunda(D.hoje), mesInicio: D.hoje.slice(0, 7) };
+    const est = { vista: 'dia', dia: HOJE, semana: segunda(HOJE), mesInicio: HOJE.slice(0, 7) };
     const $ = (s) => document.querySelector(s);
     const anunciador = $('#anunciador');
 
@@ -189,17 +267,14 @@
         return C.somaDias(dia, 1 - dow);
     }
 
+    /* o dia carregado vem com as vagas; os outros dias saem do histórico (só consultas com paciente) */
     function minhasConsultas(dia) {
-        return C.consultas.filter(
-            (k) =>
-                k.medico === MEDICO_ID &&
-                k.data === dia &&
-                C.ativa(k),
-        );
+        const fonte = dia === M.dia ? M.doDia : M.historico.filter((k) => k.data === dia);
+        return fonte.filter(ativa);
     }
 
     function todasMinhasConsultas() {
-        return C.consultas.filter((k) => k.medico === MEDICO_ID && C.ehConsulta(k));
+        return M.historico.filter((k) => !!k.status);
     }
 
     function colunas() {
@@ -211,6 +286,7 @@
     }
 
     /* os mesmos nomes da recepção, do app e do banco (dados.js) */
+    const D = window.DADOS;
     const ESTADOS = Object.assign({}, D.STATUS_CONSULTA, {
         livre: 'Horário livre',
         oferecido: D.ESTADO_HORARIO.oferecido,
@@ -218,7 +294,7 @@
     const chave = (k) => k.horario || k.status;
 
     function chaveConsulta(k) {
-        return k.data + '|' + k.ini;
+        return k.id;
     }
 
     function rotuloBloco(k) {
@@ -279,7 +355,7 @@
                 'px"></div>';
         }
         /* o almoço deste médico (Horários), se ele para */
-        const almoco = C.almocoDe(MEDICO_ID);
+        const almoco = M.almoco;
         if (almoco)
             h +=
                 '<div class="grade__almoco" style="top:' +
@@ -323,18 +399,18 @@
     }
 
     function cabecalhoDia() {
-        const md = D.medicos.find((m) => m.id === MEDICO_ID);
+        const md = M.medico;
         return (
             '<div class="grade__colunas">' +
             '<div class="grade__medico" style="--cor:' +
-            md.cor +
+            A.corDoMedico(0) +
             '">' +
             '<span class="grade__medico-texto">' +
             '<span class="grade__medico-nome">' +
-            md.nome +
+            A.esc(md.nome) +
             '</span>' +
             '<span class="grade__medico-esp">' +
-            D.especialidades[md.esp].nome +
+            A.esc(md.especialidade ? md.especialidade.nome : '') +
             '</span>' +
             '</span></div></div>'
         );
@@ -345,17 +421,17 @@
             '<div class="grade__dias">' +
             colunas()
                 .map((col) => {
-                    const f = (D.feriados || []).find(
+                    const f = M.feriados.find(
                         (x) => x.data === col.data,
                     );
                     return (
                         '<div class="grade__dia-cab' +
-                        (col.data === D.hoje ? ' grade__dia-cab--hoje' : '') +
+                        (col.data === HOJE ? ' grade__dia-cab--hoje' : '') +
                         '">' +
                         '<span class="grade__dia-nome">' +
                         curtoData(col.data) +
-                        (f ? ' · ' + f.nome : '') +
-                        (col.data === D.hoje
+                        (f ? ' · ' + A.esc(f.nome) : '') +
+                        (col.data === HOJE
                             ? '<span class="visualmente-oculto">, hoje</span>'
                             : '') +
                         '</span></div>'
@@ -409,8 +485,9 @@
         if (!linha) return;
         const cols = colunas();
         const n = cols.length;
-        const idx = cols.findIndex((c) => c.data === D.hoje);
-        if (idx < 0) {
+        const idx = cols.findIndex((c) => c.data === HOJE);
+        /* fora da semana aberta, ou antes das 7h e depois das 19h: sem linha (ela passaria da grade) */
+        if (idx < 0 || agora() < INICIO || agora() > C.FIM) {
             linha.hidden = true;
             return;
         }
@@ -457,8 +534,8 @@
             var dObj = new Date(ano, mes, d);
             var dowD = dObj.getDay();
             var isDom = dowD === 0;
-            var isHoje = iso === D.hoje;
-            var feriado = (D.feriados || []).find(function(f) { return f.data === iso; });
+            var isHoje = iso === HOJE;
+            var feriado = M.feriados.find(function(f) { return f.data === iso; });
             var consultas = minhasConsultas(iso);
             var livres = consultas.filter(function(k) { return !!k.horario; }).length;
             var total = consultas.length;
@@ -560,7 +637,7 @@
     }
 
     function atualizarContadores() {
-        const consultas = minhasConsultas(D.hoje);
+        const consultas = minhasConsultas(HOJE);
         const atendidas = consultas.filter(
             (k) => k.status === 'atendida' || k.status === 'em_atendimento',
         ).length;
@@ -678,6 +755,36 @@
             if (pdEl2) pdEl2.hidden = false;
             renderPacientesDia();
         }
+        /* na vista do dia, busca as consultas e as vagas daquele dia (GET …/agenda?data=) */
+        if (est.vista === 'dia' && est.dia !== M.dia && !buscandoDia) {
+            buscandoDia = true;
+            carregar(est.dia)
+                .then(() => { buscandoDia = false; redesenhar(); })
+                .catch((e) => { buscandoDia = false; if (e.status !== 401) toast('Não foi possível carregar o dia', e.message, 'alert-triangle'); });
+        }
+    }
+    let buscandoDia = false;
+
+    /* recarrega depois de uma ação, para a tela mostrar o que o banco gravou */
+    async function recarregar() {
+        await carregar(M.dia || est.dia);
+        redesenhar();
+        if (secaoAtual === 'historico') renderHistorico();
+        if (secaoAtual === 'perfil') renderPerfil();
+    }
+    async function agir(botao, acao, titulo, sub, icone) {
+        if (botao) botao.disabled = true;
+        try {
+            await acao();
+            fecharDlg(document.getElementById('dlg-consulta'));
+            fecharDlg(document.getElementById('dlg-retorno'));
+            toast(titulo, sub, icone);
+            await recarregar();
+        } catch (e) {
+            if (e.status === 401) return; /* api.js já mandou para o login */
+            toast('Não deu certo', e.message, 'alert-triangle');
+            if (botao) botao.disabled = false;
+        }
     }
 
     /* ─── Detalhe da consulta ─── */
@@ -700,21 +807,20 @@
         );
     }
 
-    function abrirConsulta(chave) {
-        const [data, ini] = chave.split('|');
-        const k = C.consultas.find(
-            (x) =>
-                x.medico === MEDICO_ID &&
-                x.data === data &&
-                String(x.ini) === ini,
-        );
-        if (!k) return;
+    function abrirConsulta(id) {
+        const k = consultaPorId(id);
+        if (!k || !k.status) return;
 
         const corpo = document.getElementById('dlg-consulta-corpo');
         const acoes = document.getElementById('dlg-consulta-acoes');
         const titulo = document.getElementById('dlg-consulta-titulo');
 
         titulo.textContent = k.paciente;
+
+        /* exames pedidos nesta consulta e retornos deste paciente com este médico (da resposta da agenda) */
+        const exames = M.exames.filter((e) => A.mesmoId(e.consulta, k.id));
+        const retornos = retornosDe(k);
+        const podeExame = k.status === 'em_atendimento' || k.status === 'atendida';
 
         corpo.innerHTML =
             '<div class="med-dlg__info">' +
@@ -731,7 +837,7 @@
             '</div>' +
             (k.sala
                 ? '<div class="med-dlg__linha"><span class="med-dlg__rotulo">Sala</span><span>' +
-                  k.sala +
+                  A.esc(k.sala) +
                   '</span></div>'
                 : '') +
             (k.motivo
@@ -742,190 +848,161 @@
             (k.presencaConfirmada
                 ? '<div class="med-dlg__linha"><span class="med-dlg__rotulo">Presença</span><span>Confirmada pelo paciente</span></div>'
                 : '') +
-            '</div>';
+            '</div>' +
+            (exames.length
+                ? '<div class="med-dlg__notas"><h3>Exames pedidos</h3>' +
+                  exames.map((e) => '<div class="med-nota"><span class="med-nota__data">' + A.esc(e.nome) + ' · ' + (e.status === 'realizado' ? 'realizado' : 'pendente') + '</span></div>').join('') +
+                  '</div>'
+                : '') +
+            (podeExame
+                ? '<form class="med-dlg__exame" id="form-exame" novalidate>' +
+                  '<label for="f-exame">Pedir exame</label>' +
+                  '<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="f-exame" maxlength="150" placeholder="Ex.: Hemograma completo" style="flex:1 1 180px;min-height:44px" />' +
+                  '<button type="submit" class="botao botao--secundario botao--pequeno">Pedir</button></div></form>'
+                : '') +
+            (retornos.length
+                ? '<div class="med-dlg__notas"><h3>Retornos</h3>' +
+                  retornos
+                      .map(
+                          (r) =>
+                              '<div class="med-nota"><span class="med-nota__data">' +
+                              (r.status === 'agendado' ? 'Marcado' : r.status === 'realizado' ? 'Realizado' : 'Encaminhado à recepção') +
+                              (r.data ? ' · ' + A.extenso(r.data) : '') +
+                              '</span>' +
+                              (r.nota ? '<p class="med-nota__texto">' + A.esc(r.nota) + '</p>' : '') +
+                              '</div>',
+                      )
+                      .join('') +
+                  '</div>'
+                : '');
 
-        /* exames pedidos nesta consulta, e o campo para pedir outro (atendimento em andamento ou concluído) */
-        const exames = C.examesDe(k.paciente).filter((e) => e.consulta === k.id);
-        if (exames.length) {
-            corpo.innerHTML +=
-                '<div class="med-dlg__notas"><h3>Exames pedidos</h3>' +
-                exames.map((e) => '<div class="med-nota"><span class="med-nota__data">' + A.esc(e.nome) + ' · ' + (e.status === 'realizado' ? 'realizado' : 'pendente') + '</span></div>').join('') +
-                '</div>';
-        }
-        if (k.status === 'em_atendimento' || k.status === 'atendida') {
-            corpo.innerHTML +=
-                '<form class="med-dlg__exame" id="form-exame" novalidate>' +
-                '<label for="f-exame">Pedir exame</label>' +
-                '<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="f-exame" maxlength="150" placeholder="Ex.: Hemograma completo" style="flex:1 1 180px;min-height:44px" />' +
-                '<button type="submit" class="botao botao--secundario botao--pequeno">Pedir</button></div></form>';
-            corpo.querySelector('#form-exame').addEventListener('submit', (ev) => {
+        /* POST /api/exames { consulta, nome } */
+        const formExame = corpo.querySelector('#form-exame');
+        if (formExame) {
+            formExame.addEventListener('submit', (ev) => {
                 ev.preventDefault();
-                const nome = corpo.querySelector('#f-exame').value.trim();
-                if (!nome) { corpo.querySelector('#f-exame').focus(); return; }
-                C.registrarExame({ paciente: k.paciente, medico: MEDICO_ID, consulta: k.id, nome });
-                toast('Exame pedido', nome + ' · ' + k.paciente, 'check-circle');
-                abrirConsulta(chave);
+                const campo = corpo.querySelector('#f-exame');
+                const nome = campo.value.trim();
+                if (!nome) { campo.focus(); return; }
+                const botao = formExame.querySelector('button');
+                botao.disabled = true;
+                API.chamar('POST', '/api/exames', { consulta: Number(k.id), nome })
+                    .then(async () => {
+                        toast('Exame pedido', nome + ' · ' + k.paciente, 'check-circle');
+                        await recarregar();
+                        abrirConsulta(k.id);
+                    })
+                    .catch((e) => {
+                        if (e.status !== 401) toast('Não deu certo', e.message, 'alert-triangle');
+                        botao.disabled = false;
+                    });
             });
         }
 
-        // Notas de retorno salvas
-        const retornos = lerRetornos().filter((r) => r.paciente === k.paciente);
-        if (retornos.length) {
-            corpo.innerHTML +=
-                '<div class="med-dlg__notas"><h3>Notas de acompanhamento</h3>' +
-                retornos
-                    .map(
-                        (r) =>
-                            '<div class="med-nota"><span class="med-nota__data">' +
-                            (r.data || 'sem data') +
-                            '</span>' +
-                            (r.nota
-                                ? '<p class="med-nota__texto">' +
-                                  A.esc(r.nota) +
-                                  '</p>'
-                                : '') +
-                            '</div>',
-                    )
-                    .join('') +
-                '</div>';
-        }
-
-        // Ações disponíveis por status
+        /* Ações do Apêndice I que cabem ao médico */
         acoes.innerHTML = '';
-        if (k.data === D.hoje && (k.status === 'na_recepcao' || k.status === 'confirmada')) {
-            const btnIniciar = document.createElement('button');
-            btnIniciar.type = 'button';
-            btnIniciar.className = 'botao botao--principal';
-            btnIniciar.innerHTML = I('stethoscope', 'ic-sm') + 'Iniciar atendimento';
-            btnIniciar.addEventListener('click', () => iniciarConsulta(k));
-            acoes.appendChild(btnIniciar);
-        }
-        if (
-            k.status === 'em_atendimento' ||
-            k.status === 'na_recepcao' ||
-            k.status === 'confirmada'
-        ) {
-            const btnFinalizar = document.createElement('button');
-            btnFinalizar.type = 'button';
-            btnFinalizar.className = 'botao botao--menta';
-            btnFinalizar.innerHTML =
-                I('check', 'ic-sm') + 'Finalizar atendimento';
-            btnFinalizar.addEventListener('click', () => finalizarConsulta(k));
-            acoes.appendChild(btnFinalizar);
-        }
-
-        if (k.status === 'atendida' || k.status === 'em_atendimento') {
-            const btnRetorno = document.createElement('button');
-            btnRetorno.type = 'button';
-            btnRetorno.className = 'botao botao--secundario';
-            btnRetorno.innerHTML =
-                '<i class="fa-regular fa-calendar-days"></i> Marcar retorno';
-            btnRetorno.addEventListener('click', () => {
+        const botao = (classe, html, fn) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'botao ' + classe;
+            b.innerHTML = html;
+            b.addEventListener('click', () => fn(b));
+            acoes.appendChild(b);
+        };
+        if (k.status === 'na_recepcao')
+            botao('botao--principal', I('stethoscope', 'ic-sm') + 'Iniciar atendimento', (b) => iniciarConsulta(k, b));
+        /* só a partir do dia da consulta (a API confere também) */
+        if (k.data <= HOJE && (k.status === 'em_atendimento' || k.status === 'na_recepcao' || k.status === 'confirmada'))
+            botao('botao--menta', I('check', 'ic-sm') + 'Finalizar atendimento', (b) => finalizarConsulta(k, b));
+        if (k.status === 'atendida' || k.status === 'em_atendimento')
+            botao('botao--secundario', '<i class="fa-regular fa-calendar-days"></i> Marcar retorno', () => {
                 fecharDlg(document.getElementById('dlg-consulta'));
                 abrirRetorno(k);
             });
-            acoes.appendChild(btnRetorno);
-        }
-
-        if (k.status === 'confirmada' || k.status === 'na_recepcao') {
-            const btnFaltou = document.createElement('button');
-            btnFaltou.type = 'button';
-            btnFaltou.className = 'botao botao--texto';
-            btnFaltou.innerHTML = I('user-x', 'ic-sm') + 'Registrar ausência';
-            btnFaltou.addEventListener('click', () => registrarFaltou(k));
-            acoes.appendChild(btnFaltou);
-        }
+        /* falta só depois que a consulta começou e com o paciente sem ter chegado: a mesma regra da
+           recepção (clinica.js, "Marcar falta"). A falta conta para a restrição da conta da família. */
+        if (k.status === 'confirmada' && (k.data < HOJE || (k.data === HOJE && k.ini <= agora())))
+            botao('botao--texto', I('user-x', 'ic-sm') + 'Registrar ausência', (b) => registrarFaltou(k, b));
 
         abrirDlg(document.getElementById('dlg-consulta'));
     }
 
-    function iniciarConsulta(k) {
-        k.status = 'em_atendimento';
-        C.salvar();
-        fecharDlg(document.getElementById('dlg-consulta'));
-        redesenhar();
-        toast('Atendimento iniciado', k.paciente + ' · ' + C.txt(k.ini), 'stethoscope');
+    /* PUT /api/consultas/{id}/status: iniciar só de quem está na recepção; finalizar a partir de
+       confirmada, na recepção ou em atendimento (Apêndice I) */
+    function iniciarConsulta(k, b) {
+        agir(b, () => API.chamar('PUT', '/api/consultas/' + k.id + '/status', { status: 'em_atendimento' }),
+            'Atendimento iniciado', k.paciente + ' · ' + C.txt(k.ini), 'stethoscope');
     }
 
-    function finalizarConsulta(k) {
-        k.status = 'atendida';
-        C.salvar();
-        // Notificar recepção via localStorage
-        try {
-            const notifs = JSON.parse(
-                localStorage.getItem('medico.notif') || '[]',
-            );
-            notifs.push({
-                tipo: 'atendimento_finalizado',
-                medico: MEDICO_ID,
-                paciente: k.paciente,
-                horario: C.txt(k.ini),
-                data: k.data,
-                ts: Date.now(),
-            });
-            localStorage.setItem('medico.notif', JSON.stringify(notifs));
-        } catch (e) {}
-        fecharDlg(document.getElementById('dlg-consulta'));
-        redesenhar();
-        toast(
-            'Atendimento finalizado',
-            'Recepção notificada · ' + k.paciente,
-            'check-circle',
-        );
+    function finalizarConsulta(k, b) {
+        agir(b, () => API.chamar('PUT', '/api/consultas/' + k.id + '/status', { status: 'atendida' }),
+            'Atendimento finalizado', k.paciente + ' · ' + C.txt(k.ini), 'check-circle');
     }
 
-    /* só o médico ou a recepção marcam falta; atraso não é falta */
-    function registrarFaltou(k) {
-        k.status = 'faltou';
-        C.registrarFalta(k, 'Não compareceu', D.medicos.find((m) => m.id === MEDICO_ID).nome);
-        fecharDlg(document.getElementById('dlg-consulta'));
-        redesenhar();
-        toast(
-            'Ausência registrada',
-            k.paciente + (k.presencaConfirmada ? ' · tinha confirmado presença' : ''),
-            'user-x',
-        );
+    /* POST /api/consultas/{id}/falta: só o médico ou a recepção marcam falta; atraso não é falta */
+    function registrarFaltou(k, b) {
+        agir(b, () => API.chamar('POST', '/api/consultas/' + k.id + '/falta'),
+            'Ausência registrada', k.paciente + (k.presencaConfirmada ? ' · tinha confirmado presença' : ''), 'user-x');
     }
 
     /* ─── Retorno com nota ─── */
-    /* retornos e exames ficam na agenda da clínica (clinica-dados.js): a recepção e o paciente também veem */
-    function lerRetornos() {
-        return C.retornosDe(C.consultas.map((k) => k.paciente).filter(Boolean)).filter((r) => r.medico === MEDICO_ID);
+    /* retornos deste médico (vêm na resposta da agenda), do paciente da consulta */
+    function retornosDe(k) {
+        return M.retornos.filter((r) => r.pessoa && A.mesmoId(r.pessoa.id, k.pessoaId));
     }
 
+    let retornoDe = null; /* a consulta do retorno que está sendo marcado */
     function abrirRetorno(k) {
+        retornoDe = k;
         document.getElementById('ret-paciente').value = k.paciente;
-        // pré-preencher com 30 dias à frente
-        const d = new Date(C.data(k.data));
-        d.setDate(d.getDate() + 30);
-        document.getElementById('ret-data').value = d
-            .toISOString()
-            .slice(0, 10);
         document.getElementById('ret-nota').value = '';
-        // resetar para "data" selecionado
-        const radioData = document.querySelector(
-            'input[name="ret-tipo"][value="data"]',
-        );
-        if (radioData) radioData.checked = true;
+        document.querySelector('input[name="ret-tipo"][value="data"]').checked = true;
         atualizarRetornoTipo();
+        carregarLivres();
         abrirDlg(document.getElementById('dlg-retorno'));
     }
 
     function atualizarRetornoTipo() {
         const tipo = document.querySelector('input[name="ret-tipo"]:checked');
-        const campoData = document.getElementById('ret-campo-data');
         const btnSubmit = document.getElementById('ret-btn-submit');
-        const inputData = document.getElementById('ret-data');
-        if (!tipo || !campoData) return;
+        if (!tipo || !btnSubmit) return;
         const isRecepcao = tipo.value === 'recepcao';
-        campoData.hidden = isRecepcao;
-        if (inputData) inputData.required = !isRecepcao;
-        if (btnSubmit) {
-            btnSubmit.innerHTML = isRecepcao
-                ? I('send', 'ic-sm') + 'Encaminhar para recepção'
-                : I('calendar-plus', 'ic-sm') + 'Confirmar retorno';
-        }
+        /* style, e não hidden: .campo-med tem display próprio */
+        document.getElementById('ret-campo-data').style.display = isRecepcao ? 'none' : '';
+        btnSubmit.innerHTML = isRecepcao
+            ? I('send', 'ic-sm') + 'Encaminhar para recepção'
+            : I('calendar-plus', 'ic-sm') + 'Confirmar retorno';
     }
+
+    /* horários livres do próprio médico: GET /api/especialidades/{id}/horarios-livres (até 2 meses) */
+    let livres = [];
+    async function carregarLivres() {
+        const campo = document.getElementById('ret-data');
+        livres = [];
+        try {
+            const r = await API.chamar('GET', '/api/especialidades/' + M.medico.especialidade.id + '/horarios-livres');
+            const meu = r.find((x) => A.mesmoId(x.medico.id, M.medico.id));
+            livres = (meu && meu.dias) || [];
+        } catch (e) { avisarRetorno(e.message); return; }
+        /* sugere o primeiro dia com horário a partir de 30 dias (ou o último aberto) */
+        const alvo = C.somaDias(HOJE, 30);
+        const dia = livres.find((d) => d.data >= alvo) || livres[livres.length - 1];
+        campo.min = HOJE;
+        campo.max = livres.length ? livres[livres.length - 1].data : '';
+        campo.value = dia ? dia.data : '';
+        desenharHoras();
+    }
+    function avisarRetorno(t) {
+        const a = document.getElementById('ret-aviso');
+        a.textContent = t || '';
+        a.hidden = !t;
+    }
+    function desenharHoras() {
+        const dia = livres.find((d) => d.data === document.getElementById('ret-data').value);
+        document.getElementById('ret-hora').innerHTML = ((dia && dia.horas) || []).map((h) => '<option>' + A.esc(h) + '</option>').join('');
+        avisarRetorno(dia ? '' : 'Sem horário livre neste dia.');
+    }
+    document.getElementById('ret-data').addEventListener('change', desenharHoras);
 
     document.querySelectorAll('input[name="ret-tipo"]').forEach((r) => {
         r.addEventListener('change', atualizarRetornoTipo);
@@ -936,50 +1013,68 @@
         const paciente = document.getElementById('ret-paciente').value;
         const tipo = document.querySelector('input[name="ret-tipo"]:checked');
         const isRecepcao = tipo && tipo.value === 'recepcao';
-        const data = isRecepcao
-            ? ''
-            : document.getElementById('ret-data').value;
+        const data = isRecepcao ? '' : document.getElementById('ret-data').value;
+        const hora = isRecepcao ? '' : document.getElementById('ret-hora').value;
         const nota = document.getElementById('ret-nota').value.trim();
 
-        /* Retornos: "encaminhado" (a recepção marca a data) ou "agendado" (o médico já indicou a data) */
-        C.registrarRetorno({
-            medico: MEDICO_ID,
-            paciente,
-            data,
-            nota,
-            status: isRecepcao ? 'encaminhado' : 'agendado',
+        /* POST /api/retornos { consulta, data, hora, nota }: com data, a consulta fica marcada; sem data, a recepção marca */
+        if (!retornoDe) return;
+        if (!isRecepcao && !(data && hora)) { document.getElementById('ret-data').focus(); return; }
+        const k = retornoDe;
+        agir(
+            document.getElementById('ret-btn-submit'),
+            () => API.chamar('POST', '/api/retornos', { consulta: Number(k.id), data: data || null, hora: hora || null, nota: nota || null }),
+            isRecepcao ? 'Retorno encaminhado à recepção' : 'Retorno marcado',
+            paciente + (isRecepcao ? '' : ' · ' + A.extenso(data) + ', às ' + hora),
+            isRecepcao ? 'send' : 'calendar-plus',
+        ).then(() => { document.getElementById('ret-btn-submit').disabled = false; });
+    });
+
+    /* ─── Tamanho do texto (fica salvo neste navegador) ─── */
+    function desenharTexto() {
+        const t = localStorage.getItem('medico-texto') || 'normal';
+        document.documentElement.style.fontSize = { grande: '118.75%', 'muito-grande': '137.5%' }[t] || '';
+        document.querySelectorAll('#seg-texto [data-texto]').forEach((b) => {
+            b.setAttribute('aria-checked', String(b.dataset.texto === t));
+            b.tabIndex = b.dataset.texto === t ? 0 : -1;
         });
+    }
+    function mudarTexto(t) {
+        try { localStorage.setItem('medico-texto', t); } catch (e) { /* sem armazenamento */ }
+        desenharTexto();
+    }
+    document.getElementById('seg-texto').addEventListener('click', (ev) => {
+        const b = ev.target.closest('[data-texto]');
+        if (b) mudarTexto(b.dataset.texto);
+    });
+    document.getElementById('seg-texto').addEventListener('keydown', (ev) => {
+        if (ev.key !== 'ArrowRight' && ev.key !== 'ArrowLeft') return;
+        const ordem = ['normal', 'grande', 'muito-grande'];
+        const v = ordem[(ordem.indexOf(localStorage.getItem('medico-texto') || 'normal') + (ev.key === 'ArrowRight' ? 1 : 2)) % 3];
+        mudarTexto(v);
+        document.querySelector('#seg-texto [data-texto="' + v + '"]').focus();
+    });
+    desenharTexto();
 
-        // Notificar recepção via localStorage
+    /* ─── Senha: PUT /api/usuarios/{id}/senha ─── */
+    document.getElementById('form-senha').addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const f = ev.currentTarget;
+        const campo = (n) => document.getElementById('s-' + n);
+        const avisar = (t) => { campo('aviso').textContent = t; campo('aviso').hidden = false; };
+        const nova = campo('nova').value;
+        if (!campo('atual').value) return avisar('Digite a senha que você usa hoje.');
+        if (nova.length < 8 || !/[a-zA-Z]/.test(nova) || !/\d/.test(nova)) return avisar('A nova senha precisa de pelo menos 8 caracteres, com letras e números.');
+        if (nova === campo('atual').value) return avisar('A nova senha precisa ser diferente da atual.');
+        if (campo('repete').value !== nova) return avisar('As duas senhas novas não estão iguais.');
+        const b = f.querySelector('button[type="submit"]');
+        b.disabled = true;
         try {
-            const notifs = JSON.parse(
-                localStorage.getItem('medico.notif') || '[]',
-            );
-            notifs.push({
-                tipo: isRecepcao ? 'retorno_recepcao' : 'retorno_agendado',
-                medico: MEDICO_ID,
-                paciente,
-                data: data || 'a definir pela recepção',
-                nota,
-                ts: Date.now(),
-            });
-            localStorage.setItem('medico.notif', JSON.stringify(notifs));
-        } catch (e) {}
-
-        fecharDlg(document.getElementById('dlg-retorno'));
-        if (isRecepcao) {
-            toast(
-                'Retorno encaminhado',
-                'Recepção notificada · ' + paciente,
-                'send',
-            );
-        } else {
-            toast(
-                'Retorno agendado',
-                paciente + (data ? ' · ' + data : ''),
-                'calendar-plus',
-            );
-        }
+            await API.trocarSenha(campo('atual').value, nova);
+            f.reset();
+            avisar('Senha trocada. Use a nova senha no próximo login.');
+        } catch (e) { avisar(e.message); }
+        b.disabled = false;
     });
 
     /* ─── Histórico ─── */
@@ -1048,9 +1143,7 @@
 
         lista.innerHTML = paginados
             .map((k) => {
-                const retornos = lerRetornos().filter(
-                    (r) => r.paciente === k.paciente,
-                );
+                const retornos = M.retornos.filter((r) => A.mesmoId(r.consulta, k.id));
                 return (
                     '<li class="hist-item" data-chave="' +
                     chaveConsulta(k) +
@@ -1192,24 +1285,21 @@
 
     /* ─── Perfil ─── */
     function renderPerfil() {
-        const md = D.medicos.find((m) => m.id === MEDICO_ID);
+        /* GET /api/medicos/{id}: só para ver (a recepção altera em Médicos e Horários) */
+        const md = M.medico;
         if (!md) return;
-        const esp = D.especialidades[md.esp];
-        const dur =
-            C.DURACAO && C.DURACAO[MEDICO_ID]
-                ? C.DURACAO[MEDICO_ID] + ' min'
-                : '30 min';
+        const esp = md.especialidade;
 
         const set = (id, v) => {
             const el = $(id);
             if (el) el.textContent = v;
         };
-        set('#perfil-nome', (md.titulo || 'Dr.') + ' ' + md.nome);
+        set('#perfil-nome', md.nome);
         set('#perfil-esp', esp ? esp.nome : '');
         set('#perfil-crm', md.crm || '—');
         set('#perfil-espec', esp ? esp.nome : '—');
-        set('#perfil-sala', md.sala || 'Sala 3');
-        set('#perfil-dur', dur);
+        set('#perfil-sala', md.sala || '—');
+        set('#perfil-dur', M.dur + ' min');
 
         // avatar
         document.querySelectorAll('.perfil-avatar').forEach((el) => {
@@ -1221,10 +1311,8 @@
         // stats do perfil
         const todas = todasMinhasConsultas();
         const realizadas = todas.filter((k) => k.status === 'atendida').length;
-        const hoje = minhasConsultas(D.hoje).length;
-        const retornos = lerRetornos().filter(
-            (r) => r.medico === MEDICO_ID,
-        ).length;
+        const hoje = minhasConsultas(HOJE).length;
+        const retornos = M.retornos.length;
         const statsEl = $('#perfil-stats');
         if (statsEl) {
             statsEl.innerHTML =
@@ -1243,7 +1331,7 @@
         const expEl = $('#perfil-expediente');
         if (expEl) {
             const DIAS = ['Segunda a sexta', 'Sábado'];
-            const exp = C.EXPEDIENTE && C.EXPEDIENTE[MEDICO_ID];
+            const exp = md.expediente; /* { semana: { inicio, fim } | null, sabado, almoco } | null */
             if (exp) {
                 let html = '';
                 if (exp.semana) {
@@ -1251,9 +1339,9 @@
                         '<div class="perfil-linha"><dt>' +
                         DIAS[0] +
                         '</dt><dd>' +
-                        exp.semana[0] +
+                        A.esc(exp.semana.inicio) +
                         ' – ' +
-                        exp.semana[1] +
+                        A.esc(exp.semana.fim) +
                         '</dd></div>';
                 }
                 if (exp.sabado) {
@@ -1261,9 +1349,9 @@
                         '<div class="perfil-linha"><dt>' +
                         DIAS[1] +
                         '</dt><dd>' +
-                        exp.sabado[0] +
+                        A.esc(exp.sabado.inicio) +
                         ' – ' +
-                        exp.sabado[1] +
+                        A.esc(exp.sabado.fim) +
                         '</dd></div>';
                 } else {
                     html +=
@@ -1274,16 +1362,15 @@
                 expEl.innerHTML = html;
             } else {
                 expEl.innerHTML =
-                    '<div class="perfil-linha"><dt>Horário</dt><dd>08:00 – 16:40</dd></div>';
+                    '<div class="perfil-linha"><dt>Horário</dt><dd style="color:var(--tinta-3)">A recepção ainda não cadastrou o seu expediente</dd></div>';
             }
         }
 
         // próximas consultas (futuras ou de hoje em diante)
-        const proximas = C.consultas
+        const proximas = M.historico
             .filter(
                 (k) =>
-                    k.medico === MEDICO_ID &&
-                    k.data >= D.hoje &&
+                    k.data >= HOJE &&
                     k.status !== 'cancelada' &&
                     k.status !== 'faltou',
             )
@@ -1367,17 +1454,17 @@
         if (bv && bv.dataset.vista !== est.vista) {
             est.vista = bv.dataset.vista;
             if (est.vista === 'semana') est.semana = segunda(est.dia);
-            if (est.vista === 'mes') est.mesInicio = D.hoje.slice(0, 7);
+            if (est.vista === 'mes') est.mesInicio = HOJE.slice(0, 7);
             redesenhar();
             anunciar('Visão de ' + bv.textContent.trim().toLowerCase());
             return;
         }
         if (ev.target.closest('#hoje')) {
-            est.dia = D.hoje;
-            est.semana = segunda(D.hoje);
-            est.mesInicio = D.hoje.slice(0, 7);
+            est.dia = HOJE;
+            est.semana = segunda(HOJE);
+            est.mesInicio = HOJE.slice(0, 7);
             redesenhar();
-            anunciar('Hoje, ' + A.extenso(D.hoje, true));
+            anunciar('Hoje, ' + A.extenso(HOJE, true));
             return;
         }
         if (ev.target.closest('#ant')) {
@@ -1480,14 +1567,54 @@
         el.outerHTML = A.marca(Number(el.dataset.marca));
     });
     const folhaEl = document.getElementById('folha-hoje');
-    if (folhaEl) folhaEl.innerHTML = A.folha(D.hoje);
-    const subEl = document.getElementById('subtitulo');
-    const md = D.medicos.find((m) => m.id === MEDICO_ID);
-    if (subEl && md)
-        subEl.textContent = md.nome + ' · ' + D.especialidades[md.esp].nome;
-    redesenhar();
-    irPara(location.hash.slice(1));
-    A.seloClinica(document.querySelector('.lateral'), 'medico');
-    /* a recepção marcou chegada ou cancelou em outra aba: a agenda do médico acompanha */
-    C.aoMudar(() => redesenhar());
+    if (folhaEl) folhaEl.innerHTML = A.folha(HOJE);
+    const sairBtn = document.getElementById('sair');
+    if (sairBtn)
+        sairBtn.addEventListener('click', async () => {
+            await API.sair();
+            location.href = 'login.html';
+        });
+
+    function montarTela() {
+        const md = M.medico;
+        const esp = md.especialidade ? md.especialidade.nome : '';
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        set('subtitulo', md.nome + (esp ? ' · ' + esp : ''));
+        set('lateral-nome', md.nome);
+        set('lateral-esp', esp);
+        /* "Você atua em": só mostra a clínica, sem link (o médico não troca nem abre a clínica) */
+        if (window.DADOS && window.DADOS.clinica.nome) A.seloClinica(document.querySelector('.lateral'), 'medico');
+        document.querySelectorAll('.avatar-iniciais').forEach((el) => { el.textContent = A.iniciais(md.nome); });
+        redesenhar();
+        irPara(location.hash.slice(1));
+    }
+
+    /* GET da agenda de hoje e do perfil; enquanto isso, "Carregando…"; se falhar, o erro e "Tentar de novo" */
+    function iniciar() {
+        const alvo = document.querySelector('main') || document.body;
+        const espera = document.createElement('p');
+        espera.className = 'carregando-area';
+        espera.setAttribute('role', 'status');
+        espera.textContent = 'Carregando a sua agenda…';
+        alvo.prepend(espera);
+        carregar(HOJE)
+            .then(() => { espera.remove(); montarTela(); })
+            .catch((e) => {
+                if (e && e.status === 401) return; /* api.js já mandou para o login */
+                espera.className = 'carregando-area carregando-area--erro';
+                espera.setAttribute('role', 'alert');
+                espera.innerHTML = A.esc(e.message) + ' <button type="button" class="botao botao--secundario botao--pequeno">Tentar de novo</button>';
+                espera.querySelector('button').addEventListener('click', () => { espera.remove(); iniciar(); });
+            });
+    }
+    iniciar();
+
+    /* a recepção registra a chegada no computador dela: a agenda do médico busca de novo de tempos em tempos
+       e quando a aba volta a ficar visível (sem atrapalhar um diálogo aberto) */
+    function atualizarSeLivre() {
+        if (!M.medico || document.hidden || document.querySelector('dialog[open]')) return;
+        recarregar().catch(() => {});
+    }
+    setInterval(atualizarSeLivre, 30000);
+    document.addEventListener('visibilitychange', atualizarSeLivre);
 })();

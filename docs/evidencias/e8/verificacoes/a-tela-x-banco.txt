@@ -1,0 +1,31 @@
+# Verificação a — tela × banco (24/11/2026, 10:40:58)
+Banco AgendaPro_Saude_App (.\SQLEXPRESS), consultado pelo sqlcmd; os textos vêm em hexadecimal (UTF-16LE) e são
+decodificados no Node, para os acentos não dependerem da página de código do console.
+
+## Consulta 65 (marcada pela tela na 8d)
+   banco: {"data":"2026-11-25","ini":"10:00","fim":"10:30","status":"CONFIRMADA","paciente":"Paula Ficha qqxwy","medico":"Dr(a). Lia Fila qqxwy","motivo":"Consulta marcada pela tela qqxwy","sala":"Sala 7","esp":"Clínica Geral qpiig"}
+   tela (agenda, semana): "Paula Ficha qqxwy, 10:00 às 10:30, qua, 25/11, Dr(a). Lia Fila qqxwy. Confirmada. Enter abre as opções."
+OK  paciente, data, início e fim, médico e status da agenda = banco
+   tela (menu da consulta): "Paula Ficha qqxwy qua, 25/11, 10:00 às 10:30 Dr(a). Lia Fila qqxwy · Confirmada Motivo: Consulta marcada pela tela qqxwy Remarcar (mover) Cancelar consulta Fech"
+OK  motivo do menu = banco ("Consulta marcada pela tela qqxwy")
+
+## Médico 14
+   banco: {"nome":"Dr(a). Lia Fila qqxwy","crm":"CRM/SP 142710","sala":"Sala 7","esp":"Clínica Geral qpiig","telefone":null,"duracao":30,"expediente":"08:00-17:00 almoço 12:00-13:00 dias 5"}
+   tela (medicos.html): "LQ Dr(a). Lia Fila qqxwy Clínica Geral qpiig · CRM/SP 142710 08:00–17:00 3 1 atendidas 8% 1 ter, 24/11 · 11:00 Sala 7 Sem telefone Editar"
+OK  nome, CRM, sala e especialidade da tela = banco
+OK  a sala gravada na consulta (Sala 7) é a sala do médico
+OK  expediente no banco (Horarios_Atendimento: 08:00-17:00 almoço 12:00-13:00 dias 5) e na tela
+
+## Paciente 31
+   banco: {"nome":"Paula Ficha qqxwy","cpf":"13995544843","parentesco":"Titular","nascimento":"1988-03-15","consultas":4,"faltasValendo":1,"faltasRetiradas":1,"naFila":1,"exame":"Hemograma completo REALIZADO"}
+   tela (ficha): "Paula Ficha qqxwy CPF 139.955.448-43 · Titular Consultas 4 Faltas 1 Na fila 1 Faltas registradas ter, 24/11 · 15:00 Não compareceu · Dr(a). Lia Fila qqxwy · registrada por Recepção A Teste · tinha confirmado presença Retirar (justificada) ter, 24/11 · 15:30 · retirada Não compareceu · Dr(a). Lia Fila qqxwy · registrada por Recepção A Teste · tinha confirmado presença Retirada por Recepção A Teste: Atestado médico apr…"
+OK  nome, CPF e parentesco da ficha = banco
+OK  número de consultas na clínica: tela 4, banco 4
+OK  faltas que valem: tela 1, banco 1 (e 1 retirada, que a ficha lista como "retirada")
+OK  na fila: tela 1, banco 1
+OK  faltas retiradas na lista da ficha = banco
+OK  exame da ficha = banco (Hemograma completo REALIZADO)
+OK  a especialidade da consulta na ficha (Clínica Geral qpiig) = banco
+
+OK  0 erros de JavaScript
+TODAS AS VERIFICAÇÕES PASSARAM

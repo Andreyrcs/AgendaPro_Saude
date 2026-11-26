@@ -1,0 +1,10 @@
+OK  cadastrar (POST /api/pacientes + login): volta logado, com token e a clínica do código — {"idUsuario":104,"papel":"paciente","clinicaId":15,"clinica":"Clínica Teste A","token":"[token omitido]"}
+OK  CPF repetido: a mensagem da API (F12) — 400 Este CPF já está cadastrado.
+OK  código inexistente: a mensagem da API — 404 Não achamos uma clínica com esse código. Confira com a recepção.
+OK  entrar paciente com clínica (F7: GET /api/pacientes/{id}/clinicas) — clinicaId 15
+OK  entrar com conta da equipe: recusado no app — 403 Este aplicativo é dos pacientes. A equipe da clínica usa o site do AgendaPro Saúde.
+Mensagem 207, N�vel 16, Estado 1, Servidor Andrey_RCS, Linha 1
+Nome de coluna 'Nome' inv�lido.
+Mensagem 207, N�vel 16, Estado 1, Servidor Andrey_RCS, Linha 1
+Nome de coluna 'Nome' inv�lido.
+no banco: Paciente App Um | cpf 39609053351 | nasc 1992-07-15 | alergias [Dipirona] | tel (15) 97777-6666 | parentesco Titular | clinica 15

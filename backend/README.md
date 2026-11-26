@@ -1,212 +1,162 @@
-# AgendaPRO.API
+# AgendaPro Saúde: API (back-end)
 
-Backend do projeto AgendaPro.
-
-Essa é a parte da API do nosso sistema de agendamento de reunioes. O banco usado pelo grupo é MySQL, e a API foi feita em C# com ASP.NET Core Web API.
-
-Para acessar o banco foi usado Entity Framework Core, porque fica mais simples trabalhar com as tabelas usando classes no C#.
-
-## Tecnologias
-
-C#  
-ASP.NET Core Web API  
-MySQL  
-Entity Framework Core  
-Pomelo.EntityFrameworkCore.MySql  
-BCrypt  
-
-## Banco de dados
-
-O script do banco fica em:
-
-Database/schema.sql
-
-As tabelas principais sao:
-
-usuarios  
-agendar_reuniao  
-participantes_reuniao  
-
-A tabela usuarios guarda os dados do usuario, como nome, email, senha hash e status.
-
-A tabela agendar_reuniao guarda os dados da reuniao, como titulo, pauta, data, horario, tipo, local ou link e organizador.
-
-A tabela participantes_reuniao guarda os usuarios convidados para cada reuniao.
-
-## O que foi feito
-
-cadastro de usuario  
-login  
-criacao de reuniao  
-listagem das minhas reunioes  
-listagem de convites pendentes  
-adicionar participante  
-aceitar convite  
-recusar convite  
-cancelar reuniao  
-listar usuarios  
-buscar usuario por email  
-
-## Observacoes
-
-A senha nao fica salva aberta no banco. Ela é salva como hash usando BCrypt.
-
-A reuniao pode ser PRESENCIAL ou ONLINE.
-
-Se for presencial, precisa ter local.
-
-Se for online, precisa ter link.
-
-Somente o organizador pode cancelar a reuniao ou adicionar participantes.
-
-O participante só pode aceitar ou recusar o proprio convite.
-
-Ainda nao foi usado JWT. Para o trabalho, o frontend envia o idUsuarioLogado nas requisicoes, e o backend usa esse id para validar permissoes.
+API REST do AgendaPro Saúde em ASP.NET Core (.NET 10), com Dapper e SQL Server.
+A documentação oficial das rotas está em [docs/especificacao-api.md](docs/especificacao-api.md).
+O que a web e o app precisam ajustar para usar a API está em [docs/ajustes-front.md](docs/ajustes-front.md).
 
 ## Como rodar
 
-Primeiro crie o banco usando o arquivo:
+1. **SDK do .NET 10** instalado (`dotnet --version`).
+2. **Banco:** SQL Server na instância padrão da máquina (`localhost`, autenticação do Windows). O script oficial é
+   `banco/agendapro_saude_sqlserver.sql` (pasta `banco/` na raiz do repositório). Ele cria o banco `AgendaPro_Saude`
+   com as tabelas, a visão, as procedures e os triggers, e grava só os dados do sistema (`Status_Consulta` e
+   `Parametros`). Na raiz do repositório:
 
-Database/schema.sql
+   ```
+   sqlcmd -S localhost -E -C -I -f 65001 -i banco\agendapro_saude_sqlserver.sql
+   sqlcmd -S localhost -E -C -I -f 65001 -d AgendaPro_Saude -i backend\docs\dados-prevencao.sql
+   sqlcmd -S localhost -E -C -I -f 65001 -d AgendaPro_Saude -i backend\docs\dados-feriados.sql
+   ```
 
-Depois confira a connection string no appsettings.json.
+   O segundo comando grava o catálogo de campanhas de prevenção (sem ele, a tela de prevenção fica vazia). O terceiro
+   grava os feriados nacionais de 2026 e 2027: a API só lê os feriados (`GET /api/feriados`), porque a tabela vale
+   para todas as clínicas e nenhum perfil pode gravar nela. Os dois arquivos podem rodar mais de uma vez.
+   Se o SQL Server for uma instância nomeada (por exemplo o SQL Express), troque `localhost` por `.\SQLEXPRESS` nos
+   comandos e na connection string.
+   Para usar outro nome de banco (por exemplo `AgendaPro_Saude_App`), faça uma cópia do script trocando o nome nas
+   linhas do `IF DB_ID(...)`, do `CREATE DATABASE` e do `USE`, e passe o mesmo nome no `-d` e na connection string.
+3. **Segredos** (ficam fora do código, nos user-secrets). Na pasta `backend/AgendaPro.Api`:
 
-Exemplo:
+   ```
+   dotnet user-secrets set "ConnectionStrings:AgendaPro" "Server=localhost;Database=AgendaPro_Saude;Trusted_Connection=True;TrustServerCertificate=True"
+   dotnet user-secrets set "Jwt:Chave" "<chave aleatória>"
+   ```
 
-Server=localhost;Database=agenda_pro;User=root;Password=sua_senha;
+   A chave do JWT precisa ter pelo menos 32 caracteres (assinatura HMAC-SHA256). Gere uma aleatória e nunca a
+   coloque em arquivo do repositório. No PowerShell:
 
-Troque sua_senha pela senha do MySQL da maquina.
+   ```
+   $b = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
+   dotnet user-secrets set "Jwt:Chave" ([Convert]::ToBase64String($b))
+   ```
+4. **Rodar**, na pasta `backend/AgendaPro.Api`:
 
-Para rodar pelo terminal:
+   | Comando | Endereço | Para quê |
+   |---|---|---|
+   | `dotnet run --launch-profile http` | `http://localhost:5080` | Só na própria máquina (abre o Swagger) |
+   | `dotnet run --launch-profile rede-local` | `http://0.0.0.0:5080` | Para o celular e os colegas na mesma rede Wi-Fi |
 
-dotnet restore
+   No perfil `rede-local`, os outros acessam pelo IP do computador que roda a API (`ipconfig`, linha "IPv4"),
+   por exemplo `http://192.168.0.10:5080`. Na primeira vez, o Windows pode pedir para liberar o programa no
+   firewall: aceite para "redes privadas". No app, troque `IP_DA_CONEXAO` em `aplicativo/src/servicos/config.js`
+   para esse IP. Na apresentação, o `apresentacao.cmd` (na raiz) liga tudo e já informa o IP e a origem do CORS:
+   veja `docs/apresentacao.md`.
 
-dotnet run
+## CORS (web)
 
-Depois teste no navegador:
+O navegador só deixa a página chamar a API se a origem dela estiver em `Cors:Origens`, no
+`AgendaPro.Api/appsettings.json`. Hoje estão liberadas as do Live Server:
 
-GET http://localhost:5000/api/teste/conexao
+- `http://localhost:5500`
+- `http://127.0.0.1:5500`
 
-A porta pode mudar dependendo de como o projeto rodar na maquina.
+Se a web rodar em outro endereço ou porta (por exemplo, na apresentação com dois notebooks, a web aberta por
+`http://<IP-do-servidor>:5500`), acrescente a origem **no user-secrets**, sem mexer no `appsettings.json`, e
+reinicie a API. O índice continua a lista do arquivo, que já tem os itens 0 e 1:
 
-## Rotas principais
+```
+dotnet user-secrets set "Cors:Origens:2" "http://192.168.0.10:5500"
+dotnet user-secrets set "Cors:Origens:3" "http://outro-endereco:5500"
+```
 
-Teste de conexao:
+Para tirar uma origem: `dotnet user-secrets remove "Cors:Origens:2"`.
+O app do celular não passa pelo CORS (não é navegador).
 
-GET /api/teste/conexao
+## Erros
 
-Criar usuario:
+Toda resposta de erro vem como `{ "mensagem": "..." }`. Além dos códigos do Quadro 5.1, a API responde **409**
+quando dois pedidos tentam gravar o mesmo dado ao mesmo tempo (por exemplo, dois cadastros com o mesmo CPF ou
+e-mail): o segundo recebe 409 com a mesma mensagem da checagem normal ("Este CPF já está cadastrado.",
+"Este e-mail já tem uma conta. Entre com ele ou use outro."). Fora da corrida, a checagem continua respondendo 400.
 
-POST /api/usuarios
+## Swagger e token
 
-Login:
+1. Com a API rodando, abra `http://localhost:5080/swagger` (só em Development).
+2. Chame `POST /api/auth/login` com:
 
-POST /api/auth/login
+   ```json
+   { "email": "ana@email.com", "senha": "senha1234" }
+   ```
 
-Listar usuarios:
+   A resposta traz `token`, `expiraEm` e `usuario` (`idUsuario`, `nome`, `email`, `papel`, `clinicaId`, `medicoId`).
+3. Copie o valor de `token`, clique em **Authorize** (cadeado no alto da página), cole o token (sem a palavra
+   `Bearer`) e confirme. As próximas chamadas vão com `Authorization: Bearer <token>`.
 
-GET /api/usuarios
+Nas telas, envie o mesmo cabeçalho `Authorization: Bearer <token>` em toda rota que não seja pública.
+Públicas: `POST /api/auth/login`, `POST /api/pacientes` e `POST /api/clinicas`.
 
-Buscar usuario por email:
+## Dados de teste
 
-GET /api/usuarios/buscar-por-email?email=email@email.com
+Todos os dados são fictícios. **Estas contas não existem num banco criado pelo script**: foram criadas em testes
+locais. Num banco novo, crie a clínica e o dono por `POST /api/clinicas` e o paciente por `POST /api/pacientes`.
 
-Criar reuniao:
+| Conta | Senha | Perfil | Clínica |
+|---|---|---|---|
+| `ana@email.com` | `senha1234` | Paciente | — |
+| `bruno@email.com` | `senha1234` | Paciente | — |
+| `carla@email.com` | `senha1234` | Paciente | Vinculada à 1 |
+| `diego@email.com` | `senha1234` | Paciente (com dois familiares) | Vinculado às 1, 2 e 3 |
+| `eva575609@teste.com` | `senha1234` | Paciente | — |
+| `fabio575609@teste.com` | `senha1234` | Paciente | — |
+| `dono@clinicajacaranda.com.br` | `nova1234` | Dono | 2 |
+| `rita.recepcao@clinicajacaranda.com.br` | `xpass373` | Recepção | 2 |
+| `medum575609@teste.com` | `khued611` | Médico | 2 |
+| `meddois575609@teste.com` | `zafdq923` | Médico | 2 |
+| `medped575609@teste.com` | `rvcsy224` | Médico (pediatria) | 2 |
+| `medrecep@teste.com` | `afjef908` | Médico | 2 |
+| `donob@teste.com` | `senha1234` | Dono | 3 |
 
-POST /api/reunioes
+| Clínica | Id | Código |
+|---|---|---|
+| Clínica Ipê | 1 | `IPE-4821` |
+| Clínica Jacarandá | 2 | `JAC-1206` |
+| Clinica Teste B | 3 | `TES-5118` |
 
-Listar minhas reunioes:
+## O que mudou em relação ao contrato antigo
 
-GET /api/reunioes/minhas?idUsuarioLogado=1
+Os contratos `docs/relatorio-integracao.md` e `aplicativo/docs/aplicativo-integracao-api.md` foram escritos antes
+da especificação. Onde os dois divergem, a API segue a especificação:
 
-Listar convites pendentes:
+1. **Sem `idUsuarioLogado`.** Quem está logado sai do token. O `idUsuarioLogado` enviado no corpo ou na query é
+   ignorado. Em `/api/pacientes/{id}/...` e `/api/usuarios/{id}/...`, o `{id}` é o `idUsuario` da conta logada;
+   outro id responde 403.
+2. **Cadastro do paciente numa chamada só:** `POST /api/pacientes` cria a conta e o titular juntos, com
+   `{ nome, email, senha, telefone, cpf, nascimento, alergias, codigo }` (`telefone`, `alergias` e `codigo`
+   opcionais). Não existe `POST /api/usuarios`. O parentesco do titular é `"Titular"`.
+3. **CPF repetido responde 400** (não 409), com "Este CPF já está cadastrado.".
+4. **Especialidades:** `GET /api/clinicas/{id}/especialidades` (não `GET /api/especialidades`), com
+   `{ id, nome, duracao }`. Não há rota para editar especialidade.
+5. **Vínculo com a clínica:** `POST /api/pacientes/{id}/clinicas` aceita `{ "codigo": "IPE-4821" }` (app;
+   acha clínica pública ou privada) ou `{ "clinicaId": 1 }` (web; só clínica pública). Vínculo novo responde
+   201; clínica já vinculada responde 200 (é assim que a web troca de clínica). Para achar pelo código antes:
+   `GET /api/clinicas/codigo/{codigo}`.
+6. **Paciente só usa clínica vinculada:** especialidades, horários, agendamento e lista de espera de uma clínica
+   sem vínculo com a conta respondem 403.
+7. **Recusar a vaga tira a pessoa da fila** (`PUT /api/lista-espera/{id}/vaga` com `{ "aceitar": false }`): a
+   entrada fica expirada e a vaga vai para o próximo. Ela não continua na fila.
+8. **Uma fila por conta:** quem já está numa lista de espera recebe 400 ao tentar entrar em outra.
+9. **Mudança de status** (`PUT /api/consultas/{id}/status` com `{ "status": "..." }`): iniciar o atendimento só a
+   partir de `na_recepcao` (não de `confirmada`); `faltou` e `cancelada` não passam por essa rota.
+10. **Textos de erro do banco** saem como a procedure escreve. Por exemplo, "Horário reservado para oferta da lista
+    de espera." e "Por enquanto, você pode agendar só pela lista de espera.".
+11. **Sair:** não há `POST /api/auth/logout`. Para sair, a tela apaga o token.
 
-GET /api/reunioes/convites?idUsuarioLogado=1
+A lista completa dos ajustes do front, com a fonte e a gravidade de cada um, está em
+[docs/ajustes-front.md](docs/ajustes-front.md).
 
-Adicionar participante:
+## Respostas de erro
 
-POST /api/reunioes/1/participantes
-
-Aceitar convite:
-
-PUT /api/reunioes/1/participantes/2/confirmar?idUsuarioLogado=2
-
-Recusar convite:
-
-PUT /api/reunioes/1/participantes/2/recusar?idUsuarioLogado=2
-
-Cancelar reuniao:
-
-DELETE /api/reunioes/1?idUsuarioLogado=1
-
-## Exemplos simples
-
-Cadastro:
-
-{
-  "nome": "Thiago",
-  "email": "thiago@email.com",
-  "senha": "123456"
-}
-
-Login:
-
-{
-  "email": "thiago@email.com",
-  "senha": "123456"
-}
-
-Criar reuniao presencial:
-
-{
-  "tituloReuniao": "Reuniao teste",
-  "pautaReuniao": "Teste com MySQL",
-  "dataReuniao": "2026-05-20",
-  "horaInicio": "09:00:00",
-  "horaFim": "10:00:00",
-  "localReuniao": "Sala A29",
-  "linkReuniao": null,
-  "idUsuarioLogado": 1,
-  "tipoReuniao": "PRESENCIAL"
-}
-
-Criar reuniao online:
-
-{
-  "tituloReuniao": "Reuniao online",
-  "pautaReuniao": "Teste com MySQL",
-  "dataReuniao": "2026-05-20",
-  "horaInicio": "09:00:00",
-  "horaFim": "10:00:00",
-  "localReuniao": null,
-  "linkReuniao": "https://meet.google.com/teste",
-  "idUsuarioLogado": 1,
-  "tipoReuniao": "ONLINE"
-}
-
-Adicionar participante:
-
-{
-  "idUsuarioLogado": 1,
-  "idUsuario": 2
-}
-
-## Fluxo principal
-
-O usuario cria uma reuniao.
-
-Depois o organizador pode adicionar participantes.
-
-Quando alguem é adicionado, fica com status CONVIDADO.
-
-Se o participante aceitar, o status muda para CONFIRMADO.
-
-Se recusar, muda para RECUSADO.
-
-Na tela de minhas reunioes, o usuario só deve ver as reunioes que ele criou ou as que ele aceitou participar.
-
-## Status
-
-O backend esta funcional para o fluxo principal do projeto:
-
-cadastro, login, criar reuniao, adicionar participante, aceitar convite, recusar convite e cancelar reuniao.
+- Erros com mensagem: `{ "mensagem": "..." }` (400, 401, 404, 500).
+- 403 sem corpo: dado de outra conta ou de outra clínica. A exceção é familiar, consulta ou entrada da fila de
+  outra conta, que vem com "Você só pode gerenciar a sua família.".
+- 401 sem corpo: token ausente, vencido ou de conta desativada (por exemplo, recepcionista removida da equipe).

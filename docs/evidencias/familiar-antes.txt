@@ -1,0 +1,20 @@
+OK  P1 adiciona um familiar (para editar) -> HTTP 201 {"id":63,"nome":"Filho Original","curto":"Filho","cpf":"71660546702","relacao":"Filho(a)","nascimento":"2015-04-02","cor":"#CFE2F6","alergias":null,"titular":false}
+XX  P1 edita o familiar (nome, parentesco, nascimento, alergias, cor) -> HTTP 404 (sem corpo)
+XX    a resposta traz os dados novos — null
+XX  P1 edita o próprio titular (relação enviada é ignorada) -> HTTP 404 (sem corpo)
+XX    continua titular, com o nome novo — {}
+XX    o nome da conta (GET /api/pacientes/{id}) acompanha o titular — Paciente 1
+XX  P1 volta o nome do titular -> HTTP 404 (sem corpo)
+XX  CPF de outra pessoa (o titular de P2) -> HTTP 404 (sem corpo)
+XX    mensagem de CPF repetido
+XX  CPF inválido -> HTTP 404 (sem corpo)
+XX  parentesco inválido -> HTTP 404 (sem corpo)
+XX  nascimento no futuro -> HTTP 404 (sem corpo)
+XX  P1 tenta editar a pessoa de P2 pela própria URL -> HTTP 404 (sem corpo)
+XX    mensagem "só a sua família"
+XX  P1 tenta usar a URL da conta de P2 -> HTTP 404 (sem corpo)
+OK  pessoa inexistente -> HTTP 404 (sem corpo)
+XX  recepção (perfil sem acesso) -> HTTP 404 (sem corpo)
+XX  sem token -> HTTP 404 (sem corpo)
+
+16 verificação(ões) FALHARAM

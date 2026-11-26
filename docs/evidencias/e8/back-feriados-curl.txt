@@ -1,0 +1,16 @@
+# Feriados só leitura (back) — 2026-11-23 22:51
+## Escrita: as rotas não existem mais
+POST /api/feriados [dono] → 405 (Allow: GET) 
+DELETE /api/feriados/1 [dono] → 404  
+POST /api/feriados [recep] → 405 (Allow: GET) 
+DELETE /api/feriados/1 [recep] → 404  
+POST /api/feriados [sem token] → 405 (Allow: GET) 
+## Leitura continua
+GET /api/feriados?de=2026-01-01&ate=2026-12-31 [sem token] → 401  
+GET /api/feriados?de=2026-11-01&ate=2026-12-31 [paciente] → 200  | [{"id":7,"data":"2026-11-02","nome":"Finados"},{"id":8,"data":"2026-11-15","nome":"Proclamação da República"},{"id":9,"data":"2026-11-20","nome":"Dia Naciona
+GET /api/feriados?de=2026-11-01&ate=2026-12-31 [medico] → 200  | [{"id":7,"data":"2026-11-02","nome":"Finados"},{"id":8,"data":"2026-11-15","nome":"Proclamação da República"},{"id":9,"data":"2026-11-20","nome":"Dia Naciona
+GET /api/feriados?de=2026-11-01&ate=2026-12-31 [recep] → 200  | [{"id":7,"data":"2026-11-02","nome":"Finados"},{"id":8,"data":"2026-11-15","nome":"Proclamação da República"},{"id":9,"data":"2026-11-20","nome":"Dia Naciona
+GET /api/feriados?de=2026-11-01&ate=2026-12-31 [dono] → 200  | [{"id":7,"data":"2026-11-02","nome":"Finados"},{"id":8,"data":"2026-11-15","nome":"Proclamação da República"},{"id":9,"data":"2026-11-20","nome":"Dia Naciona
+GET /api/feriados?de=2026-12-31&ate=2026-01-01 [dono] → 400  | {"mensagem":"O fim do período precisa ser depois do começo."}
+## Nada gravado
+Feriados no banco: 20; 2026-12-24: 0

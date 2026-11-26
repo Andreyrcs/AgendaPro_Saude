@@ -1,0 +1,42 @@
+horário escolhido: {"medico":"13","data":"2026-11-24","hora":"08:00"}
+OK  a consulta marcada pela tela está na API — {"id":85,"data":"2026-11-24","hora":"08:00","medico":"Médica Teste","motivo":"Teste da etapa 7b","sala":"Sala 1"}
+OK  o horário saiu da lista de livres
+OK  cancelada pela tela: status na API — cancelada
+OK  o horário voltou a ficar livre
+OK  nenhum erro de JavaScript
+
+rede da API:
+  1 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  2 GET    /api/pacientes/79/clinicas -> 200  [Bearer]  
+  3 GET    /api/pacientes/79/familiares -> 200  [Bearer]  [{"id":47,"nome":"Paciente 1","curto":"Paciente","cpf":"91861773978","relacao":"Titular","nascimento":"1990-05-10","cor":"#CFE2F6","alergias":null,"titular":tru
+  4 GET    /api/pacientes/79/situacao -> 200  [Bearer]  {"faltas":0,"restricao":"normal","ate":null}
+  5 GET    /api/pacientes/79/acompanhamento -> 200  [Bearer]  {"retornos":[],"exames":[]}
+  6 GET    /api/pacientes/79/notificacoes -> 200  [Bearer]  []
+  7 GET    /api/clinicas/15/especialidades -> 200  [Bearer]  [{"id":10,"nome":"Clínica geral","duracao":30}]
+  8 GET    /api/pacientes/79/consultas -> 200  [Bearer]  {"proximas":[],"passadas":[]}
+  9 GET    /api/feriados?de=2026-10-01&ate=2027-05-31 -> 200  [Bearer]  []
+ 10 GET    /api/pacientes/79/lista-espera -> 200  [Bearer]  null
+ 11 GET    /api/pacientes/79/prevencao -> 200  [Bearer]  [{"id":1,"mes":"2026-10","campanha":"Outubro Rosa","tema":"Prevenção do câncer de mama","exames":[{"id":1,"idCampanha":1,"titulo":"Mamografia","nota":"A cada 2 
+ 12 GET    /api/especialidades/10/horarios-livres -> 200  [Bearer]  [{"medico":{"id":13,"nome":"Médica Teste","sala":"Sala 1"},"dias":[{"data":"2026-11-24","horas":["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30"
+ 13 POST   /api/consultas -> 201  [Bearer]  {"id":85,"data":"2026-11-24","hora":"08:00","sala":"Sala 1","status":"confirmada","motivo":"Teste da etapa 7b","tipo":"consulta","titulo":null,"presencaConfirma
+ 14 GET    /api/pacientes/79/lista-espera -> 200  [Bearer]  null
+ 15 GET    /api/pacientes/79/familiares -> 200  [Bearer]  [{"id":47,"nome":"Paciente 1","curto":"Paciente","cpf":"91861773978","relacao":"Titular","nascimento":"1990-05-10","cor":"#CFE2F6","alergias":null,"titular":tru
+ 16 GET    /api/pacientes/79/acompanhamento -> 200  [Bearer]  {"retornos":[],"exames":[]}
+ 17 GET    /api/pacientes/79/notificacoes -> 200  [Bearer]  []
+ 18 GET    /api/pacientes/79/prevencao -> 200  [Bearer]  [{"id":1,"mes":"2026-10","campanha":"Outubro Rosa","tema":"Prevenção do câncer de mama","exames":[{"id":1,"idCampanha":1,"titulo":"Mamografia","nota":"A cada 2 
+ 19 GET    /api/pacientes/79/situacao -> 200  [Bearer]  {"faltas":0,"restricao":"normal","ate":null}
+ 20 GET    /api/feriados?de=2026-10-01&ate=2027-05-31 -> 200  [Bearer]  []
+ 21 GET    /api/clinicas/15/especialidades -> 200  [Bearer]  [{"id":10,"nome":"Clínica geral","duracao":30}]
+ 22 GET    /api/pacientes/79/consultas -> 200  [Bearer]  {"proximas":[{"id":85,"data":"2026-11-24","hora":"08:00","sala":"Sala 1","status":"confirmada","motivo":"Teste da etapa 7b","tipo":"consulta","titulo":null,"pre
+ 23 GET    /api/especialidades/10/horarios-livres -> 200  [Bearer]  [{"medico":{"id":13,"nome":"Médica Teste","sala":"Sala 1"},"dias":[{"data":"2026-11-24","horas":["08:30","09:00","09:30","10:00","10:30","11:00","11:30","13:00"
+ 24 DELETE /api/consultas/85 -> 200  [Bearer]  {"falta":false,"oferecidoAFila":false}
+ 25 GET    /api/pacientes/79/familiares -> 200  [Bearer]  [{"id":47,"nome":"Paciente 1","curto":"Paciente","cpf":"91861773978","relacao":"Titular","nascimento":"1990-05-10","cor":"#CFE2F6","alergias":null,"titular":tru
+ 26 GET    /api/pacientes/79/notificacoes -> 200  [Bearer]  []
+ 27 GET    /api/pacientes/79/lista-espera -> 200  [Bearer]  null
+ 28 GET    /api/pacientes/79/acompanhamento -> 200  [Bearer]  {"retornos":[],"exames":[]}
+ 29 GET    /api/pacientes/79/prevencao -> 200  [Bearer]  [{"id":1,"mes":"2026-10","campanha":"Outubro Rosa","tema":"Prevenção do câncer de mama","exames":[{"id":1,"idCampanha":1,"titulo":"Mamografia","nota":"A cada 2 
+ 30 GET    /api/pacientes/79/consultas -> 200  [Bearer]  {"proximas":[],"passadas":[{"id":85,"data":"2026-11-24","hora":"08:00","sala":"Sala 1","status":"cancelada","motivo":"Teste da etapa 7b","tipo":"consulta","titu
+ 31 GET    /api/pacientes/79/situacao -> 200  [Bearer]  {"faltas":0,"restricao":"normal","ate":null}
+ 32 GET    /api/feriados?de=2026-10-01&ate=2027-05-31 -> 200  [Bearer]  []
+ 33 GET    /api/clinicas/15/especialidades -> 200  [Bearer]  [{"id":10,"nome":"Clínica geral","duracao":30}]
+ 34 GET    /api/especialidades/10/horarios-livres -> 200  [Bearer]  [{"medico":{"id":13,"nome":"Médica Teste","sala":"Sala 1"},"dias":[{"data":"2026-11-24","horas":["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30"

@@ -9,8 +9,8 @@ import { cores } from '../estilos/cores';
 import { espaco, raios } from '../estilos/espacos';
 import { HOJE, diaEMes } from '../utilitarios/datas';
 import { FALTAS_PARA_RESTRICAO } from '../utilitarios/status';
-import { clinica } from '../dados/dadosFicticios';
-import { nomeParaExibir } from '../utilitarios/texto';
+import { clinicaDaSessao, nomeParaExibir } from '../utilitarios/texto';
+import { useSessao } from '../contexto/SessaoContext';
 
 export function CartaoConfirmarPresenca({ consulta, aoVou, aoNaoVou, ocupado }) {
   const amanha = consulta.data > HOJE;
@@ -38,6 +38,8 @@ export function CartaoConfirmarPresenca({ consulta, aoVou, aoNaoVou, ocupado }) 
 
 // situacao = { tipo: 'normal' | 'so_fila' | 'so_recepcao', ate }
 export function AvisoRestricao({ situacao }) {
+  const { usuario } = useSessao();
+  const clinica = clinicaDaSessao(usuario);
   if (!situacao || situacao.tipo === 'normal') return null;
   const recepcao = situacao.tipo === 'so_recepcao';
   return (
@@ -50,7 +52,7 @@ export function AvisoRestricao({ situacao }) {
             ? `Houve uma nova falta sem aviso durante a restrição. Até ${diaEMes(situacao.ate)}, as consultas são marcadas pela recepção da clínica.`
             : `Houve ${FALTAS_PARA_RESTRICAO} faltas sem aviso depois de confirmar presença. Até ${diaEMes(situacao.ate)} você pode entrar na lista de espera, mas não marcar direto.`}
         </Texto>
-        {recepcao && (
+        {recepcao && !!clinica.telefoneLink && (
           <Botao
             titulo={`Ligar para a clínica · ${clinica.telefone}`}
             icone="phone"

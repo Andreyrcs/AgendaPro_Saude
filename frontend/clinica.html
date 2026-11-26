@@ -11,8 +11,8 @@
                     ) || {};
                 document.documentElement.dataset.lateral =
                     p.menu === 'recolhido' ? 'recolhida' : 'aberta';
-                if (p.texto === 'grande')
-                    document.documentElement.style.fontSize = '112.5%';
+                document.documentElement.style.fontSize =
+                    { grande: '118.75%', 'muito-grande': '137.5%' }[p.texto] || '';
             } catch (e) {}
         </script>
         <title>Agenda da Clínica</title>
@@ -54,6 +54,7 @@
         />
     </head>
     <body>
+        <a class="pular" href="#conteudo">Pular para o conteúdo</a>
         <div class="casca">
             <aside class="lateral" aria-label="Navegação da clínica">
                 <a class="lateral__marca" href="index.html">
@@ -69,15 +70,7 @@
                     ></ul>
                 </nav>
 
-                <div class="lateral__pe">
-                    <span
-                        class="avatar-iniciais"
-                        style="--tam: 36px; background: #d4f3e6"
-                        aria-hidden="true"
-                        >CM</span
-                    >
-                    <span><b>Carla Mendes</b><br />Recepção</span>
-                </div>
+                <div class="lateral__pe"></div>
             </aside>
 
             <main class="conteudo" id="conteudo">
@@ -343,10 +336,11 @@
 
         <script src="assets/js/icones.js"></script>
         <script src="assets/js/dados.js"></script>
+        <script src="assets/js/config.js"></script>
         <script src="assets/js/api.js"></script>
         <script src="assets/js/comum.js"></script>
         <script src="assets/js/movimento.js"></script>
-        <script src="assets/js/clinica-dados.js"></script>
+        <script src="assets/js/clinica-servicos.js"></script>
         <script src="assets/js/clinica-casca.js"></script>
         <script src="assets/js/clinica.js"></script>
     </body>

@@ -49,6 +49,16 @@
     --id-cida: #f6e5a8;
     --id-kenji: #f3d3de;
 
+    /* Cores dos médicos na agenda da clínica (F15): uma por posição na lista, tons claros com texto --tinta */
+    --med-1: #e2ecf0;
+    --med-2: #fbe0ea;
+    --med-3: #e6f1d4;
+    --med-4: #efe2f5;
+    --med-5: #d6efe6;
+    --med-6: #f9e9b9;
+    --med-7: #fde2c4;
+    --med-8: #dbe4fb;
+
     /* Tipografia */
     --fonte-texto:
         'Atkinson Hyperlegible Next', 'Segoe UI', system-ui, sans-serif;

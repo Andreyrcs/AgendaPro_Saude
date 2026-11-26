@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";if(p.texto==="grande")document.documentElement.style.fontSize="112.5%"}catch(e){}</script>
+    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";document.documentElement.style.fontSize={grande:"118.75%","muito-grande":"137.5%"}[p.texto]||""}catch(e){}</script>
     <title>Minha conta · Clínica</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='26' rx='7' fill='%2312263f'/%3E%3Cpath d='M2 12v-1a7 7 0 0 1 7-7h14a7 7 0 0 1 7 7v1z' fill='%23a8e6cf'/%3E%3Crect x='14.2' y='14.5' width='3.6' height='11.5' rx='1.2' fill='%23fff'/%3E%3Crect x='10.25' y='18.45' width='11.5' height='3.6' rx='1.2' fill='%23fff'/%3E%3C/svg%3E" />
     <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   </head>
   <body data-pagina="conta">
+        <a class="pular" href="#conteudo">Pular para o conteúdo</a>
     <div class="casca">
       <aside class="lateral" aria-label="Navegação da clínica">
         <a class="lateral__marca" href="clinica.html">
@@ -48,31 +49,18 @@
               <h2 id="t-dados">Dados pessoais</h2>
               <p>Seu nome aparece para a equipe da clínica e no registro de quem marcou cada consulta.</p>
             </div>
-            <form class="painel ajuste__painel" id="form-dados" novalidate>
+            <div class="painel ajuste__painel" id="form-dados">
               <div class="campo" id="c-nome">
                 <label for="f-nome">Nome completo</label>
-                <input id="f-nome" name="nome" autocomplete="name" />
+                <input id="f-nome" name="nome" autocomplete="name" readonly />
               </div>
               <div class="campo" id="c-email">
                 <label for="f-email">E-mail</label>
-                <input id="f-email" name="email" type="email" autocomplete="email" />
-                <span class="campo__dica">É por ele que você entra no sistema e recupera a senha.</span>
+                <input id="f-email" name="email" type="email" autocomplete="email" readonly aria-describedby="dica-email" />
+                <span class="campo__dica" id="dica-email">É por ele que você entra no sistema.</span>
               </div>
-              <div class="campos-dupla">
-                <div class="campo" id="c-tel">
-                  <label for="f-tel">Telefone da recepção</label>
-                  <input id="f-tel" name="tel" inputmode="tel" autocomplete="tel" />
-                </div>
-                <div class="campo">
-                  <label for="f-ramal">Ramal</label>
-                  <input id="f-ramal" name="ramal" inputmode="numeric" autocomplete="off" />
-                </div>
-              </div>
-              <div class="ajuste__acoes">
-                <span class="ajuste__salvo" id="salvo-dados" aria-live="polite"></span>
-                <button type="submit" class="botao botao--principal botao--pequeno">Salvar dados</button>
-              </div>
-            </form>
+              <p class="campo__dica" id="dados-nota"></p>
+            </div>
           </section>
 
           <section class="ajuste" aria-labelledby="t-senha">
@@ -83,16 +71,16 @@
             <form class="painel ajuste__painel" id="form-senha" novalidate>
               <div class="campo" id="c-atual">
                 <label for="f-atual">Senha atual</label>
-                <input id="f-atual" name="atual" type="password" autocomplete="current-password" />
+                <input id="f-atual" name="atual" type="password" maxlength="64" autocomplete="current-password" />
               </div>
               <div class="campos-dupla">
                 <div class="campo" id="c-nova">
                   <label for="f-nova">Nova senha</label>
-                  <input id="f-nova" name="nova" type="password" autocomplete="new-password" />
+                  <input id="f-nova" name="nova" type="password" maxlength="64" autocomplete="new-password" />
                 </div>
                 <div class="campo" id="c-repete">
                   <label for="f-repete">Repita a nova senha</label>
-                  <input id="f-repete" name="repete" type="password" autocomplete="new-password" />
+                  <input id="f-repete" name="repete" type="password" maxlength="64" autocomplete="new-password" />
                 </div>
               </div>
               <label class="marcar"><input type="checkbox" id="ver-senha" /> Mostrar as senhas</label>
@@ -114,6 +102,7 @@
                 <div class="segmento" role="radiogroup" aria-labelledby="t-texto" id="seg-texto">
                   <button type="button" role="radio" data-texto="normal">Normal</button>
                   <button type="button" role="radio" data-texto="grande">Grande</button>
+                  <button type="button" role="radio" data-texto="muito-grande">Extra</button>
                 </div>
               </div>
               <div class="interruptor-linha">
@@ -139,14 +128,6 @@
             </div>
           </section>
 
-          <section class="ajuste" aria-labelledby="t-dados-proto">
-            <div class="ajuste__rotulo">
-              <h2 id="t-dados-proto">Dados neste computador</h2>
-              <p>Enquanto a clínica não estiver ligada ao servidor, o que a recepção faz fica guardado neste navegador.</p>
-            </div>
-            <div class="painel ajuste__painel" id="restaurar-caixa"></div>
-          </section>
-
           <section class="ajuste ajuste--sair" aria-label="Sair">
             <div class="ajuste__rotulo"></div>
             <div class="ajuste__painel ajuste__painel--solto">
@@ -164,10 +145,11 @@
 
     <script src="assets/js/icones.js"></script>
     <script src="assets/js/dados.js"></script>
+    <script src="assets/js/config.js"></script>
     <script src="assets/js/api.js"></script>
     <script src="assets/js/comum.js"></script>
     <script src="assets/js/movimento.js"></script>
-    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-servicos.js"></script>
     <script src="assets/js/clinica-casca.js"></script>
     <script src="assets/js/pagina-conta.js"></script>
   </body>

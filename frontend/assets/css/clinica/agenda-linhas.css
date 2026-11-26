@@ -95,6 +95,9 @@
   transform: none;
   padding-left: 4px;
 }
+.linhas__hora:last-child {
+  transform: translateX(-100%);
+}
 
 .linhas__corpo {
   display: flex;
@@ -153,14 +156,14 @@
   color: #6b4300;
 }
 
-/* visão da semana: um grupo de seis linhas por dia */
+/* visão da semana: um grupo por dia, com uma linha por médico (--nm).
+   A altura do grupo tem de ser a mesma da grade ao lado: o traço do dia é sombra, para não ocupar espaço. */
 .linhas__grupo {
   display: flex;
-  height: calc(6 * var(--h));
-  border-top: 2px solid var(--linha);
+  height: calc(var(--nm) * var(--h));
 }
-.linhas__grupo:first-child {
-  border-top: 0;
+.linhas__grupo + .linhas__grupo {
+  box-shadow: inset 0 2px 0 var(--linha);
 }
 .linhas__dia {
   flex: none;

@@ -1,0 +1,36 @@
+# Verificação i — Checagem A (24/11/2026, 10:48:20). Login pela tela; Edge headless.
+
+OK  público  index.html abre sem erro de JS
+OK  público  login.html abre sem erro de JS
+OK  público  cadastro.html abre sem erro de JS
+OK  público  cadastro-clinica.html abre sem erro de JS
+OK  público  termos.html abre sem erro de JS
+OK  público  privacidade.html abre sem erro de JS
+OK  dono     entra e cai em clinica.html
+OK  dono     clinica.html abre sem erro de JS
+OK  dono     lista-espera.html abre sem erro de JS
+OK  dono     pacientes.html abre sem erro de JS
+OK  dono     nova-consulta.html abre sem erro de JS
+OK  dono     medicos.html abre sem erro de JS
+OK  dono     horarios.html abre sem erro de JS
+OK  dono     especialidades.html abre sem erro de JS
+OK  dono     conta.html abre sem erro de JS
+OK  dono     equipe.html abre sem erro de JS
+OK  recepcao entra e cai em clinica.html
+OK  recepcao clinica.html abre sem erro de JS
+OK  recepcao lista-espera.html abre sem erro de JS
+OK  recepcao pacientes.html abre sem erro de JS
+OK  recepcao nova-consulta.html abre sem erro de JS
+OK  recepcao medicos.html abre sem erro de JS
+OK  recepcao horarios.html abre sem erro de JS
+OK  recepcao especialidades.html abre sem erro de JS
+OK  recepcao conta.html abre sem erro de JS
+OK  recepcao equipe.html abre sem erro de JS
+OK  medico   entra e cai em medico.html
+OK  medico   medico.html abre sem erro de JS (ainda simulada até a Etapa 9)
+OK  paciente entra e cai em paciente-desktop.html
+OK  paciente paciente-desktop.html abre sem erro de JS
+OK  paciente escolher-clinica.html abre sem erro de JS
+OK  paciente paciente-mobile.html (390 px) abre sem erro de JS
+
+32 de 32 verificações OK

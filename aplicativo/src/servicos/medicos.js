@@ -1,49 +1,47 @@
-// Especialidades, médicos e horários livres da clínica.
+// Especialidades, médicos e horários livres da clínica do paciente (Apêndice L).
+// Rotas: GET /api/clinicas/{id}/especialidades, GET /api/especialidades/{id} e
+// GET /api/especialidades/{id}/horarios-livres. A clínica é a da sessão (GET /api/pacientes/{id}/clinicas no login).
 
-import { clinicaDe, esperar, horariosLivres, especialidadePorId } from '../dados/bancoSimulado';
-import { especialidades, especialidadesPorClinica, medicos } from '../dados/dadosFicticios';
-import { HOJE } from '../utilitarios/datas';
+import { chamarApi } from './api';
+import { mesmaEspecialidade } from '../utilitarios/texto';
 
-// TODO: troca pra chamada real quando o endpoint GET /api/especialidades existir
-export async function listarEspecialidades() {
-  await esperar();
-  return especialidades;
+// Especialidade da API: { id, nome, duracao }. "desc" é o texto curto que as telas mostram embaixo do nome.
+const comDescricao = (e) => ({ ...e, desc: `Consulta de ${e.duracao} minutos` });
+
+export async function listarEspecialidades(usuario) {
+  if (!usuario.clinicaId) return [];
+  const lista = await chamarApi(`/api/clinicas/${usuario.clinicaId}/especialidades`);
+  return lista.map(comDescricao);
 }
 
-// TODO: troca pra chamada real quando o endpoint GET /api/especialidades/{id} existir
 export async function buscarEspecialidade(idEspecialidade) {
-  await esperar(100);
-  const especialidade = especialidadePorId(idEspecialidade);
-  if (!especialidade) throw new Error('Especialidade não encontrada.');
-  return especialidade;
+  return comDescricao(await chamarApi(`/api/especialidades/${idEspecialidade}`));
 }
 
-// "Marcar" da prevenção: procura a especialidade pelo NOME na clínica atual do paciente.
-// Devolve o id dela ou lança "Esta clínica não atende essa especialidade."
-const semAcento = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
-export function especialidadeNaClinica(usuario, nome) {
-  const daClinica = especialidadesPorClinica[clinicaDe(usuario)] || [];
-  const achada = especialidades.find((e) => daClinica.includes(e.id) && semAcento(e.nome) === semAcento(nome));
+// Procura a especialidade pelo NOME na clínica do paciente (os ids mudam de clínica para clínica).
+// Devolve a especialidade ou null.
+export async function especialidadePeloNome(usuario, nome) {
+  const lista = await listarEspecialidades(usuario);
+  return lista.find((e) => mesmaEspecialidade(e.nome, nome)) || null;
+}
+
+// "Marcar" da prevenção: devolve o id da especialidade ou lança "Esta clínica não atende essa especialidade."
+export async function especialidadeNaClinica(usuario, nome) {
+  const achada = await especialidadePeloNome(usuario, nome);
   if (!achada) throw new Error('Esta clínica não atende essa especialidade.');
   return achada.id;
 }
 
-// Lê os horários sem esperar (o assistente também usa)
-export function horariosDaEspecialidade(idEspecialidade) {
-  return medicos
-    .filter((m) => m.esp === idEspecialidade)
-    .map((medico) => ({
-      medico,
-      dias: (horariosLivres[medico.id] || [])
-        .filter((d) => d.data >= HOJE && d.horas.length > 0)
-        .map((d) => ({ data: d.data, horas: [...d.horas] })),
-    }));
+// Formato: [{ medico: { id, nome, sala }, dias: [{ data, horas: ['08:00', ...] }] }]
+// Médico sem horário vem com dias: [] (a tela oferece a lista de espera).
+export async function listarHorariosLivres(idEspecialidade) {
+  return chamarApi(`/api/especialidades/${idEspecialidade}/horarios-livres`);
 }
 
 // O horário livre mais cedo entre todos os médicos da especialidade (ou null)
-export function calcularPrimeiroHorario(idEspecialidade) {
+export function calcularPrimeiroHorario(horarios) {
   let melhor = null;
-  for (const { medico, dias } of horariosDaEspecialidade(idEspecialidade)) {
+  for (const { medico, dias } of horarios) {
     for (const dia of dias) {
       for (const hora of dia.horas) {
         if (!melhor || dia.data + hora < melhor.data + melhor.hora) {
@@ -55,16 +53,6 @@ export function calcularPrimeiroHorario(idEspecialidade) {
   return melhor;
 }
 
-// Formato: [{ medico: { id, nome, esp, cor, sala }, dias: [{ data, horas: ['08:00', ...] }] }]
-// Médico sem horário vem com dias: [] (a tela oferece a lista de espera).
-// TODO: troca pra chamada real quando o endpoint GET /api/especialidades/{id}/horarios-livres existir
-export async function listarHorariosLivres(idEspecialidade) {
-  await esperar();
-  return horariosDaEspecialidade(idEspecialidade);
-}
-
-// TODO: troca pra chamada real quando o endpoint GET /api/especialidades/{id}/horarios-livres existir
 export async function primeiroHorario(idEspecialidade) {
-  await esperar(100);
-  return calcularPrimeiroHorario(idEspecialidade);
+  return calcularPrimeiroHorario(await listarHorariosLivres(idEspecialidade));
 }

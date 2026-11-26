@@ -689,3 +689,22 @@ body {
     font-size: 0.8125rem !important;
     color: var(--tinta-3) !important;
 }
+/* atalho de teclado: aparece ao receber o foco */
+.pular {
+    position: absolute;
+    left: 16px;
+    top: -60px;
+    z-index: 50;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: var(--noite);
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+}
+.pular:focus {
+    top: 12px;
+}
+main:focus {
+    outline: none;
+}

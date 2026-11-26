@@ -29,6 +29,7 @@
         <link rel="stylesheet" href="assets/css/calendario.css" />
     </head>
     <body class="pagina-app">
+        <a class="pular" href="#viewport" onclick="event.preventDefault();document.getElementById('viewport').focus()">Pular para o conteúdo</a>
         <div class="palco">
             <aside class="palco__lado" aria-label="Sobre a versão para celular">
                 <a class="palco__marca" href="index.html">
@@ -138,7 +139,7 @@
                         </span>
                     </div>
 
-                    <main class="viewport" id="viewport"></main>
+                    <main class="viewport" id="viewport" tabindex="-1"></main>
 
                     <nav class="nav-inferior" aria-label="Menu principal">
                         <a href="#inicio" data-aba="inicio"
@@ -188,11 +189,12 @@
 
         <script src="assets/js/icones.js"></script>
         <script src="assets/js/dados.js"></script>
+        <script src="assets/js/config.js"></script>
         <script src="assets/js/api.js"></script>
+        <script src="assets/js/mascaras.js"></script>
         <script src="assets/js/triagem.js"></script>
         <script src="assets/js/comum.js"></script>
         <script src="assets/js/movimento.js"></script>
-        <script src="assets/js/clinica-dados.js"></script>
         <script src="assets/js/paciente-servicos.js"></script>
         <script src="assets/js/prevencao-tela.js"></script>
         <script src="assets/js/calendario-paciente.js"></script>

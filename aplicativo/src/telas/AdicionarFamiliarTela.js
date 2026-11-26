@@ -13,7 +13,7 @@ import { adicionarFamiliar } from '../servicos/familia';
 import { cores, opcoesFamilia } from '../estilos/cores';
 import { espaco, raios, TOQUE_MINIMO } from '../estilos/espacos';
 import { HOJE, brParaIso, mascararData } from '../utilitarios/datas';
-import { ERRO_CPF, cpfValido, mascararCPF } from '../utilitarios/validacao';
+import { ERRO_CPF, LIMITES, cpfValido, mascararCPF } from '../utilitarios/validacao';
 
 // Parentesco é obrigatório (coluna Pacientes.Parentesco); as mesmas opções da web
 const PARENTESCOS = ['Filho(a)', 'Cônjuge', 'Pai/Mãe', 'Irmão(ã)', 'Outro'];
@@ -57,7 +57,14 @@ export default function AdicionarFamiliarTela({ navigation }) {
       </View>
 
       <View style={estilos.campos}>
-        <CampoTexto rotulo="Nome completo" value={nome} onChangeText={setNome} erro={erros.nome} autoComplete="name" />
+        <CampoTexto
+          rotulo="Nome completo"
+          value={nome}
+          onChangeText={setNome}
+          erro={erros.nome}
+          autoComplete="name"
+          maxLength={LIMITES.nome}
+        />
         <CampoTexto
           rotulo="CPF"
           value={cpf}
@@ -65,7 +72,6 @@ export default function AdicionarFamiliarTela({ navigation }) {
           erro={erros.cpf}
           keyboardType="number-pad"
           placeholder="000.000.000-00"
-          maxLength={14}
         />
 
         <View style={estilos.grupo}>
@@ -104,6 +110,7 @@ export default function AdicionarFamiliarTela({ navigation }) {
           value={alergias}
           onChangeText={setAlergias}
           placeholder="Ex.: alergia a dipirona"
+          maxLength={LIMITES.alergias}
         />
 
         <View style={estilos.grupo}>

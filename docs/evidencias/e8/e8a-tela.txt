@@ -1,0 +1,78 @@
+# Etapa 8a — verificações pela tela (23/11/2026, 23:02:33)
+Clínica A id 3, código TES-3028. Navegador: Edge (headless).
+
+## 1. Dono: dados da clínica e equipe
+PASSOU  equipe.html mostra o código da clínica (TES-3028)
+PASSOU  dono vê "Adicionar recepcionista"
+PASSOU  o campo "Senha provisória" saiu do formulário
+PASSOU  telefone (11) 3333-2372 continua depois de recarregar a página
+PASSOU  a senha provisória aparece uma vez em #credencial (não registrada aqui)
+PASSOU  a recepcionista aparece na lista com o nome como texto
+PASSOU  XSS no nome da recepcionista (lista, aviso e credencial): 0 <img> injetado
+PASSOU  depois de recarregar, a senha provisória não aparece mais
+PASSOU  o selo da lateral mostra o nome novo, como texto
+PASSOU  XSS no nome da clínica (selo, subtítulo, aviso): 0 <img> injetado
+
+## 2. Dono: Minha conta
+PASSOU  nome só para leitura
+PASSOU  e-mail só para leitura
+PASSOU  e-mail é o da conta logada
+PASSOU  telefone e ramal saíram
+PASSOU  "Voltar à carga inicial" saiu
+PASSOU  dono vê 6 permissões
+PASSOU  "Médicos na agenda" = 0 (o médico de teste ainda não tem expediente)
+PASSOU  conta.html com o nome da clínica XSS: 0 <img> injetado
+
+## 3. Recepcionista (nome com XSS)
+PASSOU  recepção: dados da clínica desativados
+PASSOU  recepção: sem "Adicionar recepcionista"
+PASSOU  recepção: nenhum botão "Remover"
+PASSOU  recepção: "você" marcado na própria linha (ids comparados como texto)
+PASSOU  rodapé da lateral mostra o nome da recepcionista como texto
+PASSOU  recepção em equipe.html: 0 <img> injetado
+PASSOU  recepção vê 4 permissões
+PASSOU  recepção: nota para pedir a mudança ao responsável
+PASSOU  recepção em conta.html: 0 <img> injetado
+PASSOU  recepção trocou a senha em conta.html ("Senha trocada")
+PASSOU  login com a senha provisória antiga → 401
+PASSOU  login com a senha nova → 200
+PASSOU  390 px, equipe.html: 0 <img> injetado
+PASSOU  390 px, equipe.html: sem rolagem lateral (largura 390)
+PASSOU  390 px, conta.html: 0 <img> injetado
+PASSOU  390 px, conta.html: sem rolagem lateral (largura 390)
+
+## 4. As 9 telas (console)
+PASSOU  dono: 0 erros de JavaScript nas 9 telas, com o nome da clínica XSS
+PASSOU  dono: 0 <img> injetado nas 9 telas (0)
+PASSOU  dono: 0 alert desde o login (0)
+PASSOU  recepção: 0 erros de JavaScript nas 9 telas, com o nome da clínica XSS
+PASSOU  recepção: 0 <img> injetado nas 9 telas (0)
+PASSOU  recepção: 0 alert desde o login (0)
+
+## 5. Remoção da recepcionista
+PASSOU  dono removeu a recepcionista pela tela
+PASSOU  GET /api/clinicas/3/equipe com o token antigo dela → 401
+PASSOU  no navegador dela, a próxima tela vai para login.html?expirou=1 e mostra "Sua sessão terminou. Entre de novo." (navegações: equipe.html → login.html?expirou=1 → login.html)
+PASSOU  a sessão dela foi apagada do navegador
+PASSOU  login dela depois da remoção → 401
+
+## 6. Troca de senha do dono
+PASSOU  dono trocou a senha em conta.html
+PASSOU  login do dono com a senha antiga → 401
+PASSOU  login do dono com a senha nova → 200
+PASSOU  nome da clínica de volta: Clínica Teste Alfa
+
+## 7. Token nas chamadas à API
+PASSOU  70 chamadas; sem token fora do login e cadastros: 0
+PASSOU  login sem o token de quem entrou antes: 0 com token
+  1×  DELETE /api/clinicas/{id}/equipe/{id} [token]
+  18×  GET /api/clinicas/{id} [token]
+  11×  GET /api/clinicas/{id}/equipe [token]
+  16×  GET /api/clinicas/{id}/lista-espera [token]
+  16×  GET /api/clinicas/{id}/medicos [token]
+  2×  POST /api/auth/login [sem token]
+  1×  POST /api/clinicas/{id}/equipe [token]
+  3×  PUT /api/clinicas/{id} [token]
+  2×  PUT /api/usuarios/{id}/senha [token]
+
+TODAS AS VERIFICAÇÕES PASSARAM

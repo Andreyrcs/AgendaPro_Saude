@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";if(p.texto==="grande")document.documentElement.style.fontSize="112.5%"}catch(e){}</script>
+    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";document.documentElement.style.fontSize={grande:"118.75%","muito-grande":"137.5%"}[p.texto]||""}catch(e){}</script>
     <title>Lista de espera · Clínica</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='26' rx='7' fill='%2312263f'/%3E%3Cpath d='M2 12v-1a7 7 0 0 1 7-7h14a7 7 0 0 1 7 7v1z' fill='%23a8e6cf'/%3E%3Crect x='14.2' y='14.5' width='3.6' height='11.5' rx='1.2' fill='%23fff'/%3E%3Crect x='10.25' y='18.45' width='11.5' height='3.6' rx='1.2' fill='%23fff'/%3E%3C/svg%3E" />
     <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   </head>
   <body>
+        <a class="pular" href="#conteudo">Pular para o conteúdo</a>
     <div class="casca">
       <aside class="lateral" aria-label="Navegação da clínica">
         <a class="lateral__marca" href="clinica.html">
@@ -30,10 +31,7 @@
         <nav aria-label="Seções">
           <ul class="lateral__menu" id="lateral-menu" data-pagina="fila"></ul>
         </nav>
-        <div class="lateral__pe">
-          <span class="avatar-iniciais" style="--tam: 36px; background: #d4f3e6" aria-hidden="true">CM</span>
-          <span><b>Carla Mendes</b><br />Recepção</span>
-        </div>
+        <div class="lateral__pe"></div>
       </aside>
 
       <main class="conteudo" id="conteudo">
@@ -67,22 +65,14 @@
     <dialog class="dialogo" id="dlg-adicionar" aria-labelledby="t-adicionar">
       <form method="dialog" id="form-adicionar" novalidate>
         <h2 id="t-adicionar">Adicionar à lista de espera</h2>
-        <p class="dialogo__texto">A pessoa entra no fim da fila e recebe a vaga quando chegar a vez dela.</p>
-        <div class="campo" id="c-nome">
-          <label for="f-nome">Nome do paciente</label>
-          <input id="f-nome" name="nome" autocomplete="off" required />
-        </div>
-        <div class="campos-dupla">
-          <div class="campo">
-            <label for="f-tel">Telefone</label>
-            <input id="f-tel" name="tel" inputmode="tel" autocomplete="off" placeholder="(11) 90000-0000" />
-          </div>
-          <div class="campo">
-            <label for="f-medico">Médico</label>
-            <select id="f-medico" name="medico"></select>
-          </div>
+        <p class="dialogo__texto">A pessoa entra no fim da fila e recebe a vaga quando chegar a vez dela. Cada conta fica em uma fila por vez.</p>
+        <div id="adicionar-paciente"></div>
+        <div class="campo">
+          <label for="f-medico">Médico</label>
+          <select id="f-medico" name="medico"></select>
         </div>
         <label class="marcar"><input type="checkbox" name="app" /> A pessoa usa o app e recebe o aviso por lá</label>
+        <p class="campo__erro" id="e-adicionar" role="alert" hidden></p>
         <div class="dialogo__acoes">
           <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>
           <button type="submit" class="botao botao--principal botao--pequeno" value="ok">Adicionar</button>
@@ -95,11 +85,13 @@
 
     <script src="assets/js/icones.js"></script>
     <script src="assets/js/dados.js"></script>
+    <script src="assets/js/config.js"></script>
     <script src="assets/js/api.js"></script>
     <script src="assets/js/comum.js"></script>
     <script src="assets/js/movimento.js"></script>
-    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-servicos.js"></script>
     <script src="assets/js/clinica-casca.js"></script>
+    <script src="assets/js/escolher-paciente.js"></script>
     <script src="assets/js/pagina-lista-espera.js"></script>
   </body>
 </html>

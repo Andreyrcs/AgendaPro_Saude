@@ -1,226 +1,304 @@
-/* AgendaPro Saúde — Lista de espera da clínica.
-   À esquerda, os médicos e quantas pessoas esperam por cada um; à direita, a fila do escolhido,
-   com o próximo horário livre e a ação de oferecê-lo à 1ª pessoa. Tudo fica gravado (clinica-dados.js). */
+/* AgendaPro Saúde — Lista de espera da clínica, pela API.
+   À esquerda, os médicos e quantas pessoas esperam por cada um; à direita, a fila do escolhido, com a vaga aberta e a
+   ação de oferecê-la. Tudo vem de GET /api/clinicas/{id}/lista-espera (F21: [{ medico, especialidade, pessoas, vagas }]).
+   Oferecer: POST /api/consultas/{vaga}/oferecer (a API escolhe a pessoa). Tirar: DELETE /api/lista-espera/{id}.
+   Adicionar: POST /api/lista-espera { pessoa, medico, usaApp }, com o paciente escolhido pelo id (cada conta fica em
+   uma fila por vez). Trocar de médico: não há rota própria, então a tela tira da fila e põe na do outro médico; se o
+   segundo passo falhar, tenta devolver a pessoa à fila antiga (no fim) e avisa. O telefone aparece mascarado. */
 (function () {
   "use strict";
 
-  const D = window.DADOS;
-  const C = window.CLIDADOS;
   const A = window.AP;
   const M = window.MOV;
   const K = window.CASCA;
+  const API = window.API;
+  const CL = window.CLINICA;
   const I = A.icone;
   const $ = (s) => document.querySelector(s);
 
-  const filaDe = (m) => D.filas[m] || (D.filas[m] = []);
-  const diasNaFila = (p) => Math.max(0, Math.round((C.data(D.hoje) - C.data(p.desde)) / 86400000));
+  CL.iniciar(iniciar);
+  function iniciar() {
+  const filas = () => CL.fila;
+  const filaDe = (m) => { const f = CL.filaDoMedico(m); return f ? f.pessoas || [] : []; };
+  const nomeMedico = (m) => { const f = CL.filaDoMedico(m); return f ? f.medico.nome : ""; };
+  const nomeEsp = (m) => { const f = CL.filaDoMedico(m); return f && f.especialidade ? f.especialidade.nome : ""; };
+  const corDe = (m) => { const md = K.medico(m); return md ? md.cor : A.corDoMedico(0); };
+  const avatar = (m, tam) => A.avatarMedico({ nome: nomeMedico(m), cor: corDe(m) }, tam);
+  const diasNaFila = (p) => Math.max(0, Math.round((CL.data(CL.hoje) - CL.data(p.desde)) / 86400000));
+  const idMedico = (f) => String(f.medico.id);
 
-  let atual = location.hash.slice(1);
-  if (!C.MEDICOS.includes(atual)) atual = C.MEDICOS.slice().sort((a, b) => filaDe(b).length - filaDe(a).length)[0];
-
-  /* a próxima vaga de um médico, de agora em diante: a já oferecida à fila ou a que sobrou de um cancelamento */
-  function proximaVaga(m) {
-    return C.consultas
-      .filter((k) => k.medico === m && (k.horario === "oferecido" || k.vaga) && k.horario && (k.data > D.hoje || (k.data === D.hoje && k.ini >= K.agora())))
-      .sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : a.ini - b.ini))[0];
+  let atual = decodeURIComponent(location.hash.slice(1));
+  function escolherInicial() {
+    if (filas().some((f) => A.mesmoId(f.medico.id, atual))) return;
+    const maior = filas().slice().sort((a, b) => (b.pessoas || []).length - (a.pessoas || []).length)[0];
+    atual = maior ? idMedico(maior) : null;
   }
+  escolherInicial();
+
+  /* a vaga do médico: a já oferecida a alguém da fila, ou a primeira VAGA futura (sobra de cancelamento) */
+  function vagaDe(m) {
+    const oferecida = filaDe(m).find((p) => p.vagaOferecida);
+    if (oferecida) return { oferecida: true, data: oferecida.vagaOferecida.data, hora: oferecida.vagaOferecida.hora, pessoa: oferecida.pessoa };
+    const f = CL.filaDoMedico(m);
+    const v = f && (f.vagas || [])[0];
+    return v ? { oferecida: false, id: String(v.id), data: v.data, hora: v.hora } : null;
+  }
+  const aguardando = (m) => filaDe(m).filter((p) => !p.vagaOferecida);
 
   function desenharSubtitulo() {
-    const total = K.totalFila();
-    const com = C.MEDICOS.filter((m) => filaDe(m).length).length;
+    const total = CL.totalFila();
+    const com = filas().filter((f) => (f.pessoas || []).length).length;
     let maisAntiga = null;
-    C.MEDICOS.forEach((m) => filaDe(m).forEach((p) => { if (!maisAntiga || p.desde < maisAntiga.p.desde) maisAntiga = { p, m }; }));
-    $("#subtitulo").innerHTML = "<b>" + total + (total === 1 ? " pessoa" : " pessoas") + "</b> aguardando vaga com " + com + (com === 1 ? " médico" : " médicos") + "." +
-      (maisAntiga ? " Quem espera há mais tempo: " + A.esc(maisAntiga.p.nome) + ", " + diasNaFila(maisAntiga.p) + " dias, com " + K.medico(maisAntiga.m).nome + "." : "");
+    filas().forEach((f) => (f.pessoas || []).forEach((p) => { if (!maisAntiga || p.desde < maisAntiga.p.desde) maisAntiga = { p, f }; }));
+    $("#subtitulo").innerHTML = filas().length
+      ? "<b>" + total + (total === 1 ? " pessoa" : " pessoas") + "</b> aguardando vaga com " + com + (com === 1 ? " médico" : " médicos") + "." +
+        (maisAntiga ? " Quem espera há mais tempo: " + A.esc(maisAntiga.p.pessoa.nome) + ", " + diasNaFila(maisAntiga.p) + (diasNaFila(maisAntiga.p) === 1 ? " dia" : " dias") + ", com " + A.esc(maisAntiga.f.medico.nome) + "." : "")
+      : "Cadastre os médicos da clínica para abrir a lista de espera.";
   }
 
   function desenharMedicos() {
-    const ordem = C.MEDICOS.slice().sort((a, b) => filaDe(b).length - filaDe(a).length);
-    $("#medicos").innerHTML = ordem.map((m) => {
-      const md = K.medico(m);
-      const n = filaDe(m).length;
-      return '<button type="button" class="medico-opcao" data-medico="' + m + '" aria-current="' + (m === atual) + '">' +
-        A.avatarMedico(md, 36) +
-        '<span><span class="medico-opcao__nome">' + md.nome + '</span><span class="medico-opcao__sub">' + K.esp(md.esp).nome + "</span></span>" +
+    const ordem = filas().slice().sort((a, b) => (b.pessoas || []).length - (a.pessoas || []).length || a.medico.nome.localeCompare(b.medico.nome, "pt-BR"));
+    $("#medicos").innerHTML = ordem.length ? ordem.map((f) => {
+      const m = idMedico(f);
+      const n = (f.pessoas || []).length;
+      return '<button type="button" class="medico-opcao" data-medico="' + A.esc(m) + '" aria-current="' + A.mesmoId(m, atual) + '">' +
+        avatar(m, 36) +
+        '<span><span class="medico-opcao__nome">' + A.esc(f.medico.nome) + '</span><span class="medico-opcao__sub">' + A.esc(nomeEsp(m)) + "</span></span>" +
         '<span class="medico-opcao__n' + (n ? "" : " medico-opcao__n--zero") + '" aria-label="' + n + (n === 1 ? " pessoa" : " pessoas") + ' na fila">' + n + "</span></button>";
-    }).join("");
+    }).join("") : '<p class="vazio">Nenhum médico cadastrado ainda.</p>';
   }
 
   function vagaHTML(m) {
-    const v = proximaVaga(m);
-    const lista = filaDe(m);
+    const v = vagaDe(m);
     if (!v) {
       return '<div class="vaga-caixa"><span class="vaga-caixa__texto"><b>Nenhuma vaga aberta por enquanto</b>' +
-        "<span>Quando a recepção cancela uma consulta deste médico, o horário é oferecido à 1ª pessoa da fila.</span></span></div>";
+        "<span>Quando uma consulta deste médico é cancelada, o horário é oferecido sozinho à 1ª pessoa da fila.</span></span></div>";
     }
-    const quando = K.cap(A.extenso(v.data)) + ", " + C.txt(v.ini);
-    if (v.horario === "oferecido") {
+    const quando = K.cap(A.extenso(v.data)) + ", " + v.hora;
+    if (v.oferecida) {
       return '<div class="vaga-caixa vaga-caixa--oferecido">' + A.folha(v.data, { pequena: true, menta: true }) +
-        '<span class="vaga-caixa__texto"><b>Vaga de ' + quando + " oferecida a " + A.esc(v.paciente) + "</b>" +
+        '<span class="vaga-caixa__texto"><b>Vaga de ' + quando + " oferecida a " + A.esc(v.pessoa.nome) + "</b>" +
         "<span>A pessoa tem 30 minutos para confirmar. Se não confirmar, a vaga passa para a próxima.</span></span></div>";
     }
-    /* vaga: sobrou de um cancelamento quando ninguém estava na fila; só ela pode ser oferecida */
+    /* vaga: sobrou de um cancelamento quando ninguém da fila pôde receber; só ela pode ser oferecida */
+    const espera = aguardando(m);
     return '<div class="vaga-caixa">' + A.folha(v.data, { pequena: true }) +
       '<span class="vaga-caixa__texto"><b>Vaga: ' + quando + "</b><span>Sobrou de um cancelamento" +
-      (lista.length ? ". Pode ser oferecida à 1ª pessoa da fila." : ", quando ninguém estava na fila.") + "</span></span>" +
-      (lista.length && C.podeOferecer(v)
-        ? '<button type="button" class="botao botao--menta botao--pequeno" data-oferecer="' + v.id + '" aria-label="Oferecer horário a ' + A.esc(lista[0].nome) + '">' +
-          I("bell-ring", "ic-sm") + "Oferecer horário</button>"
+      (espera.length ? ". Pode ser oferecida à 1ª pessoa da fila." : ", quando ninguém estava na fila.") + "</span></span>" +
+      (espera.length
+        ? '<button type="button" class="botao botao--menta botao--pequeno" data-oferecer="' + A.esc(v.id) + '">' + I("bell-ring", "ic-sm") + "Oferecer horário</button>"
         : "") + "</div>";
+  }
+
+  function pessoaHTML(p, i, m) {
+    const dias = diasNaFila(p);
+    const nome = A.esc(p.pessoa.nome);
+    return '<li class="pessoa" data-id="' + A.esc(p.id) + '">' +
+      '<span class="pessoa__pos num" aria-hidden="true">' + (i + 1) + "º</span>" +
+      '<span><span class="pessoa__nome"><span class="visualmente-oculto">Posição ' + (i + 1) + ": </span>" + nome + "</span>" +
+      (p.usaApp ? '<span class="pessoa__app">' + I("smartphone") + "pelo app</span>" : "") +
+      '<span class="pessoa__sub">Desde ' + A.extenso(p.desde, false) + ' · <span class="' + (dias >= 14 ? "pessoa__espera--longa" : "") + '">' +
+      (dias ? dias + (dias === 1 ? " dia" : " dias") : "entrou hoje") + "</span>" + CL.telefoneHTML(p) +
+      (p.vagaOferecida ? " · <b>vaga oferecida (" + K.curtoData(p.vagaOferecida.data) + ", " + A.esc(p.vagaOferecida.hora) + "), aguardando resposta</b>" : "") + "</span></span>" +
+      '<span class="pessoa__acoes">' +
+      (p.vagaOferecida || filas().length < 2 ? "" : '<button type="button" class="link-acao" data-trocar="' + A.esc(p.id) + '" aria-label="Trocar o médico de ' + nome + '">Trocar de médico</button>') +
+      '<button type="button" class="link-acao link-acao--discreto" data-tirar="' + A.esc(p.id) + '" aria-label="Tirar ' + nome + ' da fila">Tirar da fila</button></span></li>';
   }
 
   function desenharDetalhe() {
     const m = atual;
-    const md = K.medico(m);
+    if (!m) { $("#detalhe").innerHTML = '<p class="vazio">Cadastre os médicos da clínica para abrir a lista de espera.</p>'; return; }
     const lista = filaDe(m);
     const media = lista.length ? Math.round(lista.reduce((s, p) => s + diasNaFila(p), 0) / lista.length) : 0;
     $("#detalhe").innerHTML =
-      '<div class="painel__cabeca"><div class="fila-cab">' + A.avatarMedico(md, 44) +
-      '<div><h2 id="t-detalhe">' + md.nome + '</h2><p class="painel__titulo-sub">' + K.esp(md.esp).nome +
-      (lista.length ? " · " + lista.length + (lista.length === 1 ? " pessoa" : " pessoas") + " · espera média de " + media + " dias" : "") + "</p></div></div></div>" +
+      '<div class="painel__cabeca"><div class="fila-cab">' + avatar(m, 44) +
+      '<div><h2 id="t-detalhe">' + A.esc(nomeMedico(m)) + '</h2><p class="painel__titulo-sub">' + A.esc(nomeEsp(m)) +
+      (lista.length ? " · " + lista.length + (lista.length === 1 ? " pessoa" : " pessoas") + " · espera média de " + media + (media === 1 ? " dia" : " dias") : "") + "</p></div></div></div>" +
       vagaHTML(m) +
       (lista.length
-        ? '<ol class="pessoas" id="pessoas">' + lista.map((p, i) => {
-            const dias = diasNaFila(p);
-            return '<li class="pessoa" data-nome="' + A.esc(p.nome) + '">' +
-              '<span class="pessoa__pos num" aria-hidden="true">' + (i + 1) + "º</span>" +
-              '<span><span class="pessoa__nome"><span class="visualmente-oculto">Posição ' + (i + 1) + ": </span>" + A.esc(p.nome) + "</span>" +
-              (p.app ? '<span class="pessoa__app">' + I("smartphone") + "pelo app</span>" : "") +
-              '<span class="pessoa__sub">Desde ' + A.extenso(p.desde, false) + ' · <span class="' + (dias >= 14 ? "pessoa__espera--longa" : "") + '">' + (dias ? dias + (dias === 1 ? " dia" : " dias") : "entrou hoje") + "</span>" +
-              (p.tel ? " · tel. " + A.esc(p.tel) : "") +
-              (p.qualquer ? ' · <span class="pessoa__qualquer">aceita qualquer médico de ' + K.esp(p.qualquer).nome + "</span>" : "") + "</span></span>" +
-              '<button type="button" class="link-acao link-acao--discreto" data-tirar="' + A.esc(p.nome) + '" aria-label="Tirar ' + A.esc(p.nome) + ' da fila">Tirar da fila</button></li>';
-          }).join("") + "</ol>"
-        : '<p class="vazio" style="margin-top:12px">Ninguém aguardando vaga com ' + md.nome + ".</p>");
+        ? '<ol class="pessoas" id="pessoas">' + lista.map((p, i) => pessoaHTML(p, i, m)).join("") + "</ol>"
+        : '<p class="vazio" style="margin-top:12px">Ninguém aguardando vaga com ' + A.esc(nomeMedico(m)) + ".</p>");
   }
 
   function desenharTudo() {
+    escolherInicial();
     desenharSubtitulo();
     desenharMedicos();
     desenharDetalhe();
-    const conta = document.getElementById("nav-fila");
-    if (conta) conta.textContent = K.totalFila();
+    K.desenharMenu();
   }
 
   function escolher(m) {
     atual = m;
-    history.replaceState(null, "", "#" + m);
+    history.replaceState(null, "", "#" + encodeURIComponent(m));
     desenharMedicos();
     desenharDetalhe();
     $("#detalhe").animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 160, easing: "ease" });
   }
 
-  /* posições antes de mudar a fila, para a animação FLIP (quem fica sobe um lugar) */
-  function posicoes() {
-    return new Map(Array.from(document.querySelectorAll("#pessoas .pessoa")).map((li) => [li.dataset.nome, li.getBoundingClientRect()]));
+  /* ─── Chamadas: uma por vez; a mensagem de erro é a da API ─── */
+  let ocupado = false;
+  async function acao(fazer) {
+    if (ocupado) return null;
+    ocupado = true;
+    try { return await fazer(); }
+    catch (e) { if (e && e.status !== 401) K.toast({ titulo: "Não deu para concluir", texto: e.message, icone: "info", duracao: 6000 }); return null; }
+    finally { ocupado = false; }
   }
-  function subir(antes) {
-    if (M.reduzido()) return;
-    document.querySelectorAll("#pessoas .pessoa").forEach((li) => {
-      const r = antes.get(li.dataset.nome);
-      if (r) M.flip(li, r, { duracao: 320, easing: M.EASE_OUT });
-    });
-  }
+  const pessoaPorId = (id) => { for (const f of filas()) { const p = (f.pessoas || []).find((x) => A.mesmoId(x.id, id)); if (p) return { p, m: idMedico(f) }; } return null; };
 
-  /* "Oferecer horário" (POST /api/consultas/{id}/oferecer): só numa vaga */
-  function oferecer(id) {
-    const v = C.consultas.find((k) => k.id === id);
-    if (!C.podeOferecer(v)) return;
-    const lista = filaDe(v.medico);
-    if (!lista.length) return;
-    const antes = posicoes();
-    const p = lista.shift();
-    K.guardar.saiuDaFila(v.medico, p.nome);
-    C.oferecerHorario(v, p.nome);
+  /* "Oferecer horário" (POST /api/consultas/{id}/oferecer): só numa vaga; a API escolhe a 1ª pessoa que pode receber */
+  async function oferecer(idVaga) {
+    const v = vagaDe(atual);
+    const r = await acao(async () => { const x = await API.chamar("POST", "/api/consultas/" + encodeURIComponent(idVaga) + "/oferecer"); await CL.recarregar(["fila", "agenda"]); return x; });
+    if (!r) return;
     desenharTudo();
-    subir(antes);
-    K.toast({
-      titulo: "Vaga oferecida a " + p.nome,
-      texto: K.curtoData(v.data) + ", " + C.txt(v.ini) + " com " + K.medico(v.medico).nome + ". " + (p.app ? "Aviso enviado pelo app." : "Ligue para " + (p.tel || "a pessoa") + "."),
-      icone: "bell-ring",
-      acao: { rotulo: "Desfazer", fazer: () => { lista.unshift(p); K.guardar.voltouParaFila(v.medico, p); C.liberarHorario(v); desenharTudo(); } },
-    });
+    if (r.oferecidaA) {
+      K.toast({ titulo: "Vaga oferecida a " + r.oferecidaA.pessoa.nome, texto: (v ? K.curtoData(v.data) + ", " + v.hora + " com " + nomeMedico(atual) + ". " : "") + "A pessoa tem 30 minutos para confirmar.", icone: "bell-ring", duracao: 6000 });
+    } else {
+      K.toast({ titulo: "Ninguém da fila pôde receber esta vaga", texto: "Quem está na fila já tem consulta nesse horário. A vaga continua aberta.", icone: "info", duracao: 6000 });
+    }
   }
 
-  function tirar(nome) {
-    const lista = filaDe(atual);
-    const i = lista.findIndex((p) => p.nome === nome);
-    if (i < 0) return;
-    const antes = posicoes();
-    const [p] = lista.splice(i, 1);
-    const medicoDaFila = atual;
-    K.guardar.saiuDaFila(medicoDaFila, p.nome);
-    const li = document.querySelector('#pessoas .pessoa[data-nome="' + CSS.escape(nome) + '"]');
-    const fim = () => { desenharTudo(); subir(antes); const prox = document.querySelector("#pessoas [data-tirar]"); if (prox) prox.focus({ preventScroll: true }); };
-    if (li && !M.reduzido()) li.animate([{ opacity: 1 }, { opacity: 0, transform: "translateX(12px)" }], { duration: 180, easing: M.EASE_OUT }).finished.then(fim);
-    else fim();
+  /* Tirar da fila: o primeiro clique pede confirmação; sem "Desfazer" (voltaria para o fim da fila) */
+  async function tirar(botao) {
+    const achado = pessoaPorId(botao.dataset.tirar);
+    if (!achado) return;
+    if (botao.dataset.confirmar !== "1") {
+      botao.dataset.confirmar = "1";
+      botao.textContent = "Confirmar: tirar " + achado.p.pessoa.nome;
+      botao.classList.remove("link-acao--discreto");
+      return;
+    }
+    const ok = await acao(async () => { await API.chamar("DELETE", "/api/lista-espera/" + encodeURIComponent(achado.p.id)); await CL.recarregar(["fila", "agenda"]); return true; });
+    if (!ok) return;
+    desenharTudo();
+    const prox = document.querySelector("#pessoas [data-tirar]");
+    if (prox) prox.focus({ preventScroll: true });
+    K.toast({ titulo: achado.p.pessoa.nome + " saiu da fila", texto: "Quem estava atrás subiu um lugar.", icone: "info" });
+  }
+
+  /* Trocar de médico: DELETE da entrada atual + POST na fila do outro médico (a pessoa vai para o fim da fila nova) */
+  function abrirTroca(botao) {
+    const achado = pessoaPorId(botao.dataset.trocar);
+    if (!achado) return;
+    const li = botao.closest(".pessoa");
+    if (li.querySelector(".trocar-medico")) return;
+    const outros = filas().filter((f) => !A.mesmoId(f.medico.id, achado.m));
+    li.insertAdjacentHTML("beforeend",
+      '<form class="trocar-medico" data-trocar-form="' + A.esc(achado.p.id) + '">' +
+      '<div class="campo"><label for="troca-' + A.esc(achado.p.id) + '">Novo médico</label><select id="troca-' + A.esc(achado.p.id) + '">' +
+      outros.map((f) => '<option value="' + A.esc(f.medico.id) + '">' + A.esc(f.medico.nome) + " · " + A.esc(f.especialidade ? f.especialidade.nome : "") + "</option>").join("") +
+      '</select></div><button type="submit" class="botao botao--principal botao--pequeno">Trocar</button>' +
+      '<button type="button" class="botao botao--secundario botao--pequeno" data-cancelar-troca>Cancelar</button>' +
+      '<p class="campo__dica" style="flex-basis:100%">A pessoa sai desta fila e entra no fim da fila do outro médico.</p></form>');
+    li.querySelector("select").focus();
+  }
+  async function trocar(form) {
+    const achado = pessoaPorId(form.dataset.trocarForm);
+    if (!achado) return;
+    const novo = form.querySelector("select").value;
+    const p = achado.p;
+    const corpo = (medico) => ({ pessoa: Number(p.pessoa.id), medico: Number(medico), usaApp: !!p.usaApp });
+    let entrou = null;
+    let erro = null;
+    const feito = await acao(async () => {
+      await API.chamar("DELETE", "/api/lista-espera/" + encodeURIComponent(p.id));
+      try {
+        entrou = await API.chamar("POST", "/api/lista-espera", corpo(novo));
+      } catch (e) {
+        if (e.status === 401) throw e;
+        erro = e;
+        /* não entrou na fila nova: tenta devolver à antiga (no fim, porque a posição foi perdida) */
+        try { await API.chamar("POST", "/api/lista-espera", corpo(achado.m)); erro.devolvida = true; } catch (e2) { erro.devolvida = false; }
+      }
+      await CL.recarregar(["fila", "agenda"]);
+      return true;
+    });
+    if (!feito) return;
+    if (entrou) {
+      escolher(String(novo));
+      desenharTudo();
+      K.toast({ titulo: p.pessoa.nome + " agora espera vaga com " + nomeMedico(novo), texto: "Posição " + entrou.posicao + " na fila nova.", icone: "list-ordered", duracao: 6000 });
+      return;
+    }
+    desenharTudo();
     K.toast({
-      titulo: p.nome + " saiu da fila",
-      texto: "Quem estava atrás subiu um lugar.",
-      icone: "info",
-      acao: { rotulo: "Desfazer", fazer: () => { lista.splice(i, 0, p); K.guardar.voltouParaFila(medicoDaFila, p); desenharTudo(); } },
+      titulo: "Não deu para trocar o médico de " + p.pessoa.nome,
+      texto: erro.message + (erro.devolvida ? " A pessoa voltou para a fila de " + nomeMedico(achado.m) + ", no fim." : " A pessoa ficou fora da fila: adicione de novo."),
+      icone: "info", duracao: 9000,
     });
   }
 
   /* ─── Eventos ─── */
   $("#medicos").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-medico]");
-    if (b && b.dataset.medico !== atual) escolher(b.dataset.medico);
+    if (b && !A.mesmoId(b.dataset.medico, atual)) escolher(b.dataset.medico);
   });
   $("#detalhe").addEventListener("click", (ev) => {
     const o = ev.target.closest("[data-oferecer]");
     if (o) { oferecer(o.dataset.oferecer); return; }
     const t = ev.target.closest("[data-tirar]");
-    if (t) tirar(t.dataset.tirar);
+    if (t) { tirar(t); return; }
+    const tr = ev.target.closest("[data-trocar]");
+    if (tr) { abrirTroca(tr); return; }
+    const c = ev.target.closest("[data-cancelar-troca]");
+    if (c) { const f = c.closest("form"); const b = f.closest(".pessoa").querySelector("[data-trocar]"); f.remove(); if (b) b.focus(); }
+  });
+  $("#detalhe").addEventListener("submit", (ev) => {
+    const f = ev.target.closest("[data-trocar-form]");
+    if (!f) return;
+    ev.preventDefault();
+    trocar(f);
   });
   window.addEventListener("hashchange", () => {
-    const m = location.hash.slice(1);
-    if (C.MEDICOS.includes(m) && m !== atual) escolher(m);
+    const m = decodeURIComponent(location.hash.slice(1));
+    if (filas().some((f) => A.mesmoId(f.medico.id, m)) && !A.mesmoId(m, atual)) escolher(m);
   });
 
+  /* ─── Adicionar à fila: o paciente escolhido pelo id ─── */
   const dlg = $("#dlg-adicionar");
   const form = $("#form-adicionar");
-  $("#f-medico").innerHTML = C.MEDICOS.map((m) => '<option value="' + m + '">' + K.medico(m).nome + " · " + K.esp(K.medico(m).esp).nome + "</option>").join("");
+  const botaoOk = form.querySelector('button[type="submit"]');
+  const seletor = window.ESCOLHER_PACIENTE($("#adicionar-paciente"), { prefixo: "add", aoEscolher: () => { $("#e-adicionar").hidden = true; } });
+  function erroAdicionar(texto) { const e = $("#e-adicionar"); e.textContent = texto; e.hidden = false; M.tremer(e); }
   $("#adicionar").addEventListener("click", () => {
     form.reset();
-    $("#f-medico").value = atual;
-    $("#c-nome").classList.remove("campo--erro");
-    const erro = $("#c-nome .campo__erro");
-    if (erro) erro.remove();
+    seletor.limpar();
+    $("#e-adicionar").hidden = true;
+    $("#f-medico").innerHTML = filas().map((f) => '<option value="' + A.esc(f.medico.id) + '">' + A.esc(f.medico.nome) + " · " + A.esc(f.especialidade ? f.especialidade.nome : "") + "</option>").join("");
+    if (atual) $("#f-medico").value = atual;
     K.abrirDialogo(dlg);
+    seletor.focar();
   });
-  form.addEventListener("submit", (ev) => {
+  form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
-    const nome = form.nome.value.trim().replace(/\s+/g, " ");
-    if (nome.split(" ").length < 2) {
-      const c = $("#c-nome");
-      c.classList.add("campo--erro");
-      if (!c.querySelector(".campo__erro")) c.insertAdjacentHTML("beforeend", '<span class="campo__erro" id="e-nome">Escreva o nome e o sobrenome.</span>');
-      form.nome.setAttribute("aria-describedby", "e-nome");
-      form.nome.focus();
-      M.tremer(form.nome);
-      return;
-    }
+    if (botaoOk.disabled) return;
+    const pessoa = seletor.escolhido();
+    if (!pessoa) { erroAdicionar("Escolha o paciente: procure pelo nome ou pelo CPF."); seletor.focar(); return; }
     const m = form.medico.value;
-    const p = { nome, desde: D.hoje, tel: form.tel.value.trim() ? "•••• " + form.tel.value.replace(/\D/g, "").slice(-4) : "", app: form.app.checked };
-    filaDe(m).push(p);
-    K.guardar.entrouNaFila(m, p);
-    K.fecharDialogo(dlg);
-    if (m !== atual) atual = m;
-    history.replaceState(null, "", "#" + m);
-    desenharTudo();
-    const novo = document.querySelector("#pessoas .pessoa:last-child");
-    if (novo && !M.reduzido()) novo.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: 240, easing: M.EASE_OUT });
-    K.toast({ titulo: nome + " entrou na fila", texto: "Posição " + filaDe(m).length + " na fila de " + K.medico(m).nome + ".", icone: "list-ordered" });
+    botaoOk.disabled = true;
+    try {
+      const r = await API.chamar("POST", "/api/lista-espera", { pessoa: Number(pessoa.id), medico: Number(m), usaApp: form.app.checked });
+      await CL.recarregar(["fila"]);
+      K.fecharDialogo(dlg);
+      atual = String(m);
+      history.replaceState(null, "", "#" + encodeURIComponent(m));
+      desenharTudo();
+      const novo = document.querySelector('#pessoas .pessoa[data-id="' + CSS.escape(String(r.id)) + '"]');
+      if (novo && !M.reduzido()) novo.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: 240, easing: M.EASE_OUT });
+      K.toast({ titulo: pessoa.nome + " entrou na fila", texto: "Posição " + r.posicao + " na fila de " + nomeMedico(m) + ".", icone: "list-ordered" });
+    } catch (e) {
+      if (e.status !== 401) erroAdicionar(e.message);
+    } finally {
+      botaoOk.disabled = false;
+    }
   });
 
-  /* outra aba mudou a fila ou a agenda (paciente respondeu a vaga, recepção cancelou): redesenha */
-  C.aoMudar(() => { if (atual) desenharTudo(); });
+  /* outra pessoa mudou a fila (o paciente respondeu a vaga, outra recepção cancelou): consulta a API a cada 30 s */
+  CL.vigiar(desenharTudo, () => ocupado || dlg.open || !!document.querySelector("#detalhe .trocar-medico, #detalhe [data-confirmar]"));
 
-  if (!atual) {
-    $("#subtitulo").textContent = "Cadastre os médicos da clínica para abrir a lista de espera.";
-    $("#adicionar").hidden = true;
-    return;
-  }
+  if (!atual) $("#adicionar").hidden = true;
   desenharTudo();
+  }
 })();

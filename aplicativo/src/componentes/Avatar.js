@@ -27,7 +27,7 @@ export function AvatarFamiliar({ pessoa, tamanho = 44 }) {
 }
 
 export function AvatarMedico({ medico, tamanho = 44 }) {
-  return <Circulo nome={medico.nome} cor={medico.cor} tamanho={tamanho} />;
+  return <Circulo nome={medico.nome} cor={medico.cor || '#e2ecf0'} tamanho={tamanho} />;
 }
 
 const estilos = StyleSheet.create({

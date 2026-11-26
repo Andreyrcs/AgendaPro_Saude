@@ -1,0 +1,81 @@
+esperando 61 s para a janela do limite de login zerar...
+
+== a. Uma consulta e um familiar na tela batem com o banco
+   banco (Consultas 86): 2026-11-24|08:00|M�dica Teste|Cl�nica geral|Confer�ncia tela x banco|Filho Editado|Sala 1
+XX  consulta: data, hora, médico, especialidade, motivo e sala da tela = banco — tela mostra "24 de novembro", "08:00", "M�dica Teste", "Cl�nica geral", "Confer�ncia tela x banco", "Sala 1"
+OK    "Para" mostra o familiar do banco — Filho Editado
+   banco (Pacientes 63): Filho Editado|71660546702|2016-01-31|Amendoim|Outro
+OK  familiar: nome, CPF, parentesco, idade (pela data) e alergias da tela = banco — tela mostra "Filho Editado", "716.605.467-02", "Outro", "10 anos", "Amendoim"
+
+== b. Adicionar e editar familiar pela tela; CPF repetido no campo CPF
+OK  adicionar pela tela: a pessoa está na API — {"id":66,"nome":"Helena Teste da Silva","curto":"Helena","cpf":"31979869626","relacao":"Filho(a)","nascimento":"2019-04-03","cor":"#E3F2DC","alergias":"Amoxicilina","titular":false}
+OK    o formulário de edição vem preenchido
+OK  editar pela tela: nome, parentesco e alergias mudaram na API (cor mantida) — {"id":66,"nome":"Helena Teste Editada","curto":"Helena","cpf":"31979869626","relacao":"Outro","nascimento":"2019-04-03","cor":"#E3F2DC","alergias":null,"titular":false}
+OK    a tela mostra os dados novos ("Nenhuma informada" para alergias)
+OK  CPF de outra pessoa: a mensagem da API aparece no campo CPF — Este CPF já está cadastrado.
+
+== c. Agendar e cancelar pela tela; o horário volta a ficar livre
+OK  agendada pela tela: está na API e o horário saiu da lista de livres — consulta 90 em 2026-11-24 08:30
+OK  cancelada pela tela: status "cancelada" e o horário voltou a ficar livre
+
+== d. Paciente A (P1) tentando ler e alterar dados do paciente B (P2), trocando o id na rota
+   GET    /api/consultas/88                                          -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+   DELETE /api/consultas/88                                          -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+   PUT    /api/consultas/88/presenca                                 -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+   GET    /api/pacientes/80                                          -> 403 (sem corpo)
+   GET    /api/pacientes/80/familiares                               -> 403 (sem corpo)
+   POST   /api/pacientes/80/familiares                               -> 403 (sem corpo)
+   PUT    /api/pacientes/79/familiares/48                            -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+   GET    /api/pacientes/80/consultas                                -> 403 (sem corpo)
+   GET    /api/pacientes/80/situacao                                 -> 403 (sem corpo)
+   GET    /api/pacientes/80/lista-espera                             -> 403 (sem corpo)
+   GET    /api/pacientes/80/acompanhamento                           -> 403 (sem corpo)
+   GET    /api/pacientes/80/prevencao                                -> 403 (sem corpo)
+   GET    /api/pacientes/80/notificacoes                             -> 403 (sem corpo)
+   PUT    /api/pacientes/80/notificacoes/lidas                       -> 403 (sem corpo)
+   GET    /api/pacientes/80/clinicas                                 -> 403 (sem corpo)
+   POST   /api/consultas                                             -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+   POST   /api/lista-espera                                          -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+   DELETE /api/lista-espera/24                                       -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+   PUT    /api/lista-espera/24/vaga                                  -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+   PUT    /api/prevencao/8                                           -> 403 {"mensagem":"Você só pode gerenciar a sua família."}
+OK  todas as 20 tentativas recusadas com 403 ou 404 — 403,403,403,403,403,403,403,403,403,403,403,403,403,403,403,403,403,403,403,403
+OK    e nada de P2 mudou (consulta confirmada, fila e nome do titular intactos) — consulta confirmada, fila 24, titular Paciente 2
+OK    na tela, #consulta/{id de P2} não mostra a consulta de P2 (volta para a Agenda)
+
+== e. Token de paciente chamando rotas da equipe
+   GET    /api/clinicas/15                                               -> 403 (sem corpo)
+   PUT    /api/clinicas/15                                               -> 403 (sem corpo)
+   GET    /api/clinicas/15/agenda?de=2026-11-24&ate=2026-11-30           -> 403 (sem corpo)
+   GET    /api/clinicas/15/pacientes                                     -> 403 (sem corpo)
+   GET    /api/clinicas/15/faltas?paciente=48                            -> 403 (sem corpo)
+   GET    /api/clinicas/15/equipe                                        -> 403 (sem corpo)
+   POST   /api/clinicas/15/equipe                                        -> 403 (sem corpo)
+   GET    /api/clinicas/15/medicos                                       -> 403 (sem corpo)
+   POST   /api/clinicas/15/medicos                                       -> 403 (sem corpo)
+   PUT    /api/medicos/13                                                -> 403 (sem corpo)
+   DELETE /api/medicos/13                                                -> 403 (sem corpo)
+   GET    /api/clinicas/15/lista-espera                                  -> 403 (sem corpo)
+   POST   /api/clinicas/15/especialidades                                -> 403 (sem corpo)
+   PUT    /api/consultas/88/status                                       -> 403 (sem corpo)
+   POST   /api/consultas/88/falta                                        -> 403 (sem corpo)
+   POST   /api/consultas/88/oferecer                                     -> 403 (sem corpo)
+   POST   /api/feriados                                                  -> 403 (sem corpo)
+   GET    /api/medicos/13/agenda?data=2026-11-24                         -> 403 (sem corpo)
+OK  todas as 18 rotas da equipe recusam o token de paciente com 403 — 403,403,403,403,403,403,403,403,403,403,403,403,403,403,403,403,403,403
+
+== f. XSS: dependente "<img src=x onerror=alert(1)>" e uma clínica com ataque em todos os textos
+OK  dependente com o nome do ataque gravado como texto na API — {"id":67,"nome":"<img src=x onerror=alert(1)>"}
+OK    no formulário de edição, o campo Nome traz o texto literal — <img src=x onerror=alert(1)>
+OK  nenhum <img src=x> entrou no DOM em 26 rotas (computador e celular) — total 0
+OK  nenhum alert() executou — diálogos 0, alert() 0
+OK  o texto do ataque aparece literal na tela (23 de 26 rotas mostram o texto) — 23
+
+== g. Console sem erros de JavaScript nas 3 páginas do paciente
+OK  paciente-desktop (9 rotas), paciente-mobile a 390 px (10 rotas) e escolher-clinica: 0 erros de JavaScript — 0 linhas no console (só recursos 4xx esperados)
+
+== h. Token em todas as chamadas, exceto login e cadastros
+OK  167 chamadas registradas nas telas desta etapa: 161 com token; sem token só login/cadastro
+
+1 verificação(ões) FALHARAM:
+- consulta: data, hora, médico, especialidade, motivo e sala da tela = banco

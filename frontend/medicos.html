@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";if(p.texto==="grande")document.documentElement.style.fontSize="112.5%"}catch(e){}</script>
+    <script>try{var p=JSON.parse(localStorage.getItem("agendapro.recepcao.pref"))||{};document.documentElement.dataset.lateral=p.menu==="recolhido"?"recolhida":"aberta";document.documentElement.style.fontSize={grande:"118.75%","muito-grande":"137.5%"}[p.texto]||""}catch(e){}</script>
     <title>Médicos · Clínica</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='4' width='28' height='26' rx='7' fill='%2312263f'/%3E%3Cpath d='M2 12v-1a7 7 0 0 1 7-7h14a7 7 0 0 1 7 7v1z' fill='%23a8e6cf'/%3E%3Crect x='14.2' y='14.5' width='3.6' height='11.5' rx='1.2' fill='%23fff'/%3E%3Crect x='10.25' y='18.45' width='11.5' height='3.6' rx='1.2' fill='%23fff'/%3E%3C/svg%3E" />
     <link rel="preload" href="assets/fonts/atkinson-next-latin.woff2" as="font" type="font/woff2" crossorigin />
@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   </head>
   <body>
+        <a class="pular" href="#conteudo">Pular para o conteúdo</a>
     <div class="casca">
       <aside class="lateral" aria-label="Navegação da clínica">
         <a class="lateral__marca" href="clinica.html">
@@ -30,10 +31,7 @@
         <nav aria-label="Seções">
           <ul class="lateral__menu" id="lateral-menu" data-pagina="medicos"></ul>
         </nav>
-        <div class="lateral__pe">
-          <span class="avatar-iniciais" style="--tam: 36px; background: #d4f3e6" aria-hidden="true">CM</span>
-          <span><b>Carla Mendes</b><br />Recepção</span>
-        </div>
+        <div class="lateral__pe"></div>
       </aside>
 
       <main class="conteudo" id="conteudo">
@@ -51,6 +49,7 @@
         </header>
 
         <div class="pagina">
+          <div class="credencial" id="credencial" hidden aria-live="polite"></div>
           <section class="painel" aria-labelledby="t-agenda">
             <div class="painel__cabeca">
               <h2 id="t-agenda">Com agenda nesta clínica</h2>
@@ -105,7 +104,7 @@
         <p class="dialogo__texto" id="dlg-texto">Depois do cadastro, defina o expediente em Horários para abrir a agenda.</p>
         <div class="campo" id="c-nome">
           <label for="f-nome">Nome completo</label>
-          <input id="f-nome" name="nome" autocomplete="off" placeholder="Ex.: Dra. Marta Siqueira" required />
+          <input id="f-nome" name="nome" maxlength="143" autocomplete="off" placeholder="Ex.: Dra. Marta Siqueira" required />
         </div>
         <div class="campo">
           <label for="f-esp">Especialidade</label>
@@ -114,24 +113,30 @@
         <div class="campos-dupla">
           <div class="campo" id="c-crm">
             <label for="f-crm">CRM</label>
-            <input id="f-crm" name="crm" autocomplete="off" placeholder="Ex.: CRM/SP 123456" required />
+            <span class="campo__com-prefixo">
+              <span class="campo__prefixo" aria-hidden="true">CRM/</span>
+              <input id="f-crm" name="crm" data-mascara="crm" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SP 12345" required />
+            </span>
           </div>
           <div class="campo" id="c-email">
             <label for="f-email">E-mail de acesso</label>
-            <input id="f-email" name="email" type="email" autocomplete="off" placeholder="nome@clinica.com.br" required />
+            <input id="f-email" name="email" type="email" maxlength="150" autocomplete="off" placeholder="nome@clinica.com.br" required />
           </div>
         </div>
         <div class="campos-dupla">
           <div class="campo" id="c-tel">
             <label for="f-tel">Telefone</label>
-            <input id="f-tel" name="tel" inputmode="tel" autocomplete="off" placeholder="(11) 90000-0000" />
+            <input id="f-tel" name="tel" type="tel" inputmode="tel" data-mascara="telefone" maxlength="20" autocomplete="off" placeholder="(00) 00000-0000" />
           </div>
           <div class="campo">
             <label for="f-sala">Sala ou consultório</label>
-            <input id="f-sala" name="sala" autocomplete="off" placeholder="Ex.: Sala 3" />
+            <input id="f-sala" name="sala" maxlength="30" autocomplete="off" placeholder="Ex.: Sala 3" />
           </div>
         </div>
+        <p class="campo__erro" id="e-medico" role="alert" hidden></p>
+        <p class="dialogo__texto" id="aviso-remover" hidden>O médico sai da agenda e das opções de agendamento e não entra mais no sistema. As consultas antigas continuam no histórico.</p>
         <div class="dialogo__acoes">
+          <button type="button" class="botao botao--perigo botao--pequeno" id="dlg-remover" hidden style="margin-right:auto">Remover médico</button>
           <button type="button" class="botao botao--secundario botao--pequeno" data-fechar-dialogo>Cancelar</button>
           <button type="submit" class="botao botao--principal botao--pequeno" id="dlg-ok">Cadastrar</button>
         </div>
@@ -143,10 +148,12 @@
 
     <script src="assets/js/icones.js"></script>
     <script src="assets/js/dados.js"></script>
+    <script src="assets/js/config.js"></script>
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/mascaras.js"></script>
     <script src="assets/js/comum.js"></script>
     <script src="assets/js/movimento.js"></script>
-    <script src="assets/js/clinica-dados.js"></script>
+    <script src="assets/js/clinica-servicos.js"></script>
     <script src="assets/js/clinica-casca.js"></script>
     <script src="assets/js/pagina-medicos.js"></script>
   </body>

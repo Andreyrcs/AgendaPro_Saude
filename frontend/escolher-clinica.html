@@ -12,6 +12,7 @@
         <link rel="stylesheet" href="assets/css/acesso.css" />
     </head>
     <body>
+        <a class="pular" href="#conteudo">Pular para o conteúdo</a>
         <div class="acesso">
             <header class="acesso__topo">
                 <a href="index.html" class="acesso__marca" aria-label="AgendaPro Saúde - página inicial">
@@ -20,7 +21,7 @@
                 </a>
             </header>
 
-            <main class="acesso__corpo">
+            <main class="acesso__corpo" id="conteudo" tabindex="-1">
                 <div class="cartao-acesso cartao-acesso--largo">
                     <h1 class="cartao-acesso__titulo cartao-acesso__titulo--esq" id="titulo">Qual é a sua clínica?</h1>
                     <p class="cartao-acesso__sub cartao-acesso__sub--esq" id="subtitulo">
@@ -37,7 +38,7 @@
                         <label class="campo__rotulo" for="busca">Nome da clínica ou cidade</label>
                         <div class="busca-campo">
                             <svg class="ic ic-sm" aria-hidden="true"><use href="#i-search" /></svg>
-                            <input class="campo__entrada" id="busca" type="search" placeholder="Ex.: Ipê ou São Paulo" autocomplete="off" aria-controls="resultados" />
+                            <input class="campo__entrada" id="busca" type="search" placeholder="Nome da clínica ou cidade" autocomplete="off" aria-controls="resultados" />
                         </div>
                     </div>
 
@@ -49,7 +50,7 @@
                         <form id="form-codigo" class="codigo-form" novalidate>
                             <div class="campo">
                                 <label class="campo__rotulo" for="codigo">Código</label>
-                                <input class="campo__entrada num" id="codigo" type="text" placeholder="Ex.: IPE-4821" maxlength="8" autocomplete="off" autocapitalize="characters" />
+                                <input class="campo__entrada num" id="codigo" type="text" data-mascara="codigo" placeholder="AAA-0000" maxlength="8" autocomplete="off" autocapitalize="characters" />
                                 <span class="campo__erro" id="erro-codigo" aria-live="polite"></span>
                             </div>
                             <button type="submit" class="btn btn--principal">Entrar com o código</button>
@@ -64,7 +65,9 @@
 
         <script src="assets/js/icones.js"></script>
         <script src="assets/js/dados.js"></script>
+        <script src="assets/js/config.js"></script>
         <script src="assets/js/api.js"></script>
+        <script src="assets/js/mascaras.js"></script>
         <script src="assets/js/comum.js"></script>
         <script src="assets/js/escolher-clinica.js"></script>
     </body>

@@ -1,0 +1,3 @@
+  1 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  2 GET    /api/clinicas/15 -> 200  [Bearer]  
+  3 GET    /api/clinicas/15/equipe -> 200  [Bearer]  [{"idUsuario":75,"nome":"Dono a","email":"dono.a.mwtftj45@teste.com","papel":"dono"},{"idUsuario":78,"nome":"Recepção Teste","email":"recepcao.mwtftj45@teste.co

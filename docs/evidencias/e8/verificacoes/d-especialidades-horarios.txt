@@ -1,0 +1,17 @@
+# Especialidades e horários livres por clínica (24/11/2026, 11:02:42)
+Filtro: AcessoServico.PodeUsarClinicaAsync — paciente só da clínica vinculada à conta; equipe só da própria clínica.
+Clínica A = 5 (especialidade 6), B = 6 (especialidade 12), C = 7 (vazia).
+
+Token                     lista de A   livres de A  lista de B   livres de B  
+dono A                    200          200          403          403          
+recepção A                200          200          403          403          
+dono B                    403          403          200          200          
+recepção B                403          403          200          200          
+dono C                    403          403          403          403          
+recepção C                403          403          403          403          
+paciente vinculado a A    200          200          403          403          
+paciente vinculado a B    403          403          200          200          
+médico de A               200          403          403          403          
+
+O médico não tem a rota de horários livres (perfis: paciente, recepção e dono); por isso 403 também na própria clínica.
+OK  todas as 36 respostas iguais ao esperado

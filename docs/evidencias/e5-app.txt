@@ -1,0 +1,5 @@
+OK  adulto com dor de garganta: Otorrino e Clínica geral — Otorrinolaringologia(id otorrino), Clínica geral(id clinica)
+OK  filho com dor de ouvido: Pediatria primeiro — Davi: Pediatria, Otorrinolaringologia
+OK  emergência continua: dor no peito
+OK  ehPediatria pelo nome (com e sem acento/maiúscula)
+OK  mesmoId compara número com texto

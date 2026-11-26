@@ -1,0 +1,10 @@
+  1 POST   /api/auth/login -> 200  [sem token]  {"token":"[token omitido]
+  2 GET    /api/clinicas/15 -> 200  [Bearer]  
+  3 POST   /api/auth/login -> 200  [Bearer]  {"token":"[token omitido]
+  4 GET    /api/clinicas/15 -> 200  [Bearer]  
+  5 POST   /api/auth/login -> 200  [Bearer]  
+  6 POST   /api/auth/login -> 401  [Bearer]  {"mensagem":"E-mail ou senha incorretos"}
+  7 POST   /api/auth/login -> 401  [Bearer]  {"mensagem":"E-mail ou senha incorretos"}
+  8 POST   /api/auth/login -> 429  [Bearer]  {"mensagem":"Muitas tentativas. Aguarde um minuto e tente de novo."}
+  9 POST   /api/auth/login -> 200  [Bearer]  {"token":"[token omitido]
+ 10 GET    /api/clinicas/15 -> 200  [Bearer]  

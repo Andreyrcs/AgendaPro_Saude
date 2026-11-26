@@ -1,11 +1,13 @@
 /* AgendaPro Saúde — casca comum das páginas da clínica.
    Monta o menu lateral com a página atual marcada, a folha de hoje no cabeçalho,
-   os avisos que sobem do rodapé e o relógio ("agora" é a hora do computador). */
+   os avisos que sobem do rodapé e o relógio ("agora" é a hora do computador).
+   Todas as páginas da casca passam pelo portão CLINICA.iniciar (clinica-servicos.js), que chama CASCA.atualizar()
+   depois de carregar: o selo, o número da lista de espera, os médicos, as especialidades e os horários livres vêm
+   da API. */
 (function () {
   "use strict";
 
-  const D = window.DADOS;
-  const C = window.CLIDADOS;
+  const CL = window.CLINICA; /* clinica-servicos.js, carregado antes da casca */
   const A = window.AP;
   const M = window.MOV;
   const I = A.icone;
@@ -20,17 +22,17 @@
     { id: "equipe", href: "equipe.html", icone: "building", rotulo: "Clínica e equipe" },
   ];
 
-  const agora = () => C.minutoAgora();
+  /* minutos desde a meia-noite, pela hora do computador */
+  const agora = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; };
 
-  const medico = (id) => D.medicos.find((m) => m.id === id);
-  const esp = (id) => D.especialidades[id];
+  const SEM_ESP = { nome: "", duracao: 30 };
+  const medico = (id) => CL.medico(id);
+  const esp = (id) => CL.esp(id) || SEM_ESP;
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  const totalFila = () => D.medicos.reduce((s, m) => s + (D.filas[m.id] || []).length, 0);
-  const curtoData = (dia) => { const d = C.data(dia); return A.SEMANA_CURTA[d.getDay()] + ", " + d.getDate() + "/" + String(d.getMonth() + 1).padStart(2, "0"); };
+  /* pessoas na lista de espera (da API); antes da carga, o menu fica sem o número */
+  const totalFila = () => (CL.carregada ? CL.totalFila() : 0);
+  const curtoData = (dia) => { const d = A.data(dia); return A.SEMANA_CURTA[d.getDay()] + ", " + d.getDate() + "/" + String(d.getMonth() + 1).padStart(2, "0"); };
   const semAcento = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-
-  /* médicos, especialidades e lista de espera ficam guardados por clinica-dados.js */
-  const guardar = C.guardar;
 
   /* ─── Preferências da conta (texto, movimento, menu recolhido) ─── */
   const CHAVE_PREF = "agendapro.recepcao.pref";
@@ -38,7 +40,7 @@
   try { Object.assign(pref, JSON.parse(localStorage.getItem(CHAVE_PREF)) || {}); } catch (e) { /* sem armazenamento */ }
   function aplicarPref() {
     const raiz = document.documentElement;
-    raiz.style.fontSize = pref.texto === "grande" ? "112.5%" : "";
+    raiz.style.fontSize = { grande: "118.75%", "muito-grande": "137.5%" }[pref.texto] || "";
     if (pref.movimento === "reduzido") raiz.dataset.movimento = "reduzido"; else delete raiz.dataset.movimento;
     raiz.dataset.lateral = pref.menu === "recolhido" ? "recolhida" : "aberta";
   }
@@ -50,22 +52,16 @@
   }
   aplicarPref();
 
-  /* ─── A conta de quem está na recepção: quem entrou pelo login (api.js) ─── */
+  /* ─── A conta de quem está na recepção: só quem entrou pelo login (token da sessão, api.js) ───
+     As páginas da equipe são protegidas: sem sessão, api.js já mandou para o login. */
   const logado = window.API ? window.API.usuarioAtual() : null;
-  const CHAVE_CONTA = "agendapro.recepcao.conta" + (logado ? "." + logado.id : "");
   const conta = logado
-    ? { nome: logado.nome, email: logado.email, tel: D.clinica.telefone, ramal: "", funcao: window.API.PAPEIS[logado.papel], papel: logado.papel }
-    : { nome: "Carla Mendes", email: "carla.mendes@clinicaipe.exemplo", tel: "(11) 2345-0000", ramal: "12", funcao: "Recepção", papel: "recepcao" };
-  try { Object.assign(conta, JSON.parse(localStorage.getItem(CHAVE_CONTA)) || {}); } catch (e) { /* sem armazenamento */ }
-  function salvarConta(campos) {
-    Object.assign(conta, campos);
-    try { localStorage.setItem(CHAVE_CONTA, JSON.stringify(conta)); } catch (e) { /* sem armazenamento */ }
-    desenharPe();
-  }
+    ? { nome: logado.nome || logado.email || "", email: logado.email || "", funcao: window.API.PAPEIS[logado.papel] || "", papel: logado.papel }
+    : { nome: "", email: "", funcao: "", papel: "" };
   function desenharPe() {
     const pe = document.querySelector("a.lateral__pe");
     if (!pe) return;
-    pe.innerHTML = '<span class="avatar-iniciais" style="--tam: 36px; background: #d4f3e6" aria-hidden="true">' + A.iniciais(conta.nome) + "</span>" +
+    pe.innerHTML = '<span class="avatar-iniciais" style="--tam: 36px; background: #d4f3e6" aria-hidden="true">' + (conta.nome ? A.esc(A.iniciais(conta.nome)) : "") + "</span>" +
       '<span class="lateral__rotulo"><b>' + A.esc(conta.nome) + "</b><br />" + A.esc(conta.funcao) + "</span>";
     pe.setAttribute("aria-label", "Minha conta: " + conta.nome + ", " + conta.funcao);
   }
@@ -78,7 +74,7 @@
       const n = p.id === "fila" ? totalFila() : null;
       return '<li><a href="' + p.href + '"' + (p.id === atual ? ' aria-current="page"' : "") + ' data-dica-lateral="' + p.rotulo + (n ? " · " + n : "") + '">' +
         I(p.icone, "ic-sm") + '<span class="lateral__rotulo">' + p.rotulo + "</span>" +
-        (p.id === "fila" ? '<span class="lateral__conta num" id="nav-fila">' + n + "</span>" : "") + "</a></li>";
+        (p.id === "fila" ? '<span class="lateral__conta num" id="nav-fila">' + (CL.carregada ? n : "") + "</span>" : "") + "</a></li>";
     }).join("");
   }
   if (menu) desenharMenu();
@@ -145,7 +141,7 @@
   }
 
   const folhaHoje = document.getElementById("folha-hoje");
-  if (folhaHoje && !folhaHoje.innerHTML.trim()) folhaHoje.innerHTML = A.folha(D.hoje, { menta: true });
+  if (folhaHoje && !folhaHoje.innerHTML.trim()) folhaHoje.innerHTML = A.folha(CL.hoje, { menta: true });
 
   /* ─── Anúncio para leitores de tela ─── */
   const anunciador = document.getElementById("anunciador");
@@ -155,15 +151,16 @@
     setTimeout(() => { anunciador.textContent = t; }, 30);
   }
 
-  /* ─── Avisos (mesmo desenho dos avisos da agenda) ─── */
+  /* ─── Avisos (mesmo desenho dos avisos da agenda) ───
+     título, texto e rótulo são TEXTO (muitas vezes com nome vindo da API): sempre passam por A.esc */
   function toast(o) {
     const caixa = document.getElementById("toasts");
     if (!caixa) return;
     const el = document.createElement("div");
     el.className = "toast";
     el.setAttribute("role", "status");
-    el.innerHTML = I(o.icone || "bell-ring") + "<p>" + o.titulo + (o.texto ? "<small>" + o.texto + "</small>" : "") + "</p>" +
-      (o.acao ? '<button type="button" class="botao botao--pequeno">' + I("undo", "ic-sm") + o.acao.rotulo + "</button>" : "");
+    el.innerHTML = I(o.icone || "bell-ring") + "<p>" + A.esc(o.titulo) + (o.texto ? "<small>" + A.esc(o.texto) + "</small>" : "") + "</p>" +
+      (o.acao ? '<button type="button" class="botao botao--pequeno">' + I("undo", "ic-sm") + A.esc(o.acao.rotulo) + "</button>" : "");
     caixa.appendChild(el);
     el.animate(M.reduzido() ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: "translateY(16px) scale(0.98)" }, { opacity: 1, transform: "none" }], { duration: 260, easing: M.EASE_OUT });
     const fechar = () => {
@@ -199,27 +196,24 @@
   });
 
   /* ─── Horários livres de um médico num dia (a mesma regra da agenda) ─── */
-  function livres(m, dia) {
-    const e = C.expediente(m, dia);
-    if (!e || dia < D.hoje) return [];
-    const dur = C.DURACAO[m] || 30;
-    const ks = C.consultas.filter((k) => k.medico === m && k.data === dia && C.ativa(k));
-    const lista = [];
-    for (let t = e[0]; t + dur <= e[1]; t += dur) {
-      if (C.noAlmoco(m, t, dur)) continue; /* almoço do médico */
-      if (dia === D.hoje && t < agora()) continue;
-      const k = ks.find((x) => x.ini < t + dur && t < x.ini + x.dur);
-      if (k && C.horarioDe(k) !== "livre") continue;
-      lista.push({ ini: t, dur, vaga: k || null });
+  const livres = (m, dia) => CL.livres(m, dia);
+  /* até onde a agenda está aberta para marcar (2 meses à frente, a mesma conta da API) */
+  const ULTIMO_DIA = CL.ABRE_ATE;
+
+  /* ─── Depois da carga da API (CLINICA.iniciar): rodapé, número da fila e selo com a clínica atualizada ─── */
+  function atualizar() {
+    desenharPe();
+    if (menu) desenharMenu();
+    if (lateral) {
+      const selo = lateral.querySelector(".lateral__clinica");
+      if (selo) selo.remove();
+      A.seloClinica(lateral, conta.papel, { href: "equipe.html" });
     }
-    return lista;
   }
-  /* até onde a agenda está aberta para marcar (configuração da clínica, em clinica-dados.js) */
-  const ULTIMO_DIA = C.ABRE_ATE;
 
   window.CASCA = {
     agora, medico, esp, cap, curtoData, semAcento, totalFila, livres, ULTIMO_DIA,
-    toast, anunciar, abrirDialogo, fecharDialogo, desenharMenu,
-    guardar, pref, mudarPref, conta, salvarConta,
+    toast, anunciar, abrirDialogo, fecharDialogo, desenharMenu, atualizar,
+    pref, mudarPref, conta,
   };
 })();

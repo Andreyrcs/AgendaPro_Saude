@@ -8,6 +8,8 @@
                 var _m = localStorage.getItem('medico-menu');
                 document.documentElement.dataset.lateral =
                     _m === 'recolhido' ? 'recolhida' : 'aberta';
+                document.documentElement.style.fontSize =
+                    { grande: '118.75%', 'muito-grande': '137.5%' }[localStorage.getItem('medico-texto')] || '';
             } catch (e) {}
         </script>
         <title>Minha Agenda — AgendaPro Saúde</title>
@@ -103,10 +105,10 @@
                         class="avatar-iniciais"
                         style="--tam: 36px; background: #d4e8f4"
                         aria-hidden="true"
-                        >PM</span
+                        ></span
                     >
                     <span class="lateral__rotulo"
-                        ><b>Dr. Paulo Menezes</b><br />Cardiologia</span
+                        ><b id="lateral-nome"></b><br /><span id="lateral-esp"></span></span
                     >
                 </a>
             </aside>
@@ -315,6 +317,7 @@
                                         >
                                         <input
                                             type="date"
+                                            max="9999-12-31"
                                             id="hist-data"
                                             class="hist-data-input"
                                         />
@@ -384,14 +387,10 @@
                                     class="avatar-iniciais perfil-avatar"
                                     style="--tam: 80px; background: #d4e8f4"
                                     aria-hidden="true"
-                                    >PM</span
+                                    ></span
                                 >
-                                <h2 class="perfil-nome" id="perfil-nome">
-                                    Dr. Paulo Menezes
-                                </h2>
-                                <p class="perfil-esp" id="perfil-esp">
-                                    Cardiologia
-                                </p>
+                                <h2 class="perfil-nome" id="perfil-nome"></h2>
+                                <p class="perfil-esp" id="perfil-esp"></p>
                                 <div
                                     class="perfil-resumo-numeros"
                                     id="perfil-stats"
@@ -464,6 +463,40 @@
                             </div>
                             <ol class="hist-lista" id="proximos-lista"></ol>
                         </section>
+                        <section class="perfil-bloco" aria-label="Sair">
+                            <button type="button" class="botao botao--perigo" id="sair">
+                                <svg class="ic ic-sm" aria-hidden="true"><use href="#i-log-out" /></svg>Sair da conta
+                            </button>
+                        </section>
+
+                        <section class="perfil-bloco">
+                            <h3 id="t-texto" class="perfil-secao-titulo">Tamanho do texto</h3>
+                            <div class="segmento" role="radiogroup" aria-labelledby="t-texto" id="seg-texto">
+                                <button type="button" role="radio" data-texto="normal">Normal</button>
+                                <button type="button" role="radio" data-texto="grande">Grande</button>
+                                <button type="button" role="radio" data-texto="muito-grande">Extra</button>
+                            </div>
+                        </section>
+
+                        <section class="perfil-bloco" aria-labelledby="t-senha">
+                            <h3 id="t-senha" class="perfil-secao-titulo">Trocar a senha</h3>
+                            <form id="form-senha" novalidate>
+                                <div class="campo-med">
+                                    <label for="s-atual">Senha atual</label>
+                                    <input type="password" maxlength="64" id="s-atual" autocomplete="current-password" />
+                                </div>
+                                <div class="campo-med">
+                                    <label for="s-nova">Nova senha (pelo menos 8 caracteres, com letras e números)</label>
+                                    <input type="password" maxlength="64" id="s-nova" autocomplete="new-password" />
+                                </div>
+                                <div class="campo-med">
+                                    <label for="s-repete">Repita a nova senha</label>
+                                    <input type="password" maxlength="64" id="s-repete" autocomplete="new-password" />
+                                </div>
+                                <p id="s-aviso" role="alert" style="margin: 8px 0" hidden></p>
+                                <button type="submit" class="botao botao--principal">Trocar a senha</button>
+                            </form>
+                        </section>
                     </div>
                 </div>
             </main>
@@ -532,7 +565,7 @@
                         />
                         <span class="ret-opcao__texto">
                             <strong>Marcar data específica</strong>
-                            <small>Escolher dia para o retorno</small>
+                            <small>Escolher dia e horário para o retorno</small>
                         </span>
                     </label>
                     <label class="ret-opcao">
@@ -540,7 +573,7 @@
                         <span class="ret-opcao__texto">
                             <strong>Encaminhar para recepção</strong>
                             <small
-                                >Paciente agenda na saída com a recepção</small
+                                >A recepção combina a data com o paciente</small
                             >
                         </span>
                     </label>
@@ -549,12 +582,16 @@
                 <div class="campo-med" id="ret-campo-data">
                     <label for="ret-data">Data do retorno</label>
                     <input type="date" id="ret-data" />
+                    <label for="ret-hora">Horário</label>
+                    <select id="ret-hora"></select>
+                    <p id="ret-aviso" role="alert" hidden></p>
                 </div>
                 <div class="campo-med">
                     <label for="ret-nota">Nota de acompanhamento</label>
                     <textarea
                         id="ret-nota"
                         rows="3"
+                        maxlength="500"
                         placeholder="Ex.: Revisar exame de sangue, ajustar medicação…"
                     ></textarea>
                 </div>
@@ -581,10 +618,10 @@
 
         <script src="assets/js/icones.js"></script>
         <script src="assets/js/dados.js"></script>
+        <script src="assets/js/config.js"></script>
         <script src="assets/js/api.js"></script>
         <script src="assets/js/comum.js"></script>
         <script src="assets/js/movimento.js"></script>
-        <script src="assets/js/clinica-dados.js"></script>
         <script src="assets/js/medico.js"></script>
     </body>
 </html>

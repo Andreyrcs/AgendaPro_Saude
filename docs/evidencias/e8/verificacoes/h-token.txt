@@ -1,0 +1,35 @@
+# Verificação h — token em todas as chamadas, menos login e cadastros (24/11/2026, 10:49:18)
+Cada linha do registro é: método, rota, código HTTP e [token] ou [sem token] (se o pedido levou Authorization: Bearer).
+
+   a (tela × banco)                                             23 chamadas, 0 sem token
+   f e g (9 telas, dono e recepção, A e C, 1440 e 390 px)      508 chamadas, 0 sem token
+   i (Checagem A, login pela tela)                             163 chamadas, 4 sem token
+   b (agenda)                                                   37 chamadas, 0 sem token (resumo no próprio arquivo)
+   b (nova consulta, fila e ficha)                              77 chamadas, 0 sem token (resumo no próprio arquivo)
+   c (médicos, especialidades, horários)                       107 chamadas, 0 sem token (resumo no próprio arquivo)
+
+Chamadas sem token, por rota:
+   4×  POST /api/auth/login 200 [sem token]
+
+OK  915 chamadas: 911 com token; sem token só login e cadastros (4 logins), fora disso: 0
+
+Chamadas com token (a, f, g e i), por rota:
+      1×  GET /api/clinicas 200 [token]
+    101×  GET /api/clinicas/{id} 200 [token]
+     99×  GET /api/clinicas/{id}/agenda?… 200 [token]
+     10×  GET /api/clinicas/{id}/equipe 200 [token]
+    101×  GET /api/clinicas/{id}/especialidades 200 [token]
+     14×  GET /api/clinicas/{id}/faltas?… 200 [token]
+     99×  GET /api/clinicas/{id}/lista-espera 200 [token]
+     99×  GET /api/clinicas/{id}/medicos 200 [token]
+     17×  GET /api/clinicas/{id}/pacientes 200 [token]
+     13×  GET /api/especialidades/{id}/horarios-livres 200 [token]
+    101×  GET /api/feriados?… 200 [token]
+      2×  GET /api/pacientes/{id}/acompanhamento 200 [token]
+      2×  GET /api/pacientes/{id}/clinicas 200 [token]
+      2×  GET /api/pacientes/{id}/consultas 200 [token]
+      2×  GET /api/pacientes/{id}/familiares 200 [token]
+      2×  GET /api/pacientes/{id}/lista-espera 200 [token]
+      2×  GET /api/pacientes/{id}/notificacoes 200 [token]
+      2×  GET /api/pacientes/{id}/prevencao 200 [token]
+     21×  GET /api/pacientes/{id}/situacao 200 [token]

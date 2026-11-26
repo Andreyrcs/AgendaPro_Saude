@@ -32,6 +32,7 @@
         <link rel="stylesheet" href="assets/css/paciente-desktop.css" />
     </head>
     <body class="corpo">
+        <a class="pular" href="#conteudo" onclick="event.preventDefault();document.getElementById('conteudo').focus()">Pular para o conteúdo</a>
         <div class="casca">
             <aside class="lateral" aria-label="Navegação do paciente">
                 <div>
@@ -136,7 +137,7 @@
                 </a>
             </aside>
 
-            <main class="conteudo" id="conteudo">
+            <main class="conteudo" id="conteudo" tabindex="-1">
                 <div id="pagina"></div>
             </main>
         </div>
@@ -151,13 +152,15 @@
 
         <script src="assets/js/icones.js"></script>
         <script src="assets/js/dados.js"></script>
+        <script src="assets/js/config.js"></script>
         <script src="assets/js/api.js"></script>
+        <script src="assets/js/mascaras.js"></script>
         <script src="assets/js/comum.js"></script>
         <script src="assets/js/movimento.js"></script>
-        <script src="assets/js/clinica-dados.js"></script>
         <script src="assets/js/paciente-servicos.js"></script>
         <script src="assets/js/prevencao-tela.js"></script>
         <script src="assets/js/calendario-paciente.js"></script>
+        <script src="assets/js/triagem.js"></script>
         <script src="assets/js/paciente-desktop.js"></script>
     </body>
 </html>

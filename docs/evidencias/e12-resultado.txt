@@ -1,0 +1,43 @@
+Etapa 12: banco do zero, teste do banco, catálogos, conferência pela tela e isolamento (24/11/2026)
+API em http://localhost:5080 (banco AgendaPro_Saude_App, conferido na string de conexão), web em http://localhost:5500.
+O banco AgendaPro_Saude não foi tocado: continua com a data de criação de 17/11/2026. Todo comando no banco
+rodou com -d AgendaPro_Saude_App e passou antes por uma trava que para se DB_NAME() não for o _App.
+
+1. Banco do zero + sp_TesteSistema
+   - DROP e CREATE do AgendaPro_Saude_App; banco/agendapro_saude_sqlserver.sql a partir da linha 13
+     (as linhas 6 a 11 criam e usam o AgendaPro_Saude); banco/testes_agendapro.sql sem a linha "USE AgendaPro_Saude;".
+   OK  EXEC dbo.sp_TesteSistema → TOTAL: 25 de 25 passaram (1a a 15b, todos PASSOU).
+
+2. Só os catálogos
+   - DROP e CREATE de novo; o script do banco; backend/docs/dados-prevencao.sql e backend/docs/dados-feriados.sql.
+   OK  Clinicas 0 · Usuarios 0 · Pacientes 0 · Consultas 0 · Campanhas 7 · Exames_Prevencao 9 · Feriados 20
+
+3. Conferência única pela tela (Playwright no Edge), a partir do banco vazio — e12/fluxo-tela.txt
+   OK  1  dono cria a clínica (cadastro-clinica.html) e recebe o código AAA-0000
+   OK  2  dono entra
+   OK  3  especialidade (especialidades.html)
+   OK  4  médico com CRM, e-mail e sala; senha provisória mostrada uma vez (medicos.html)
+   OK  5  expediente do médico (horarios.html)
+   OK  6  recepcionista (equipe.html)
+   OK  7  paciente se cadastra (cadastro.html)
+   OK  8  paciente escolhe a clínica pelo código (escolher-clinica.html)
+   OK  9  paciente agenda, com motivo "Dor nas costas <script>x</script>" (paciente-desktop.html)
+   OK  10 recepção registra a chegada pelo menu da consulta (clinica.html)
+   OK  11 médico abre a consulta (o motivo aparece escapado) e finaliza (medico.html)
+   OK  12 médico pede o exame "Raio-X da coluna"
+   OK  13 recepção marca o exame como realizado na ficha (pacientes.html) → no banco, Exames.Status = REALIZADO
+   OK  14 paciente abre a área dele
+   OK  15 ficha reaberta: o exame aparece como "Realizado"
+   Erros de console: nenhum. Chamadas que gravam: POST /api/clinicas 201, POST especialidades 201,
+   POST medicos 201, PUT expediente 204, POST equipe 201, POST /api/pacientes 201, POST pacientes/{id}/clinicas 201,
+   POST /api/consultas 201, PUT status (chegada) 200, PUT status (atendida) 200, POST /api/exames 201, PUT /api/exames 200.
+
+4. Isolamento entre duas clínicas, só por curl — e12/isolamento-curl.txt
+   OK  16 de 16: recepção, dono, médico e paciente da clínica B recebem 403 ao ler ou mexer em agenda, dados,
+       pacientes, médicos, lista de espera, consulta, equipe e consultas do paciente da clínica A;
+       o controle (recepção A na própria agenda) dá 200.
+   Obs.: na primeira rodada, o PUT /api/clinicas/{A} do dono B foi com um corpo incompleto e voltou 400
+   (a validação do ASP.NET responde antes do controller). Com o corpo válido: 403, e o nome da clínica A não mudou.
+
+Depois da conferência e do isolamento, o AgendaPro_Saude_App foi recriado de novo só com os catálogos
+(mesma contagem do item 2). As capturas com a senha provisória na tela (médico e recepcionista) não foram guardadas.

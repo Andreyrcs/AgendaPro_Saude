@@ -54,9 +54,9 @@ export default function PrevencaoTela({ navigation }) {
   }
 
   // "Marcar": a especialidade é procurada pelo nome na clínica atual do paciente
-  function marcar(item) {
+  async function marcar(item) {
     try {
-      const especialidade = especialidadeNaClinica(usuario, item.especialidade);
+      const especialidade = await especialidadeNaClinica(usuario, item.especialidade);
       navigation.navigate('Agendar', { especialidade, pessoa: item.pessoa.id, itemPrevencao: item.id });
     } catch (e) {
       setAvisos({ ...avisos, [item.id]: e.message });

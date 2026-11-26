@@ -3,7 +3,7 @@
 // A navegação (navegacao/Navegacao.js) mostra Login/Cadastro ou as abas conforme "usuario".
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { definirToken } from '../servicos/api';
+import { definirAoExpirar, definirToken } from '../servicos/api';
 import { apagarSessao, lerSessao, salvarSessao } from '../servicos/sessao';
 
 const SessaoContext = createContext(null);
@@ -36,6 +36,14 @@ export function SessaoProvider({ children }) {
     await apagarSessao();
     setUsuario(null);
   }
+
+  // Se a API responder 401 (token vencido ou conta desativada), sai da conta: o app volta ao Login (F9)
+  useEffect(() => {
+    definirAoExpirar(() => {
+      sair();
+    });
+    return () => definirAoExpirar(null);
+  }, []);
 
   return (
     <SessaoContext.Provider value={{ usuario, token: usuario ? usuario.token : null, carregandoSessao, abrirSessao, sair }}>

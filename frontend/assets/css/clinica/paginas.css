@@ -199,6 +199,22 @@ a.botao {
     padding: 10px 12px;
     resize: vertical;
 }
+/* texto fixo na frente do que se digita (o "CRM/" do médico) */
+.campo__com-prefixo {
+    position: relative;
+    display: block;
+}
+.campo__prefixo {
+    position: absolute;
+    z-index: 1; /* a animação de erro põe o campo por cima */
+    left: 13.5px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+.campo .campo__com-prefixo input {
+    padding-left: calc(13.5px + 3.9ch);
+}
 .campo input::placeholder,
 .campo textarea::placeholder {
     color: var(--tinta-3);
@@ -1116,23 +1132,29 @@ a.botao {
     background: var(--gelo-2);
 }
 .contagem__lista {
-    position: absolute;
-    z-index: 20;
-    left: 0;
-    top: calc(100% + 6px);
-    display: none;
+    position: fixed;
+    z-index: 70;
+    display: grid;
+    gap: 2px;
+    width: max-content;
     min-width: 260px;
+    max-width: min(420px, calc(100vw - 16px));
+    max-height: calc(100vh - 16px);
+    overflow: hidden;
     padding: 8px;
+    pointer-events: none;
+    animation: contagem-entra 140ms var(--ease-out);
     border-radius: 14px;
     background: var(--noite);
     color: #fff;
     box-shadow: 0 16px 32px -12px rgba(10, 24, 40, 0.45);
 }
-.contagem:hover .contagem__lista,
-.contagem:focus-within .contagem__lista {
-    display: grid;
-    gap: 2px;
-    animation: contagem-entra 140ms var(--ease-out);
+.contagem__lista[hidden] {
+    display: none;
+}
+.contagem__lista--duas {
+    grid-template-columns: 1fr 1fr;
+    max-width: min(720px, calc(100vw - 16px));
 }
 .contagem__lista li {
     display: flex;
@@ -1168,8 +1190,7 @@ a.botao {
     .paginacao button:active:not(:disabled) {
         transform: none;
     }
-    .contagem:hover .contagem__lista,
-    .contagem:focus-within .contagem__lista {
+    .contagem__lista {
         animation: none;
     }
 }
@@ -1180,10 +1201,6 @@ a.botao {
         height: 1px;
         overflow: hidden;
         clip: rect(0 0 0 0);
-    }
-    .contagem__lista {
-        left: auto;
-        right: 0;
     }
 }
 
@@ -1208,6 +1225,9 @@ a.botao {
     align-items: start;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--linha);
+}
+.ajuste[hidden] {
+    display: none;
 }
 .ajuste:last-child {
     border-bottom: 0;
@@ -1830,4 +1850,56 @@ a.botao {
 }
 .retirar input {
     min-height: 44px;
+}
+
+/* ─── Escolher o paciente pelo id (nova consulta e lista de espera, 8d) ─── */
+.escolher-paciente {
+    display: grid;
+    gap: 8px;
+}
+.escolher-paciente__estado:empty {
+    display: none;
+}
+.escolher-paciente__estado {
+    font-size: 0.875rem;
+    color: var(--tinta-2);
+}
+.escolher-paciente__escolhido {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: var(--menta-2);
+    box-shadow: inset 0 0 0 2px var(--noite);
+}
+.escolher-paciente__escolhido[hidden],
+.escolher-paciente .campo[hidden] {
+    display: none;
+}
+.escolher-paciente__escolhido b {
+    display: block;
+}
+.escolher-paciente__escolhido small {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--tinta-2);
+}
+.aviso-situacao {
+    margin-top: 10px;
+}
+.pessoa__acoes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px 10px;
+}
+.trocar-medico {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px;
+    grid-column: 2 / -1;
 }

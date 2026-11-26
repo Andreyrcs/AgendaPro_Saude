@@ -1,17 +1,31 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
+    "agent-browser": {
+      "source": "vercel-labs/agent-browser",
+      "commit": "a67ba089fec5fbfec07346aebad11666463d9799",
+      "sourceType": "github",
+      "skillPath": "skills/agent-browser/SKILL.md",
+      "computedHash": "a0dfac7503f69bcf529b2660fc79964064c4f179eb65695904ddc45fc0d99d20"
+    },
+    "dogfood": {
+      "source": "vercel-labs/agent-browser",
+      "commit": "a67ba089fec5fbfec07346aebad11666463d9799",
+      "sourceType": "github",
+      "skillPath": "skill-data/dogfood/SKILL.md",
+      "computedHash": "098f814c7985901a6aaa8ee3863d9dc8dca5b28d4f83612e8d24f644cb2227b0"
+    },
     "emil-design-eng": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
       "skillPath": "skills/emil-design-eng/SKILL.md",
-      "computedHash": "2483020b5bbaab030d6b3463bfba49c8d9c2cd8dea4d9fba836dbd471f1fb706"
+      "computedHash": ""
     },
     "premium-frontend-ui": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
       "skillPath": "skills/premium-frontend-ui/SKILL.md",
-      "computedHash": "e7f3d02a0233beafdd6fe5335427388109b9699ebcdc6a8782a8bada2826d916"
+      "computedHash": ""
     }
   }
 }

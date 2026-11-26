@@ -24,6 +24,7 @@
         <link rel="stylesheet" href="assets/css/acesso.css" />
     </head>
     <body>
+        <a class="pular" href="#conteudo">Pular para o conteúdo</a>
         <div class="acesso">
             <header class="acesso__topo">
                 <a
@@ -36,7 +37,7 @@
                 </a>
             </header>
 
-            <main class="acesso__corpo">
+            <main class="acesso__corpo" id="conteudo" tabindex="-1">
                 <div class="cartao-acesso">
                     <div class="container-acesso__conteudo">
                         <span class="acesso__marca-logo" data-marca="28"></span>
@@ -68,6 +69,7 @@
                                 name="email"
                                 type="email"
                                 placeholder="seu@email.com"
+                                maxlength="150"
                                 autocomplete="email"
                                 required
                             />
@@ -90,6 +92,7 @@
                                     name="senha"
                                     type="password"
                                     placeholder="Sua senha"
+                                    maxlength="64"
                                     autocomplete="current-password"
                                     required
                                 />
@@ -147,26 +150,6 @@
                         </button>
                     </form>
 
-                    <!-- Acesso rápido: entra com as contas da carga inicial (útil na apresentação) -->
-                    <div class="separador"><span>Acesso rápido</span></div>
-                    <div class="demos" aria-label="Acesso rápido">
-                        <button type="button" class="demo-btn" data-demo="recepcao">
-                            <span class="demo-btn__icone demo-btn__icone--recepcao" aria-hidden="true">CM</span>
-                            <span class="demo-btn__texto"><span class="demo-btn__nome">Carla Mendes</span><span class="demo-btn__perfil">Recepção · Clínica Ipê</span></span>
-                        </button>
-                        <button type="button" class="demo-btn" data-demo="medico">
-                            <span class="demo-btn__icone demo-btn__icone--medico" aria-hidden="true">PM</span>
-                            <span class="demo-btn__texto"><span class="demo-btn__nome">Dr. Paulo Menezes</span><span class="demo-btn__perfil">Médico · Cardiologia</span></span>
-                        </button>
-                        <button type="button" class="demo-btn" data-demo="paciente">
-                            <span class="demo-btn__icone demo-btn__icone--paciente" aria-hidden="true">JS</span>
-                            <span class="demo-btn__texto"><span class="demo-btn__nome">Juliana Santos</span><span class="demo-btn__perfil">Paciente</span></span>
-                        </button>
-                        <button type="button" class="demo-btn" data-demo="recepcaoJacaranda">
-                            <span class="demo-btn__icone demo-btn__icone--recepcao" aria-hidden="true">MF</span>
-                            <span class="demo-btn__texto"><span class="demo-btn__nome">Marta Ferraz</span><span class="demo-btn__perfil">Recepção · Clínica Jacarandá</span></span>
-                        </button>
-                    </div>
 
                     <!-- Link para cadastro -->
                     <p class="cartao-acesso__rodape">
@@ -261,6 +244,7 @@
         </svg>
 
         <script src="assets/js/dados.js"></script>
+        <script src="assets/js/config.js"></script>
         <script src="assets/js/api.js"></script>
         <script src="assets/js/comum.js"></script>
         <script src="assets/js/login.js"></script>
