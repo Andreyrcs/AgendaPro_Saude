@@ -490,6 +490,9 @@
 
 .perfil-wrap {
     padding: 24px 24px 40px;
+    display: flex;
+    flex-direction: column;
+    gap:20px;
 }
 .perfil-cartao {
     position: relative;
