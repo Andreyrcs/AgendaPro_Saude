@@ -322,7 +322,7 @@
     return c;
   }
 
-  /* GET /api/clinicas/{id}  (L1: dono e recepção, só a própria clínica). A cópia guardada no login pode estar velha:
+  /* GET /api/clinicas/{id}  (L1: dono, recepção e médico, só a própria clínica). A cópia guardada no login pode estar velha:
      as telas da equipe buscam de novo a cada carga (clinica-servicos.js). */
   async function recarregarClinica() {
     const c = clinicaAtual();

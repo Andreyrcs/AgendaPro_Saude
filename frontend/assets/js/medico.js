@@ -81,6 +81,11 @@
             M.almoco = e && e.almoco ? [C.hm(e.almoco.inicio), C.hm(e.almoco.fim)] : null;
             M.feriados = feriados || [];
             if (window.DADOS) window.DADOS.feriados = M.feriados; /* A.folha() pinta o feriado */
+            /* a clínica do cadastro do médico, só para o selo do menu; se falhar, a agenda abre do mesmo jeito */
+            try {
+                const c = await API.chamar('GET', '/api/clinicas/' + SESSAO.clinicaId);
+                if (window.DADOS && c && c.nome) window.DADOS.clinica.nome = c.nome;
+            } catch (e) { /* sem o selo */ }
             carregouPerfil = true;
         }
         const r = await API.chamar('GET', '/api/medicos/' + MEDICO_ID + '/agenda?data=' + dia);
@@ -1577,6 +1582,8 @@
         set('subtitulo', md.nome + (esp ? ' · ' + esp : ''));
         set('lateral-nome', md.nome);
         set('lateral-esp', esp);
+        /* "Você atua em": só mostra a clínica, sem link (o médico não troca nem abre a clínica) */
+        if (window.DADOS && window.DADOS.clinica.nome) A.seloClinica(document.querySelector('.lateral'), 'medico');
         document.querySelectorAll('.avatar-iniciais').forEach((el) => { el.textContent = A.iniciais(md.nome); });
         redesenhar();
         irPara(location.hash.slice(1));
